@@ -1,0 +1,56 @@
+# Node / Build artifacts
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Vercel / Deployment
+.vercel
+.now
+
+# TypeScript / Vite cache
+tsconfig.tsbuildinfo
+vite.config.ts.cache
+.eslintcache
+
+# Testing
+cypress/
+playwright-report/
+test-results/
+
+# Backend / server-side (extra safety)
+backend/
+robustness_orchestrator/
+ai/
+sdk/
+runpod/
+supabase/
+Dockerfile*
+docker-compose*
+requirements.txt
+*.py
+*.sh
+*.sql

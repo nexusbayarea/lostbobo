@@ -148,162 +148,106 @@ export function Pricing() {
         <PageLayout>
             <div className="py-32 px-6">
                 {/* Header */}
-                <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 56px" }}>
-                    <div style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        background: "rgba(59,130,246,0.1)",
-                        border: "1px solid rgba(59,130,246,0.3)",
-                        borderRadius: 999,
-                        padding: "6px 16px",
-                        fontSize: 12,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: "#60A5FA",
-                        marginBottom: 24,
-                    }}>
-                        GPU-Accelerated FEA · Cloud Native
+                <div className="text-center max-w-[640px] mx-auto mb-14">
+                    <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 rounded-full px-4 py-1.5 text-xs tracking-widest uppercase text-blue-400 mb-6">
+                        GPU-Accelerated FEA Â· Cloud Native
                     </div>
-                    <h1 style={{
-                        fontSize: "clamp(32px, 5vw, 52px)",
-                        fontWeight: 700,
-                        lineHeight: 1.1,
-                        letterSpacing: "-0.03em",
-                        marginBottom: 16,
-                        background: "linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                    }}>
+                    <h1 className="text-[clamp(32px,5vw,52px)] font-bold leading-[1.1] tracking-tight mb-4 bg-gradient-to-br from-slate-50 to-slate-400 bg-clip-text text-transparent">
                         Simulation with<br />Quantified Confidence
                     </h1>
-                    <p style={{ color: "#64748B", fontSize: 17, lineHeight: 1.6, marginBottom: 32 }}>
+                    <p className="text-slate-500 text-[17px] leading-relaxed mb-8">
                         From single-engineer validation to full-scale robustness sweeps.
-                        Cancel anytime — no lock-in.
+                        Cancel anytime â€” no lock-in.
                     </p>
 
                     {/* Billing toggle */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 999, padding: "6px 8px 6px 16px" }}>
-                        <span style={{ fontSize: 14, color: annual ? "#94A3B8" : "#E2E8F0" }}>Monthly</span>
+                    <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-full p-1.5 pl-4">
+                        <span className={`text-sm ${annual ? 'text-slate-400' : 'text-slate-100'}`}>Monthly</span>
                         <button
                             onClick={() => setAnnual(!annual)}
-                            style={{
-                                width: 44, height: 24, borderRadius: 999, border: "none", cursor: "pointer",
-                                background: annual ? "#3B82F6" : "rgba(255,255,255,0.15)",
-                                position: "relative", transition: "background 0.2s",
-                            }}
+                            className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${annual ? 'bg-blue-600' : 'bg-white/15'}`}
                         >
-                            <div style={{
-                                width: 18, height: 18, borderRadius: "50%", background: "#fff",
-                                position: "absolute", top: 3,
-                                left: annual ? 23 : 3,
-                                transition: "left 0.2s",
-                                boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-                            }} />
+                            <div className={`w-4.5 h-4.5 rounded-full bg-white absolute top-0.75 transition-all duration-200 shadow-[0_1px_4px_rgba(0,0,0,0.3)] ${annual ? 'left-[23px]' : 'left-0.75'}`} />
                         </button>
-                        <span style={{ fontSize: 14, color: annual ? "#E2E8F0" : "#94A3B8" }}>Annual</span>
+                        <span className={`text-sm ${annual ? 'text-slate-100' : 'text-slate-400'}`}>Annual</span>
                         {annual && (
-                            <span style={{
-                                fontSize: 11, fontWeight: 700, background: "rgba(16,185,129,0.15)",
-                                color: "#34D399", padding: "3px 10px", borderRadius: 999,
-                                border: "1px solid rgba(16,185,129,0.3)",
-                            }}>Save up to 25%</span>
+                            <span className="text-[11px] font-bold bg-emerald-500/15 text-emerald-400 px-2.5 py-0.75 rounded-full border border-emerald-500/30">
+                                Save up to 25%
+                            </span>
                         )}
                     </div>
                 </div>
 
                 {/* Plans grid */}
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                    gap: 20,
-                    maxWidth: 1120,
-                    margin: "0 auto 80px",
-                }}>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 max-w-[1120px] mx-auto mb-20">
                     {plans.map((plan) => (
-                        <div key={plan.name} style={{
-                            background: plan.badge ? "rgba(15,23,42,0.9)" : "rgba(255,255,255,0.025)",
-                            border: `1px solid ${plan.border}`,
-                            borderRadius: 20,
-                            padding: "32px 28px",
-                            position: "relative",
-                            boxShadow: plan.badge ? `0 0 60px ${plan.accentLight}, 0 4px 24px rgba(0,0,0,0.4)` : "none",
-                            transition: "transform 0.2s, box-shadow 0.2s",
-                        }}
-                            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+                        <div 
+                            key={plan.name} 
+                            className={`rounded-[20px] p-8 relative transition-all duration-200 hover:-translate-y-1 ${
+                                plan.badge 
+                                ? 'bg-slate-900/90 border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.12),0_4px_24px_rgba(0,0,0,0.4)]' 
+                                : 'bg-white/[0.025] border-white/10'
+                            }`}
+                            style={{ border: `1px solid ${plan.border}` }}
                         >
                             {plan.badge && (
-                                <div style={{
-                                    position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)",
-                                    background: `linear-gradient(90deg, #2563EB, #3B82F6)`,
-                                    color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
-                                    textTransform: "uppercase", padding: "5px 18px", borderRadius: 999,
-                                    whiteSpace: "nowrap",
-                                }}>{plan.badge}</div>
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-700 to-blue-500 text-white text-[11px] font-bold tracking-widest uppercase px-4.5 py-1.5 rounded-full whitespace-nowrap">
+                                    {plan.badge}
+                                </div>
                             )}
 
-                            <div style={{ marginBottom: 24 }}>
-                                <p style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: plan.accent, marginBottom: 6 }}>{plan.tag}</p>
-                                <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>{plan.name}</h2>
-                                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
-                                    <>
-                                        <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-0.04em" }}>
-                                            ${(annual ? plan.annualPrice : plan.monthlyPrice).toLocaleString()}
-                                        </span>
-                                        <span style={{ color: "#475569", fontSize: 14 }}>/mo</span>
-                                        {annual && <span style={{ color: "#34D399", fontSize: 12, marginLeft: 4 }}>billed annually</span>}
-                                    </>
+                            <div className="mb-6">
+                                <p className="text-[11px] tracking-widest uppercase mb-1.5" style={{ color: plan.accent }}>{plan.tag}</p>
+                                <h2 className="text-[26px] font-bold tracking-tight mb-4">{plan.name}</h2>
+                                <div className="flex items-baseline gap-1.5 mb-2">
+                                    <span className="text-[44px] font-extrabold tracking-tighter text-white">
+                                        ${(annual ? plan.annualPrice : plan.monthlyPrice).toLocaleString()}
+                                    </span>
+                                    <span className="text-slate-500 text-sm">/mo</span>
+                                    {annual && <span className="text-emerald-400 text-xs ml-1">billed annually</span>}
                                 </div>
-                                <div style={{
-                                    background: plan.accentLight,
-                                    border: `1px solid ${plan.border}`,
-                                    borderRadius: 8,
-                                    padding: "10px 14px",
-                                }}>
-                                    <p style={{ fontSize: 13, fontWeight: 600, color: plan.accent }}>{plan.credits}</p>
-                                    <p style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>{plan.overage}</p>
+                                <div 
+                                    className="rounded-lg p-3 border"
+                                    style={{ 
+                                        backgroundColor: plan.accentLight, 
+                                        borderColor: plan.border 
+                                    }}
+                                >
+                                    <p className="text-[13px] font-semibold" style={{ color: plan.accent }}>{plan.credits}</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">{plan.overage}</p>
                                 </div>
                             </div>
 
-                            <form action="/create-checkout-session" method="POST">
+                            <form action="/create-checkout-session" method="POST">     
                                 <input type="hidden" name="lookup_key" value={plan.lookupKey} />
-                                <button type="submit" style={{
-                                    width: "100%",
-                                    padding: "13px",
-                                    borderRadius: 10,
-                                    border: plan.ctaStyle === "filled" ? "none" : `1px solid ${plan.border}`,
-                                    background: plan.ctaStyle === "filled" ? `linear-gradient(135deg, #2563EB, #3B82F6)` : "transparent",
-                                    color: plan.ctaStyle === "filled" ? "#fff" : plan.accent,
-                                    fontSize: 14,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    marginBottom: 28,
-                                    letterSpacing: "0.01em",
-                                    transition: "opacity 0.15s",
-                                }}
-                                    onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-                                    onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+                                <button 
+                                    type="submit" 
+                                    className={`w-full p-3.25 rounded-xl text-sm font-bold tracking-wide mb-7 transition-opacity duration-150 hover:opacity-85 ${
+                                        plan.ctaStyle === "filled" 
+                                        ? 'bg-gradient-to-br from-blue-700 to-blue-500 text-white' 
+                                        : 'bg-transparent border'
+                                    }`}
+                                    style={plan.ctaStyle === "outline" ? { borderColor: plan.border, color: plan.accent } : {}}
                                 >
-                                    {plan.cta} →
+                                    {plan.cta} â†’
                                 </button>
                             </form>
 
-                            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
-                                <p style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569", marginBottom: 14 }}>Includes</p>
-                                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div className="border-t border-white/5 pt-6">
+                                <p className="text-[11px] tracking-widest uppercase text-slate-500 mb-3.5">Includes</p>
+                                <ul className="list-none p-0 m-0 mb-5 flex flex-col gap-2.5">
                                     {plan.features.map(f => (
-                                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, color: "#CBD5E1", lineHeight: 1.4 }}>
-                                            <span style={{ marginTop: 1, flexShrink: 0 }}><CheckIcon color={plan.accent} /></span>
+                                        <li key={f} className="flex items-start gap-2.5 text-[13.5px] text-slate-300 leading-relaxed">        
+                                            <span className="mt-1 flex-shrink-0"><CheckIcon color={plan.accent} /></span>
                                             {f}
                                         </li>
                                     ))}
                                 </ul>
                                 {plan.notIncluded.length > 0 && (
-                                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                                    <ul className="list-none p-0 m-0 flex flex-col gap-2.5">
                                         {plan.notIncluded.map(f => (
-                                            <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: "#334155", lineHeight: 1.4 }}>
-                                                <span style={{ marginTop: 1, flexShrink: 0 }}><XIcon /></span>
+                                            <li key={f} className="flex items-start gap-2.5 text-[13px] text-slate-700 leading-relaxed">      
+                                                <span className="mt-1 flex-shrink-0"><XIcon /></span>
                                                 {f}
                                             </li>
                                         ))}
@@ -315,83 +259,58 @@ export function Pricing() {
                 </div>
 
                 {/* Credit Packs */}
-                <div style={{ maxWidth: 820, margin: "0 auto" }}>
-                    <div style={{ textAlign: "center", marginBottom: 36 }}>
-                        <h3 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 10 }}>
+                <div className="max-w-[820px] mx-auto">
+                    <div className="text-center mb-9">
+                        <h3 className="text-2xl font-bold tracking-tight mb-2.5">
                             Compute Credit Packs
                         </h3>
-                        <p style={{ color: "#475569", fontSize: 15 }}>
+                        <p className="text-slate-500 text-[15px]">
                             Pay-as-you-go for burst capacity or one-off projects. Credits never expire.
                         </p>
                     </div>
-                    <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                        gap: 16,
-                    }}>
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
                         {creditPacks.map(pack => (
-                            <div key={pack.amount} style={{
-                                background: pack.popular ? "rgba(59,130,246,0.08)" : "rgba(255,255,255,0.03)",
-                                border: `1px solid ${pack.popular ? "rgba(59,130,246,0.4)" : "rgba(255,255,255,0.07)"}`,
-                                borderRadius: 16,
-                                padding: "24px 20px",
-                                textAlign: "center",
-                                position: "relative",
-                                cursor: "pointer",
-                                transition: "transform 0.15s",
-                            }}
-                                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                            <div 
+                                key={pack.amount} 
+                                className={`rounded-2xl p-6 text-center relative cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 border ${
+                                    pack.popular 
+                                    ? 'bg-blue-500/10 border-blue-500/40' 
+                                    : 'bg-white/[0.03] border-white/10'
+                                }`}
                             >
                                 {pack.popular && (
-                                    <div style={{
-                                        position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)",
-                                        background: "#3B82F6", color: "#fff", fontSize: 10, fontWeight: 700,
-                                        letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 999,
-                                    }}>Best Value</div>
+                                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">
+                                        Best Value
+                                    </div>
                                 )}
-                                <p style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.04em", color: "#F8FAFC" }}>
+                                <p className="text-[36px] font-extrabold tracking-tighter text-slate-50">
                                     {pack.amount.toLocaleString()}
                                 </p>
-                                <p style={{ color: "#475569", fontSize: 13, marginBottom: 16 }}>compute credits</p>
-                                <p style={{ fontSize: 22, fontWeight: 700, color: pack.popular ? "#60A5FA" : "#E2E8F0", marginBottom: 4 }}>
+                                <p className="text-slate-500 text-[13px] mb-4">compute credits</p>
+                                <p className={`text-[22px] font-bold mb-1 ${pack.popular ? 'text-blue-400' : 'text-slate-200'}`}>
                                     ${pack.price.toLocaleString()}
                                 </p>
-                                <p style={{ fontSize: 11, color: "#475569" }}>{pack.perCredit} per credit</p>
+                                <p className="text-[11px] text-slate-500">{pack.perCredit} per credit</p>
                             </div>
                         ))}
                     </div>
 
                     {/* What is a credit callout */}
-                    <div style={{
-                        marginTop: 32,
-                        background: "rgba(255,255,255,0.02)",
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        borderRadius: 14,
-                        padding: "20px 24px",
-                        display: "flex",
-                        gap: 20,
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}>
-                        <span style={{ color: "#475569", fontSize: 13 }}>What's 1 credit?</span>
-                        <span style={{ color: "#94A3B8", fontSize: 13 }}>≈ 1 GPU-minute of compute</span>
-                        <span style={{ color: "#334155" }}>·</span>
-                        <span style={{ color: "#94A3B8", fontSize: 13 }}>A 500K-element mesh run ≈ 4–8 credits</span>
-                        <span style={{ color: "#334155" }}>·</span>
-                        <span style={{ color: "#94A3B8", fontSize: 13 }}>50-run robustness sweep ≈ 60–120 credits</span>
+                    <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-xl p-5 flex gap-5 flex-wrap items-center justify-center">
+                        <span className="text-slate-500 text-[13px]">What's 1 credit?</span>
+                        <span className="text-slate-400 text-[13px]">â‰ˆ 1 GPU-minute of compute</span>
+                        <span className="text-slate-800">Â·</span>
+                        <span className="text-slate-400 text-[13px]">A 500K-element mesh run â‰ˆ 4â€“8 credits</span>
+                        <span className="text-slate-800">Â·</span>
+                        <span className="text-slate-400 text-[13px]">50-run robustness sweep â‰ˆ 60â€“120 credits</span>
                     </div>
                 </div>
 
                 {/* Bottom trust row */}
-                <div style={{
-                    display: "flex", flexWrap: "wrap", gap: 24, justifyContent: "center",
-                    marginTop: 64, color: "#334155", fontSize: 13,
-                }}>
+                <div className="flex flex-wrap gap-6 justify-center mt-16 text-slate-700 text-[13px]">
                     {["No setup fees", "Cancel anytime", "SOC 2 in progress", "ITAR-aware architecture", "A40 GPU backbone"].map(t => (
-                        <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ color: "#1E3A5F" }}>✦</span> {t}
+                        <span key={t} className="flex items-center gap-1.5">
+                            <span className="text-slate-800 text-xs">âœ¦</span> {t}
                         </span>
                     ))}
                 </div>

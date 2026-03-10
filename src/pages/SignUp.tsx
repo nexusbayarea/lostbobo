@@ -36,6 +36,7 @@ const notIncluded = [
 ];
 
 export function SignUp() {
+  console.log('SignUp: Component rendering');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,14 +46,16 @@ export function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('SignUp: handleSubmit triggered', formData);
     setIsLoading(true);
-    console.log('SignUp: Starting registration process for:', formData.email);
-    
+
     try {
       if (!formData.password || formData.password.length < 6) {
+        console.warn('SignUp: Password too short');
         throw new Error('Password must be at least 6 characters long');
       }
 
+      console.log('SignUp: Calling supabase.auth.signUp...');
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -60,6 +63,7 @@ export function SignUp() {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: formData.name,
+            name: formData.name,
           }
         },
       });
@@ -68,31 +72,38 @@ export function SignUp() {
         console.error('SignUp: Supabase error:', error);
         toast.error(error.message);
       } else {
-        console.log('SignUp: Registration successful:', data);
+        console.log('SignUp: Registration successful response:', data);
         toast.success('Registration successful! Please check your email to verify your account.');
       }
     } catch (err: any) {
-      console.error('SignUp: Unexpected error:', err);
+      console.error('SignUp: Unexpected error catch:', err);
       toast.error(err.message || 'An unexpected error occurred');
     } finally {
+      console.log('SignUp: handleSubmit finished');
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignUp = async () => {
+    console.log('SignUp: handleGoogleSignUp triggered');
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (error) {
-      toast.error(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        console.error('SignUp: Google OAuth error:', error);
+        toast.error(error.message);
+      }
+    } catch (err) {
+      console.error('SignUp: Google OAuth unexpected error:', err);
+    } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 relative overflow-hidden">
       {/* Background */}

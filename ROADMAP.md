@@ -21,6 +21,8 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 - [x] **Abuse Prevention System** (March 2026)
 - [x] **Secure Multi-Repo Deployment Strategy** (March 2026)
 - [x] **Google One Tap Integration** (March 2026)
+- [x] **Footer Logo Color Fix** - Changed SimHPC logo "Sim" text to inherit parent color (March 2026)
+- [x] **Global Background Update** - Updated all page backgrounds to match homepage color #f1ede0 (March 2026)
 
 ### Phase 2: Enterprise Features (In Progress)
 - [ ] **Advanced Mesh Handling**: Support for large-scale geometries (10M+ elements)

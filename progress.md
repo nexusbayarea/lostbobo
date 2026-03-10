@@ -720,7 +720,11 @@ Required for enterprise clients:
 
 ---
 
-*Last Updated: March 9, 2026*
+*Last Updated: March 10, 2026*
+
+### March 10, 2026 (Footer Logo & Global Background Consistency)
+- **Footer Logo Color Fix**: Changed SimHPC logo "Sim" text to `text-inherit` to properly adapt to the footer's dark background across all themes.
+- **Global Background Consistency**: Updated all page backgrounds (SignIn, SignUp, Dashboard, etc.) to use `bg-background` (HSL 46° 38% 91%) matching the homepage color #F1EDE0.
 
 ### March 8, 2026 (Abuse Prevention & Free Tier Security)
 

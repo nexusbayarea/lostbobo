@@ -5,11 +5,11 @@
 
 @layer base {
   :root {
-    --background: 45 31% 91%;
+    --background: 46 38% 91%;
     --foreground: 222 47% 11%;
-    --card: 45 31% 91%;
+    --card: 46 38% 91%;
     --card-foreground: 222 47% 11%;
-    --popover: 45 31% 91%;
+    --popover: 46 38% 91%;
     --popover-foreground: 222 47% 11%;
     --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
@@ -26,7 +26,7 @@
     --ring: 222 47% 11%;
     --radius: 0.75rem;
     /* Sidebar variables */
-    --sidebar-background: 45 31% 91%;
+    --sidebar-background: 46 38% 91%;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 222 47% 11%;
     --sidebar-primary-foreground: 210 40% 98%;

@@ -54,7 +54,7 @@ export function SignIn() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 relative overflow-hidden flex flex-col">
       {/* Background */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-30 pointer-events-none select-none z-0">
         <AnimatedMesh />
       </div>
 
@@ -69,7 +69,7 @@ export function SignIn() {
       </header>
 
       {/* Content */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+      <div className="relative z-20 flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

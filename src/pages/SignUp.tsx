@@ -114,7 +114,7 @@ export function SignUp() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-30 pointer-events-none select-none z-0">
         <AnimatedMesh />
       </div>
 
@@ -129,7 +129,7 @@ export function SignUp() {
       </header>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* Left Column - Form */}
           <motion.div

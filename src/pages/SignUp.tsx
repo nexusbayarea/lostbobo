@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Mail, 
@@ -36,6 +36,7 @@ const notIncluded = [
 ];
 
 export function SignUp() {
+  const navigate = useNavigate();
   console.log('SignUp: Component rendering');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -73,7 +74,13 @@ export function SignUp() {
         toast.error(error.message);
       } else {
         console.log('SignUp: Registration successful response:', data);
-        toast.success('Registration successful! Please check your email to verify your account.');
+        if (data.session) {
+          toast.success('Registration successful! Welcome to SimHPC.');
+          navigate('/dashboard');
+        } else {
+          toast.success('Registration successful! Please check your email to verify your account.');
+          navigate('/signin');
+        }
       }
     } catch (err: any) {
       console.error('SignUp: Unexpected error catch:', err);

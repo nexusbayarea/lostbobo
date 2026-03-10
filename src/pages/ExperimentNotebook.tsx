@@ -549,7 +549,7 @@ export default function ExperimentNotebook() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080E1C] text-white font-sans selection:bg-cyan-900/40">
+    <div className="min-h-screen bg-background text-slate-900 dark:text-white font-sans selection:bg-cyan-900/40">
       <style>{`
         * { font-family: 'DM Sans', sans-serif; }
         .font-mono, code { font-family: 'DM Mono', monospace; }

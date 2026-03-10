@@ -1,18 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ldzztrnghaaonparyggz.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_BTPKB2cbCifXpkENl43thw_dxio3DkO';
 
-// Fallback to a dummy URL if missing to prevent createClient from throwing
-// during initialization, but log a warning in development.
-const safeUrl = supabaseUrl || 'https://placeholder-url.supabase.co';
-const safeKey = supabaseAnonKey || 'placeholder-key';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials are missing. Auth features will not work.');
+if (!import.meta.env.VITE_SUPABASE_URL) {
+  console.warn('Supabase URL missing from environment, using production fallback.');
 }
 
-export const supabase = createClient(safeUrl, safeKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({

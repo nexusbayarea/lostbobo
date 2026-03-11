@@ -1,6 +1,6 @@
 # SimHPC Roadmap
 
-> Last Updated: March 8, 2026
+> Last Updated: March 10, 2026
 
 ## Vision
 SimHPC is a cloud-based GPU-accelerated finite element simulation platform with integrated robustness analysis and AI-generated engineering reports. Built for engineering teams that require stable, defensible results.
@@ -24,6 +24,9 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 - [x] **Footer Logo Color Fix** - Changed SimHPC logo "Sim" text to inherit parent color (March 2026)
 - [x] **Global Background Update** - Updated all page backgrounds to match homepage color #f1ede0 (March 2026)
 - [x] **ExperimentNotebook Theme Toggle** - Added bright/dark mode toggle matching rest of website (March 2026)
+- [x] **Magic Link Demo Tokens** - Secure alpha pilot onboarding with usage-limited demo links (March 2026)
+- [x] **Alpha RunPod Container Architecture** - Unified vLLM + RAG worker for high-performance LLM services (March 2026)
+- [x] **RAG Engineering Assistant** - Retrieval-augmented chat for SimHPC documentation (March 2026)
 
 ### Phase 2: Enterprise Features (In Progress)
 - [ ] **Advanced Mesh Handling**: Support for large-scale geometries (10M+ elements)
@@ -89,7 +92,9 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.3.1 | March 9, 2026 | Tier-aware API, Supabase simulation persistence, Payment Success UX |
+| 1.5.0 | March 10, 2026 | Alpha RunPod architecture, vLLM inference engine, RAG engineering assistant |
+| 1.4.0 | March 10, 2026 | Magic link demo tokens, usage-limited alpha pilot onboarding |
+| 1.3.1 | March 10, 2026 | Tier-aware API, Supabase simulation persistence, Payment Success UX |
 | 1.3.0 | March 9, 2026 | Google One Tap integration, GitHub Pages deployment |
 | 1.2.0 | March 8, 2026 | Experiment notebook, abuse prevention, secure repo split |
 | 1.1.0 | March 6, 2026 | Mercury AI migration, Celery worker hardening |

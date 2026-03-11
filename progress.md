@@ -722,6 +722,16 @@ Required for enterprise clients:
 
 *Last Updated: March 10, 2026*
 
+### March 10, 2026 (Alpha RunPod Architecture & LLM Service)
+- **Alpha RunPod Container**: Implemented a unified worker container architecture combining FastAPI, vLLM for ultra-fast inference, and a FAISS-based RAG service for engineering context retrieval.
+- **vLLM Integration**: Configured vLLM for high-throughput generation (~90 tok/s on RTX 3090) supporting Mistral and Llama models.
+- **RAG Service Implementation**: Developed a retrieval-augmented generation system using SentenceTransformers and FAISS, enabling the AI to answer questions based on SimHPC documentation.
+- **Backend RunPod Proxy**: Added `AlphaChatRequest` and `/api/v1/alpha/chat` endpoint to the main orchestrator, proxying authorized chat requests to the Serverless LLM worker.
+- **Serverless Lifecycle Management**: Updated `RunPodClient` to handle async job submission and status polling for the new LLM and RAG capabilities.
+- **Worker Packaging**: Scaffolded `alpha_worker/` directory with Dockerfile, requirements, and modular application code for immediate deployment.
+
+---
+
 ### March 10, 2026 (Footer Logo, Global Background & Theme Toggle)
 - **Protected Routes**: Implemented `ProtectedRoute` component and wrapped dashboard routes (`/dashboard`, `/dashboard/alpha`, `/dashboard/notebook`) to prevent unauthorized access.
 - **Experiment Notebook Alignment**: Fixed responsive grid layout and row alignment issues in both light and dark modes to prevent card overlap and squishing.

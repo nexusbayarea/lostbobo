@@ -5,6 +5,17 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-10
+
+### Added
+- **Alpha RunPod Container Architecture**: New unified worker container for high-performance LLM and RAG services.
+  - **vLLM Inference**: Integrated vLLM engine for ultra-fast Mistral/Llama inference (~90 tok/s).
+  - **RAG Service**: FAISS-based vector store for engineering context retrieval from documentation.
+  - **FastAPI Layer**: Dedicated API for Alpha chat and document management inside the worker.
+  - **RunPod Serverless Integration**: Full async lifecycle management for Alpha chat requests in the main orchestrator.
+- **Backend RunPod Client**: New `RunPodClient` in `api.py` for managing Serverless jobs, status polling, and result retrieval.
+- **Alpha Chat Endpoint**: `POST /api/v1/alpha/chat` for secure engineering assistant interactions.
+
 ---
 
 ## [1.4.0] - 2026-03-10

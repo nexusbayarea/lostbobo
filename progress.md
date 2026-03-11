@@ -723,12 +723,43 @@ Required for enterprise clients:
 *Last Updated: March 10, 2026*
 
 ### March 10, 2026 (Footer Logo, Global Background & Theme Toggle)
+- **Protected Routes**: Implemented `ProtectedRoute` component and wrapped dashboard routes (`/dashboard`, `/dashboard/alpha`, `/dashboard/notebook`) to prevent unauthorized access.
 - **Experiment Notebook Alignment**: Fixed responsive grid layout and row alignment issues in both light and dark modes to prevent card overlap and squishing.
 - **Theme-Aware Styling**: Refactored `ExperimentNotebook.tsx` to use `bg-background` and `text-foreground` classes, ensuring proper color adaptation during mode switches.
 - **Footer Logo Color Fix**: Changed SimHPC logo "Sim" text to `text-inherit` to properly adapt to the footer's dark background across all themes.
 - **Global Background Consistency**: Updated all page backgrounds (SignIn, SignUp, Dashboard, etc.) to use `bg-background` (HSL 46° 38% 91%) matching the homepage color #F1EDE0.
 - **ExperimentNotebook Theme Toggle**: Added ThemeToggle component to the Experiment Notebook page header, matching the rest of the website's bright/dark mode functionality.
 - **Notebook Color Updates**: Updated all hardcoded colors in ExperimentNotebook.tsx to use theme-aware classes (dark: prefix) for proper light/dark mode support.
+
+### March 10, 2026 (Magic Link Demo Token System)
+- **Magic Link Demo Access:**
+  - Implemented a complete alpha pilot onboarding system using secure, usage-limited magic link tokens.
+  - **Backend (`demo_access.py`):**
+    - `POST /api/v1/demo/magic-link` — Validates demo token and returns session info with remaining runs.
+    - `GET /api/v1/demo/usage` — Returns current usage stats (remaining, limit, used, expired).
+    - `POST /api/v1/demo/use-run` — Atomically decrements usage count per simulation run.
+    - `POST /api/v1/demo/create` — Admin-only endpoint to generate new magic links (requires `SIMHPC_API_KEY`).
+  - **Supabase `demo_access` Table:**
+    - Schema: `id`, `email`, `token_hash` (SHA-256), `usage_limit`, `usage_count`, `expires_at`, `created_at`, `ip_address`.
+    - RLS policy restricts access to `service_role` only.
+    - Indexes on `token_hash` and `email` for fast lookups.
+  - **Dual-Layer Storage:** Supabase (persistent) + Redis (fast reads) for redundancy.
+  - **Security:** Tokens stored as SHA-256 hashes — raw tokens never persisted. IP logging on all validation attempts.
+- **Frontend Changes:**
+  - **`DemoAccess.tsx`**: New `/demo/:token` route page with animated validation flow (validating → success → redirect to dashboard).
+  - **`DemoBanner.tsx`**: Dashboard banner showing remaining demo runs with progress bar, color-coded warnings (blue → amber → red), and upgrade CTAs.
+  - **`Dashboard.tsx`**: Integrated demo state tracking — reads from localStorage, refreshes via API on mount, decrements usage on each simulation run.
+  - **`api.ts`**: Added `validateDemoToken()`, `getDemoUsage()`, and `decrementDemoUsage()` methods with `DemoValidationResponse` and `DemoUsageResponse` interfaces.
+  - **`App.tsx`**: Registered `/demo/:token` route.
+- **CLI Tool (`generate_demo_link.py`):**
+  - Two modes: API (talks to running backend) and Direct (writes to Redis/Supabase locally).
+  - Outputs formatted magic link ready to send to alpha pilots.
+  - Usage: `python generate_demo_link.py --email pilot@coreshell.com --runs 5`
+- **Demo Flow:**
+  ```
+  Generate link → Send to pilot → Pilot clicks → Token validated → Session created →
+  Dashboard with usage banner → 5 simulations allowed → Demo ends → "Request More Access"
+  ```
 
 ### March 8, 2026 (Abuse Prevention & Free Tier Security)
 

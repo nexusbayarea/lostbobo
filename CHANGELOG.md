@@ -7,9 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-03-10
+
+### Added
+- **Magic Link Demo Tokens**: Complete alpha pilot onboarding system with secure, usage-limited demo links.
+  - `POST /api/v1/demo/magic-link` — Validate demo token and create session
+  - `GET /api/v1/demo/usage` — Check remaining simulation runs
+  - `POST /api/v1/demo/use-run` — Decrement usage counter per simulation
+  - `POST /api/v1/demo/create` — Admin endpoint to generate new magic links
+- **Supabase `demo_access` Table**: Persistent storage with SHA-256 hashed tokens, usage limits, expiration, and IP logging.
+- **Frontend Demo Landing Page (`DemoAccess.tsx`)**: Animated magic link validation with status feedback (validating → success → redirect).
+- **Dashboard Demo Banner (`DemoBanner.tsx`)**: Live usage counter with progress bar, color-coded warnings, and upgrade CTAs.
+- **CLI Tool (`generate_demo_link.py`)**: Standalone script for generating demo links via API or direct Redis/Supabase mode.
+- **Demo Tier (`demo_magic`)**: New plan tier with configurable run limits (default 5) and 7-day expiration.
+
+### Security
+- Tokens stored as SHA-256 hashes — raw tokens never persisted in database.
+- Admin demo creation endpoint requires `SIMHPC_API_KEY` authentication.
+- IP logging on all demo token validation attempts.
+- Redis + Supabase dual-layer storage for redundancy and fast reads.
+
+---
+
 ## [1.3.1] - 2026-03-10
 
 ### Added
+- **Protected Routes**: Implemented `ProtectedRoute` component to prevent unauthorized access to dashboard pages. Users are now redirected to the sign-in page if they are not authenticated.
 - **Tier-Aware API**: Backend now queries Supabase `profiles` table directly to enforce plan limits (`free` vs `professional`).
 - **Supabase Persistence**: Simulation results and summaries are now inserted into the `simulations` table using the Service Role Key.
 - **Frontend Mutation Hooks**: Implemented `useMutation` for launching simulations with automated toast notifications and error handling.

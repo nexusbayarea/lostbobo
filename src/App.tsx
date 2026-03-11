@@ -21,9 +21,11 @@ import { SignUp } from '@/pages/SignUp';
 import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
 import { Contact } from '@/pages/Contact';
+import { DemoAccess } from '@/pages/DemoAccess';
 
 import { CookieConsent } from '@/components/CookieConsent';
 import { PageLayout } from '@/components/PageLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 console.log('SimHPC: App.tsx loaded.');
 
@@ -50,9 +52,24 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/alpha" element={<AlphaControlRoom />} />
-          <Route path="/dashboard/notebook" element={<ExperimentNotebook />} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/alpha" element={
+            <ProtectedRoute>
+              <AlphaControlRoom />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/notebook" element={
+            <ProtectedRoute>
+              <ExperimentNotebook />
+            </ProtectedRoute>
+          } />
+
           <Route path="/benchmarks" element={<Benchmarks />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
@@ -62,6 +79,7 @@ function App() {
           <Route path="/dpa" element={<DPA />} />
           <Route path="/cookies" element={<CookiePolicy />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/demo/:token" element={<DemoAccess />} />
         </Routes>
         <CookieConsent />
       </BrowserRouter>

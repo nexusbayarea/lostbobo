@@ -63,7 +63,7 @@
 - **Framer Motion Animations**: Entry animations on simulation rows, insight items, and signal value changes.
 
 ### March 10, 2026 (NexusBayArea Migration & Final Alpha Polish)
-- **Ownership Migration**: Successfully moved all project infrastructure, repositories, and deployment targets from `btwndlinez` to `NexusBayArea`.
+- **Ownership Migration**: Successfully moved all project infrastructure, repositories, and deployment targets from `nexusbayarea` to `NexusBayArea`.
 - **Vercel Polish**: Cleaned up legacy deployment URLs and updated configuration to point to the new production environment.
 - **Alpha RunPod Architecture**: Implemented a unified worker container architecture combining FastAPI, vLLM for ultra-fast inference, and a FAISS-based RAG service for engineering context retrieval.
 - **vLLM Integration**: Configured vLLM for high-throughput generation (~90 tok/s on RTX 3090) supporting Mistral and Llama models.

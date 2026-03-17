@@ -11,42 +11,66 @@ services:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
       - SUPABASE_URL=${VITE_SUPABASE_URL}
       - SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_JWT_SECRET_FILE=/run/secrets/supabase_jwt_secret
       - MERCURY_API_KEY=${MERCURY_API_KEY}
       - MERCURY_MODEL=${MERCURY_MODEL:-mercury-2}
       - SIMHPC_API_KEY=${SIMHPC_API_KEY}
-      - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY_FILE=/run/secrets/stripe_secret_key
+    secrets:
+      - redis_password
+      - supabase_jwt_secret
+      - stripe_secret_key
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - backend
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # GPU-enabled Physics Worker (Celery/Distributed)
-  # Only needed if you are offloading heavy physics tasks from the main API
   worker:
-    build:
-      context: ./services/robustness-orchestrator
-      dockerfile: Dockerfile
-    image: simhpc/physics-worker:alpha
-    runtime: nvidia
+    image: simhpc-backend:latest
+    env_file: .env
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - SERVICE_TYPE=worker
       - REDIS_URL=redis://redis:6379/0
-      - SUPABASE_URL=${VITE_SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-      - MERCURY_API_KEY=${MERCURY_API_KEY}
-    volumes:
-      - sim_data:/app/data
+    secrets:
+      - redis_password
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          cpus: '8'
+          memory: 32G
+    restart: always
+    healthcheck:
+      test: ["CMD", "nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 180s
+    volumes:
+      - simulation_scratch:/tmp/sim_scratch
     networks:
       - backend
-    restart: always
 
   # High-speed Message Broker & State Store
   redis:
@@ -55,6 +79,13 @@ services:
     networks:
       - backend
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    secrets:
+      - redis_password
 
 networks:
   backend:
@@ -62,3 +93,11 @@ networks:
 
 volumes:
   sim_data:
+
+secrets:
+  redis_password:
+    file: ./secrets/redis_password.txt
+  supabase_jwt_secret:
+    file: ./secrets/supabase_jwt_secret.txt
+  stripe_secret_key:
+    file: ./secrets/stripe_secret_key.txt

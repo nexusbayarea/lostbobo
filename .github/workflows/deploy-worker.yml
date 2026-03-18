@@ -6,7 +6,8 @@ on:
     paths:
       - 'services/runpod-worker/**'
       - 'services/robustness-orchestrator/robustness_service.py'
-      - 'Dockerfile.autoscaler'
+      - '../../Dockerfile.pod'
+      - '../../services/robustness-orchestrator/worker.py'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -24,22 +25,12 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Pod Image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./services/runpod-worker/Dockerfile.serverless
+          context: ../..
+          file: ../../Dockerfile.pod
           push: true
           tags: |
-            simhpcworker/simhpc-worker:v1.6.0
+            simhpcworker/simhpc-worker:v2.0.0
             simhpcworker/simhpc-worker:latest
-
-      - name: Wait for RunPod Pull
-        run: sleep 60
-
-      - name: RunPod Health Check Ping
-        run: |
-          curl -X POST "https://api.runpod.ai/v2/dfnc77nf8oo3ne/runsync" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
-            -d '{"input": {"check_health_only": true}}'

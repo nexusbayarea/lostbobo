@@ -46,7 +46,7 @@ Moves beyond "Insights" into "Operator Guidance."
 **"The Heartbeat"**
 A left-sidebar component for real-time visibility into the distributed alpha infrastructure.
 - **Service Telemetry:** Live pulsing LEDs for Mercury AI, RunPod GPUs, Supabase DB, and Sim Worker.
-- **Recent Jobs Log:** A fast 20-line debugging scroller to identify serverless timeouts, failed jobs, or stuck dispatch queues.
+- **Recent Jobs Log:** A fast 20-line debugging scroller to identify GPU timeouts, failed jobs, or stuck dispatch queues.
 
 ---
 

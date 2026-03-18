@@ -44,12 +44,12 @@ Once the simulation completes:
 - **Link Expired**: Alpha links are valid for **7 days**. If yours expired, contact us at **deploy@simhpc.com**.
 - **System Health Indicators**: Check the left sidebar on the Dashboard. You'll see three status LEDs:
   - **Mercury AI**: Shows if the AI assistant is online (green pulse = connected)
-  - **Sim Worker**: Shows if the RunPod worker is warm and ready (green pulse = warm)
+  - **Sim Worker**: Shows if the RunPod GPU Pod is running and connected (green pulse = active)
   - **Supabase DB**: Shows if the database is connected (green pulse = connected)
   
   If any indicator is red, the service may be temporarily unavailable. The `Recent Jobs` log underneath will show if your job failed or is still queued.
 
-- **Metadata-Only Ping**: The Sim Worker status is checked using a lightweight metadata-only ping that doesn't trigger GPU spin-up, keeping costs low while providing real-time feedback.
+- **Worker Status**: GPU Pods run continuously, polling a Redis queue for jobs. The status indicator shows if the worker is actively connected.
   
 - **Performance**: We are running on dedicated **RTX 3090/A40 GPU** clusters; however, if a simulation hangs for more than 5 minutes, try a refresh.
 

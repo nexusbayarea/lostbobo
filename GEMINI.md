@@ -18,6 +18,7 @@ We follow a strict monorepo structure to separate concerns and protect intellect
 ## Tooling
 - **PowerShell**: Used for local environment management.
 - **Docker Compose**: Used for local orchestration of services.
+- **Vercel**: Primary hosting and deployment platform for the frontend.
 - **Git**: Primary version control. Do not stage/commit unless requested.
 
 ---

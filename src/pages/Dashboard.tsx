@@ -11,10 +11,12 @@ import {
   X,
   Cpu,
   Loader2,
+  Download,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { JobProgress } from '@/components/JobProgress';
 import { NotebookNavButton } from '@/components/NotebookNavButton';
+import { SimulationDetailModal } from '@/components/SimulationDetailModal';
 import { cn } from '@/lib/utils';
 import { ConfigurationPanel, type Parameter } from '@/sections/dashboard/ConfigurationPanel';
 import { RunControlPanel } from '@/sections/dashboard/RunControlPanel';
@@ -24,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DemoBanner } from '@/components/DemoBanner';
 import { toast } from 'sonner';
 import { SystemStatus } from '@/components/SystemStatus';
+import { useSimulationUpdates, type SimulationRecord } from '@/hooks/useSimulationUpdates';
 
 const sidebarItems = [
   { id: 'simulations', label: 'Simulations', icon: Play },
@@ -49,6 +52,10 @@ export function Dashboard() {
   const [currentStatus, setCurrentStatus] = useState<'pending' | 'running' | 'completed' | 'failed' | 'queued' | 'processing'>('queued');
   const [progress, setProgress] = useState(0);
   const [userBalance] = useState(5000);
+  const [selectedSim, setSelectedSim] = useState<SimulationRecord | null>(null);
+
+  // Realtime simulation history from Supabase
+  const { simulations } = useSimulationUpdates(user?.id);
 
   // Robustness Config State
   const [robustnessEnabled, setRobustnessEnabled] = useState(true);
@@ -79,11 +86,18 @@ export function Dashboard() {
   }, [isDemoUser]);
 
   const startPolling = async (runId: string) => {
+    const pollingToast = toast.loading("Initializing MFEM Solver...", {
+      description: `Run ID: ${runId.slice(0, 8)}...`,
+    });
     try {
       const token = getToken();
       const finalStatus = await api.pollStatus(runId, token, (p) => {
         setProgress(p);
         setCurrentStatus('processing');
+        toast.loading(`Processing on GPU... ${p}%`, {
+          id: pollingToast,
+          description: `Run ID: ${runId.slice(0, 8)}...`,
+        });
       });
 
       setIsRunning(false);
@@ -97,68 +111,97 @@ export function Dashboard() {
           config_summary: finalStatus.config_summary,
           progress: finalStatus.progress
         });
-        toast.success('Simulation analysis completed!');
+        toast.success("Simulation analysis completed!", {
+          id: pollingToast,
+          description: "Results are ready for review.",
+        });
       } else {
-        toast.error(`Simulation analysis failed: ${finalStatus.error || 'Unknown error'}`);
+        toast.error(`Simulation analysis failed: ${finalStatus.error || 'Unknown error'}`, {
+          id: pollingToast,
+        });
       }
     } catch (error: any) {
       setIsRunning(false);
-      toast.error(`Polling failed: ${error.message}`);
+      toast.error(`Polling failed: ${error.message}`, {
+        id: pollingToast,
+      });
     }
   };
 
   const handleStartRun = async (overrides?: { method: string; numRuns: number }) => {
-    try {
-      setIsRunning(true);
-      setCurrentRun(null);
-      setCurrentRunId(null);
-      setProgress(0);
-      setCurrentStatus('queued');
+    setIsRunning(true);
+    setCurrentRun(null);
+    setCurrentRunId(null);
+    setProgress(0);
+    setCurrentStatus('queued');
 
-      const activeMethod = overrides?.method || samplingMethod;
-      const activeNumRuns = overrides?.numRuns || numRuns;
+    const activeMethod = overrides?.method || samplingMethod;
+    const activeNumRuns = overrides?.numRuns || numRuns;
 
-      const config = {
-        numRuns: activeNumRuns,
-        samplingMethod: activeMethod,
-        parameters,
-        timeout,
-        seed
-      };
+    const config = {
+      numRuns: activeNumRuns,
+      samplingMethod: activeMethod,
+      parameters,
+      timeout,
+      seed
+    };
 
-      const token = getToken();
-      const response = await api.startRobustnessRun(config, token);
-      setCurrentRunId(response.run_id);
+    const token = getToken();
 
-      // Decrement demo usage if in demo mode
-      if (isDemoUser) {
-        const usage = await api.decrementDemoUsage();
-        setDemoRemaining(usage.remaining);
-        if (!usage.success) {
-          toast.error('Demo limit reached. Please upgrade your plan.');
-          setIsRunning(false);
-          return;
-        }
+    const simulationPromise = api.startRobustnessRun(config, token);
+
+    toast.promise(
+      simulationPromise,
+      {
+        loading: 'Transmitting to GPU Pod...',
+        success: (data) => {
+          setCurrentRunId(data.run_id);
+          // Decrement demo usage
+          if (isDemoUser) {
+            api.decrementDemoUsage().then((usage) => {
+              setDemoRemaining(usage.remaining);
+              if (!usage.success) {
+                toast.error('Demo limit reached. Please upgrade your plan.');
+                setIsRunning(false);
+              }
+            });
+          }
+          startPolling(data.run_id);
+          return {
+            title: 'Job Queued Successfully',
+            description: `ID: ${data.run_id.slice(0, 8)}... monitoring Redis queue.`,
+          };
+        },
+        error: 'Transmission failed. Check RunPod status.',
+      },
+      {
+        style: { minWidth: '350px' },
       }
+    );
 
-      startPolling(response.run_id);
-    } catch (error: any) {
+    try {
+      await simulationPromise;
+    } catch (err: any) {
       setIsRunning(false);
-      toast.error(error.message || 'Failed to start simulation.');
-      console.error(error);
+      console.error(err);
     }
   };
 
   const handleCancelRun = async () => {
     if (!currentRunId) return;
+    const cancelToast = toast.loading("Cancelling simulation...");
     try {
       const token = getToken();
       await api.cancelRobustnessRun(currentRunId, token);
       setIsRunning(false);
       setCurrentRunId(null);
-      toast.success('Simulation cancelled. Credits refunded.');
+      toast.success('Simulation cancelled. Credits refunded.', {
+        id: cancelToast,
+      });
     } catch (error) {
-      toast.error('Failed to cancel simulation.');
+      toast.error('Failed to cancel simulation.', {
+        id: cancelToast,
+      });
       console.error(error);
     }
   };
@@ -438,14 +481,96 @@ export function Dashboard() {
           )}
 
           {activeTab === 'simulations' && (
-            <div className="text-center py-16">
-              <Cpu className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                Simulation Library
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400">
-                Your saved simulations will appear here.
-              </p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                  Simulation History
+                </h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                  {simulations.length} runs
+                </span>
+              </div>
+
+              {simulations.length === 0 ? (
+                <div className="text-center py-16">
+                  <Cpu className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                    No Simulations Yet
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Run your first simulation from the Robustness tab.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-700">
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scenario</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Job ID</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Created</th>
+                        <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {simulations.map((sim) => (
+                        <tr 
+                          key={sim.id} 
+                          onClick={() => setSelectedSim(sim)}
+                          className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer"
+                        >
+                          <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-medium">
+                            {sim.scenario_name || 'Untitled'}
+                          </td>
+                          <td className="px-6 py-4">
+                            {sim.status === 'processing' || sim.status === 'running' ? (
+                              <span className="flex items-center gap-2 text-cyan-500 dark:text-cyan-400 text-sm">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Processing on GPU...
+                              </span>
+                            ) : sim.status === 'completed' ? (
+                              <span className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400 text-sm">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                Completed
+                              </span>
+                            ) : sim.status === 'failed' ? (
+                              <span className="flex items-center gap-2 text-red-500 text-sm">
+                                <span className="w-2 h-2 rounded-full bg-red-500" />
+                                Failed
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-2 text-amber-500 text-sm">
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                Queued
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-xs font-mono text-slate-500 dark:text-slate-400">
+                            {sim.job_id?.slice(0, 12)}...
+                          </td>
+                          <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
+                            {new Date(sim.created_at).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {sim.report_url && (
+                              <a
+                                href={sim.report_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-500 dark:text-blue-400 text-xs font-medium rounded-lg hover:bg-blue-500/20 transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Report
+                              </a>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -505,6 +630,12 @@ export function Dashboard() {
           )}
         </div>
       </main>
+
+      <SimulationDetailModal
+        isOpen={!!selectedSim}
+        onClose={() => setSelectedSim(null)}
+        simulation={selectedSim}
+      />
     </div>
   );
 }

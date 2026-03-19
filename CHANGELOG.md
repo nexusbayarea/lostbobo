@@ -5,6 +5,27 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-03-18
+
+### Fixed
+- **Toast Notification System**: `<Toaster />` component from sonner was never mounted — all 12 `toast()` calls were silently doing nothing. Created `App.tsx` with `<Toaster />` configured for 6s duration, 320px min-width, cyan glow theme.
+- **Toast Loading→Success Pattern**: Updated `Dashboard.tsx`, `OperatorConsole.tsx`, and `AlphaControlRoom.tsx` to use `toast.loading()` → `toast.success/error()` with the same toast ID, preventing message flashing during GPU queue operations.
+- **Toast CSS Overrides**: Added `[data-sonner-toast]` styles in `index.css` for readability on high-res dashboards (1.1rem font, 320px min-width, dark border/shadow).
+- **Missing Entry Files**: Created `main.tsx`, `App.tsx`, `index.html`, `index.css`, and `vite.config.ts` that were deleted during monorepo restructure.
+- **Third-Party Cookie Blocks**: Added custom domain strategy (app + auth subdomains) to make Supabase Auth first-party.
+
+### Added
+- **Toast Visibility**: 6-second default, 8-second success, 10-second error duration for physics simulation status messages.
+- **Toast Styling**: Cyan glow theme (`#00f2ff`), `iconTheme` for success/error, rounded corners, dark terminal aesthetic.
+- **Toast Promise Pattern**: `toast.promise()` for simulation submission — loading/success/error linked to API lifecycle.
+- **Supabase Realtime Hook**: `useSimulationUpdates` subscribes to `simulation_history` table — completion triggers 10s celebration toast.
+- **Simulation History Table**: Real-time dashboard table with status badges (Queued/Processing/Completed/Failed), clickable rows, and download links.
+- **Simulation Detail Modal**: Click any simulation row to view AI-generated insights, physics metrics JSON, and PDF download.
+- **Admin Analytics Dashboard**: Route at `/admin/analytics` with Active GPU Pods, Total Simulations, and Lead qualification tracking (Hot/Warm/New).
+- **Worker Status Sync**: `update_job_status()` method in `worker.py` syncs job status to `simulation_history` table in Supabase.
+- **Supabase Migration**: `heartbeat_history.sql` creates `worker_heartbeat`, `simulation_history`, and `leads` tables with Realtime enabled.
+- **CORS Hardening**: Changed `api.py` CORS from `["*"]` to explicit allow-list including custom domain.
+
 ## [1.6.0] - 2026-03-16
 
 ### Added

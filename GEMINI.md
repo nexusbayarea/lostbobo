@@ -10,10 +10,24 @@ We follow a strict monorepo structure to separate concerns and protect intellect
 
 ## Best Practices
 1. **Isolation**: Maintain clear boundaries between apps and services. Do not cross-import code directly between them; use shared `packages/` if necessary.
-2. **Environment**: Store all secrets in `.env` (root or per-service). Never commit `.env` files.
+2. **Environment**: Store all secrets in `.env` (root or per-service). Never commit `.env` files. For Vercel, inject `VITE_` vars via Dashboard or `vercel-envs` in workflow. For GitHub Pages, pass secrets in the `env:` block of the build step.
 3. **Documentation**: Keep `README.md` and `ARCHITECTURE.md` updated with any structural changes.
 4. **Consistency**: Follow existing naming conventions (kebab-case for folders).
 5. **Cleanliness**: Regularly clean up temporary files, build artifacts, and logs.
+
+## Deployment Notes
+- **Vercel is Production Primary**: Handles `VITE_` env injection, SPA routing, and CSP for Stripe/Supabase automatically.
+- **GitHub Pages is Backup/Staging**: Requires manual env var injection in workflow and CSP meta tag in `index.html`.
+- **Known Issue (v1.6.0-ALPHA)**: GitHub Pages fails with "Supabase Credentials Missing" and CSP violations. Fix: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to GitHub Secrets and pass them in the build step.
+- **Custom Domain (v2.1.2)**: App at `simhpc.nexusbayarea.com`, Auth at `auth.nexusbayarea.com`. DNS: A `@ → 76.76.21.21`, CNAME `auth → [project-ref].supabase.co`. Update Supabase Redirect URLs and Stripe JS Origins after domain is live.
+
+## Toast System (v2.1.2)
+- **Library**: sonner (`^2.0.7`)
+- **Mount Point**: `<Toaster />` in `src/App.tsx`
+- **Config**: 6s default, 8s success, 10s error, 350px min-width, bottom-right, cyan theme `#00f2ff`, rounded corners
+- **Pattern**: `toast.promise()` for submission; `toast.loading()` → `toast.success/error()` with same ID for other async ops
+- **CSS**: Overrides in `src/index.css` for dark terminal styling
+- **Realtime**: `useSimulationUpdates` hook subscribes to Supabase `simulation_history` table — triggers 10s completion toast at top-center
 
 ## Tooling
 - **PowerShell**: Used for local environment management.

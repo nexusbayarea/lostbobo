@@ -46,13 +46,19 @@ export const OperatorConsole: React.FC = () => {
       return;
     }
     
+    const cmdToast = toast.loading(`Dispatching ${action.toUpperCase()}...`, {
+      description: `Targeting node ${selectedRunId.slice(0, 8)}...`,
+    });
     try {
       await api.executeControlCommand(token, action, selectedRunId);
       toast.success(`OPERATOR_COMMAND: ${action.toUpperCase()} DISPATCHED`, {
-        description: `Targeting node ${selectedRunId.slice(0, 8)}...`
+        id: cmdToast,
+        description: `Targeting node ${selectedRunId.slice(0, 8)}...`,
       });
     } catch (error) {
-      toast.error(`COMMAND_FAILED: ${action.toUpperCase()}`);
+      toast.error(`COMMAND_FAILED: ${action.toUpperCase()}`, {
+        id: cmdToast,
+      });
     }
   };
 

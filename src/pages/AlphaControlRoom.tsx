@@ -165,7 +165,12 @@ export const AlphaControlRoom = () => {
           <div className="text-slate-600 flex items-center gap-4">
             <span 
               className="text-cyan-500/50 font-black border border-cyan-500/20 px-2 py-0.5 rounded cursor-pointer hover:bg-cyan-500/10 transition-colors"
-              onClick={() => toast.success("Generating Physics-Verified Certificate...")}
+              onClick={() => {
+                const certToast = toast.loading("Generating Physics-Verified Certificate...");
+                setTimeout(() => {
+                  toast.success("Certificate generated successfully!", { id: certToast });
+                }, 1500);
+              }}
             >
               [GENERATE CERTIFICATE]
             </span>

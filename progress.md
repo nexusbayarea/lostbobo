@@ -2,7 +2,7 @@
 
 ## Current Status
 
-- **v2.2.0**: RunPod API Integration + Cost-Aware Autoscaler.
+- **v2.2.1**: RunPod API Integration + Queue-Aware Autoscaler + Docker Hub Images.
 - **v1.6.0-ALPHA**: Mission Control Cockpit (Modular Design Intelligence Platform).
 - **v1.5.1-ALPHA**: Alpha Control Room (4-Panel UI).
 - **v1.4.0-BETA**: Direct Vercel Deployment & RunPod Orchestration.

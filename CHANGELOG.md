@@ -5,6 +5,22 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-03-26
+
+### Added
+- **Docker Hub Registry**: Published three production images:
+  - `simhpcworker/simhpc-api:v2.2.1` — FastAPI orchestrator with Mercury AI integration.
+  - `simhpcworker/simhpc-worker:v2.2.1` — NVIDIA CUDA 12.1 GPU physics worker with Redis polling.
+  - `simhpcworker/simhpc-autoscaler:v2.2.1` — Queue-aware multi-pod autoscaler with cost caps.
+- **Monorepo Restructure**: Migrated API service from `services/robustness-orchestrator/` to `services/api/` for clarity.
+- **New `services/worker/`**: Standalone worker service with robustness, PDF, and AI report modules.
+
+### Changed
+- **Documentation Consolidation**: Removed duplicated Mercury AI appendix (~300 lines) from 5 files; canonical reference now in `ARCHITECTURE.md`.
+- **Submodule Mapping**: Added `.gitmodules` for `apps/frontend` (lostbobo.git) and `services/api` (SimHPC.git).
+- **Version Bump**: All references updated from v2.2.0 to v2.2.1 across README, ARCHITECTURE, ROADMAP, GEMINI, ALPHA_PILOT_GUIDE, and MISSION_CONTROL_STRATEGY.
+- **`.dockerignore`**: Comprehensive ignore rules to prevent multi-GB build context bloat.
+
 ## [2.2.0] - 2026-03-25
 
 ### Added

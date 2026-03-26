@@ -68,7 +68,7 @@ A left-sidebar component for real-time visibility into the distributed alpha inf
 
 - **Service Telemetry:** Live pulsing LEDs for Mercury AI, RunPod GPUs, Supabase DB, and Sim Worker.
 - **Recent Jobs Log:** A fast 20-line debugging scroller to identify GPU timeouts, failed jobs, or stuck dispatch queues.
-- **Fleet Dashboard (v2.2.0):** Admin view at `/api/v1/admin/fleet` showing running pods, queue depth, daily cost, and scaling events. Powered by the cost-aware autoscaler with daily budget caps.
+- **Fleet Dashboard (v2.2.1):** Admin view at `/api/v1/admin/fleet` showing running pods, queue depth, daily cost, and scaling events. Powered by the cost-aware autoscaler with daily budget caps.
 
 ---
 

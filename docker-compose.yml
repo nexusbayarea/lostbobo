@@ -14,7 +14,8 @@ services:
 
   # 2. The Orchestrator (Mercury AI / FastAPI)
   api:
-    build: 
+    image: simhpcworker/simhpc-api:v2.2.1
+    build:
       context: .
       dockerfile: Dockerfile.api
     ports:
@@ -32,6 +33,7 @@ services:
 
   # 3. The Physics Engine (Sim Worker)
   worker:
+    image: simhpcworker/simhpc-worker:v2.2.1
     build:
       context: .
       dockerfile: Dockerfile.worker
@@ -43,6 +45,30 @@ services:
       - MAX_CONCURRENT_JOBS=2
       - INCEPTION_API_KEY=${INCEPTION_API_KEY}
       - MERCURY_API_KEY=${MERCURY_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # 4. The Autoscaler (Queue-Aware Scaling)
+  autoscaler:
+    image: simhpcworker/simhpc-autoscaler:v2.2.1
+    build:
+      context: .
+      dockerfile: Dockerfile.autoscaler
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RUNPOD_API_KEY=${RUNPOD_API_KEY}
+      - RUNPOD_POD_ID=${RUNPOD_POD_ID}
+      - RUNPOD_GPU_TYPE=${RUNPOD_GPU_TYPE:-NVIDIA A40}
+      - RUNPOD_WORKER_IMAGE=${RUNPOD_WORKER_IMAGE:-simhpcworker/simhpc-worker:v2.2.1}
+      - MAX_PODS=${MAX_PODS:-2}
+      - JOBS_PER_POD=${JOBS_PER_POD:-2}
+      - IDLE_TIMEOUT=${IDLE_TIMEOUT:-300}
+      - SCALE_UP_COOLDOWN=${SCALE_UP_COOLDOWN:-30}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-10}
+      - QUEUE_NAME=${QUEUE_NAME:-simhpc_jobs}
+      - DAILY_COST_WARN_USD=${DAILY_COST_WARN_USD:-10.0}
+      - DAILY_COST_HARD_CAP_USD=${DAILY_COST_HARD_CAP_USD:-25.0}
     depends_on:
       redis:
         condition: service_healthy

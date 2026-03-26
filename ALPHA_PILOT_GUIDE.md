@@ -51,7 +51,7 @@ Once the simulation completes:
   
   If any indicator is red, the service may be temporarily unavailable. The `Recent Jobs` log underneath will show if your job failed or is still queued.
 
-- **Worker Status**: GPU Pods are managed by a cost-aware autoscaler (v2.2.0) that spins pods up when jobs are queued and terminates them after 5 minutes idle. If no worker is shown, your job will be queued and a pod will start automatically.
+- **Worker Status**: GPU Pods are managed by a cost-aware autoscaler (v2.2.1) that spins pods up when jobs are queued and terminates them after 5 minutes idle. If no worker is shown, your job will be queued and a pod will start automatically.
   
 - **Performance**: We are running on dedicated **RTX 3090/A40 GPU** clusters. The autoscaler enforces daily cost caps to keep infrastructure lean. If a simulation hangs for more than 5 minutes, try a refresh.
 

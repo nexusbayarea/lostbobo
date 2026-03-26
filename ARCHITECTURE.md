@@ -1,7 +1,7 @@
 # SimHPC Architecture
 
-> Last Updated: March 25, 2026
-> Status: **LIVE (v2.2.0)**
+> Last Updated: March 26, 2026
+> Status: **LIVE (v2.2.1)**
 
 ---
 
@@ -9,17 +9,20 @@
 
 SimHPC is a cloud-native GPU-accelerated finite element simulation platform. The architecture follows a distributed microservices pattern with a **securely isolated frontend** and a **closed-source backend** orchestration layer.
 
-### The "Mission Control" Stack (v2.2.0)
+### The "Mission Control" Stack (v2.2.1)
 
 For local development and alpha testing, the platform uses a unified `docker-compose.yml` stack:
 
-- **Redis (Broker)**: `redis:7-alpine` — Handles job queueing and inter-service messaging.
-- **Orchestrator (API)**: `Dockerfile.api` — FastAPI-based control plane for AI and fleet management.
-- **Physics Engine (Worker)**: `Dockerfile.worker` — NVIDIA CUDA 12.1 based worker with full physics stack.
+| Service | Docker Image | Description |
+| :--- | :--- | :--- |
+| Redis | `redis:7-alpine` | Job queueing and inter-service messaging |
+| API | `simhpcworker/simhpc-api:v2.2.1` | FastAPI-based control plane for AI and fleet management |
+| Worker | `simhpcworker/simhpc-worker:v2.2.1` | NVIDIA CUDA 12.1 based worker with full physics stack |
+| Autoscaler | `simhpcworker/simhpc-autoscaler:v2.2.1` | Queue-aware multi-pod autoscaler with cost caps |
 
 ---
 
-## 1. The Physics Worker: Dedicated Pod Architecture (v2.2.0)
+## 1. The Physics Worker: Dedicated Pod Architecture (v2.2.1)
 
 Unlike the initial pod SimHPC_P_01 prototype, the SimHPC Physics Worker runs as a **long-lived stateful pod** to ensure deterministic physics results and low-latency telemetry.
 
@@ -270,7 +273,7 @@ SimHPC is designed as an **Operational Cockpit** that facilitates high-stakes en
 5. Verify: Guidance Engine validates results against RAG-anchored evidence.
 6. Document: Export Physics-Verified Compliance Certificates (PDF) for audit trail.
 
-### System Health & Debugging (v2.2.0)
+### System Health & Debugging (v2.2.1)
 
 In the Alpha environment, the Control Room features a real-time `System Status` indicator powered by the **Aggregated Health API (`GET /api/v1/system/status`)**:
 

@@ -4,15 +4,15 @@ The SimHPC Frontend is **LIVE** and accessible at [https://simhpc.com](https://s
 
 This is the public-facing repository for the SimHPC Mission Control Cockpit, a premium interface for aerospace and thermal engineering simulations.
 
-## Architecture (v2.2.0)
+## Architecture (v2.2.1)
 
 ### Docker Containers
-| Service | Image | Purpose |
-| :--- | :--- | :--- |
-| API | `Dockerfile.api` | FastAPI orchestrator (Mercury AI integration) |
-| GPU Worker | `Dockerfile.worker` | v2.2.1: NVIDIA CUDA 12.1 + Metric Sync |
-| Autoscaler | `Dockerfile.autoscaler` | v2.2.1: Queue-Aware (Q + Inflight) |
-| Redis | `redis:7-alpine` | Message broker + Scaling metrics |
+| Service | Image | Dockerfile | Purpose |
+| :--- | :--- | :--- | :--- |
+| API | `simhpcworker/simhpc-api:v2.2.1` | `Dockerfile.api` | FastAPI orchestrator (Mercury AI integration) |
+| GPU Worker | `simhpcworker/simhpc-worker:v2.2.1` | `Dockerfile.worker` | NVIDIA CUDA 12.1 + Metric Sync |
+| Autoscaler | `simhpcworker/simhpc-autoscaler:v2.2.1` | `Dockerfile.autoscaler` | Queue-Aware (Q + Inflight) |
+| Redis | `redis:7-alpine` | — | Message broker + Scaling metrics |
 
 ### Local Alpha Launch
 To launch the full "Mission Control" stack locally:

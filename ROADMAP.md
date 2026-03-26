@@ -34,9 +34,10 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 - [x] **Control Room UI APIs** - Persistent memory, rule-based insights, and alert aggregation (100% Complete)
 - [x] **Demo Flow APIs** - Guided 5-step onboarding and rule-based suggested run logic (100% Complete)
 - [x] **Trust Layer APIs** - Full physics provenance and uncertainty metrics APIs (100% Complete)
-- [x] **RunPod API Client (v2.2.0)** - Production-grade pod lifecycle management via GraphQL API (March 2026)
-- [x] **Cost-Aware Autoscaler (v2.2.0)** - Daily budget caps, cost tracking, fleet monitoring, event audit trail (March 2026)
-- [x] **Admin Fleet API (v2.2.0)** - 6 admin endpoints for pod lifecycle management and cost monitoring (March 2026)
+- [x] **RunPod API Client (v2.2.1)** - Production-grade pod lifecycle management via GraphQL API (March 2026)
+- [x] **Cost-Aware Autoscaler (v2.2.1)** - Daily budget caps, cost tracking, fleet monitoring, event audit trail (March 2026)
+- [x] **Admin Fleet API (v2.2.1)** - 6 admin endpoints for pod lifecycle management and cost monitoring (March 2026)
+- [x] **Docker Hub Registry (v2.2.1)** - Published images: simhpcworker/simhpc-api, simhpc-worker, simhpc-autoscaler (March 2026)
 
 ### Phase 2: Enterprise Features (In Progress)
 - [ ] **Advanced Mesh Handling**: Support for large-scale geometries (10M+ elements)
@@ -62,8 +63,8 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 ## Technical Roadmap
 
 ### Infrastructure
-- [x] RunPod API integration for automated pod lifecycle (v2.2.0)
-- [x] Cost-aware autoscaling with daily budget caps (v2.2.0)
+- [x] RunPod API integration for automated pod lifecycle (v2.2.1)
+- [x] Cost-aware autoscaling with daily budget caps (v2.2.1)
 - [ ] Kubernetes migration for worker auto-scaling
 - [ ] Multi-region GPU worker pool (RunPod + Lambda)
 - [ ] Global CDN for static simulation assets
@@ -104,6 +105,7 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.2.1 | March 26, 2026 | Docker Hub registry, consolidated docs, monorepo restructure |
 | 2.2.0 | March 25, 2026 | RunPod API client, cost-aware autoscaler v2.2.0, admin fleet endpoints |
 | 1.5.1 | March 10, 2026 | Alpha Control Room redesign with 4-panel HPC terminal layout |
 | 1.5.0 | March 10, 2026 | Alpha RunPod architecture, vLLM inference engine, RAG engineering assistant |

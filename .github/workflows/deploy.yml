@@ -10,14 +10,20 @@ env:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   # Job 1: The Quality Gate
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -38,15 +44,26 @@ jobs:
     needs: audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.9
+        uses: Infisical/secrets-action@v1.0.15
         with:
           method: "oidc"
           identity-id: "cffe0e20-3898-4cc1-bcfb-35cdceab5886"
           project-slug: "${{ vars.INFISICAL_PROJECT_SLUG }}"
           env-slug: "prod"
+
+      - name: Debug env
+        run: |
+          echo "DOCKER_USERNAME exists: $([[ -n "$DOCKER_USERNAME" ]] && echo yes || echo no)"
+          echo "DOCKER_ACCESS_TOKEN exists: $([[ -n "$DOCKER_ACCESS_TOKEN" ]] && echo yes || echo no)"
 
       - name: Login to Docker Hub
         run: echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -66,15 +83,26 @@ jobs:
     needs: audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.9
+        uses: Infisical/secrets-action@v1.0.15
         with:
           method: "oidc"
           identity-id: "cffe0e20-3898-4cc1-bcfb-35cdceab5886"
           project-slug: "${{ vars.INFISICAL_PROJECT_SLUG }}"
           env-slug: "prod"
+
+      - name: Debug env
+        run: |
+          echo "DOCKER_USERNAME exists: $([[ -n "$DOCKER_USERNAME" ]] && echo yes || echo no)"
+          echo "DOCKER_ACCESS_TOKEN exists: $([[ -n "$DOCKER_ACCESS_TOKEN" ]] && echo yes || echo no)"
 
       - name: Login to Docker Hub
         run: echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -94,18 +122,29 @@ jobs:
     needs: audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.9
+        uses: Infisical/secrets-action@v1.0.15
         with:
           method: "oidc"
           identity-id: "cffe0e20-3898-4cc1-bcfb-35cdceab5886"
           project-slug: "${{ vars.INFISICAL_PROJECT_SLUG }}"
           env-slug: "prod"
 
+      - name: Debug env
+        run: |
+          echo "VERCEL_TOKEN exists: $([[ -n "$VERCEL_TOKEN" ]] && echo yes || echo no)"
+          echo "VITE_SUPABASE_URL exists: $([[ -n "$VITE_SUPABASE_URL" ]] && echo yes || echo no)"
+
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
+        uses: amondnet/vercel-action@v25
         with:
           vercel-token: $VERCEL_TOKEN
           vercel-org-id: $VERCEL_ORG_ID

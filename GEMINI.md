@@ -46,7 +46,7 @@ The core database table is `simulations` (formerly `simulations`). A backward-co
 - **Double-Key Strategy (v2.3.0)**: Frontend uses `VITE_SUPABASE_ANON_KEY` (RLS enforced). Worker uses `SUPABASE_SERVICE_ROLE_KEY` (RLS bypassed) for telemetry and artifact sync.
 - **Stable RunPod Proxy (v2.3.0)**: Always use the RunPod HTTP Proxy URL (see `INFRASTRUCTURE.md`) for `VITE_API_URL` to prevent "Offline" errors caused by IP changes.
 - **Google Auth (v2.3.0)**: Google Client ID `552738566412-t6ba9ar8jnsk7vsd399vhh206569p61e.apps.googleusercontent.com`. Redirects must point to `https://simhpc.com/api/auth/callback/google`.
-- **Local Docker Stack (v2.5.0)**: `docker-compose up --build` starts Redis, API, Worker, Autoscaler, and Nginx-served Frontend. Verify with `GET http://localhost:8000/api/v1/health`.
+- **Local Docker Stack (v2.5.0)**: `docker-compose up --build` starts Redis, API, Worker, Autoscaler, and Nginx-served Frontend. Verify with `GET http://localhost:8000/api/v1/health`. Worker image `simhpc-worker:v2.5.0` built and ready.
 - **Vercel ≠ Docker (v2.5.0)**: `docker-compose.yml` `build.args` only apply to Docker builds. Vercel runs `vite build` directly and reads from its own Dashboard env vars. You must set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`, and `VITE_STRIPE_PUBLISHABLE_KEY` in Vercel → Settings → Environment Variables, then redeploy.
 - **Credential Policy (v2.5.0)**: Never commit pod IDs, SSH keys, or IP addresses to tracked `.md` files. Use Infisical to manage `RUNPOD_POD_ID` and `RUNPOD_SSH_KEY` for runtime injection.
 - **Docker Hub Auth (v2.5.0)**: All GitHub workflows use `DOCKER_ACCESS_TOKEN` piped via `--password-stdin`. Requires `DOCKER_ACCESS_TOKEN` and `DOCKER_USERNAME` secrets in GitHub repo.
@@ -140,6 +140,45 @@ The core database table is `simulations` (formerly `simulations`). A backward-co
 - **RunPod Auto-Updater**: `services/worker/pull_and_restart.sh` + cron (`*/5 * * * *`) pulls latest `simhpc-worker:latest` and restarts on change. Keeps GPU fleet in sync with GitHub.
 - **Pre-Commit Hook**: `.git/hooks/pre-commit` blocks local commits if ruff fails. Run `chmod +x .git/hooks/pre-commit` after cloning.
 - **Security Audit**: Root `.env` must remain untracked. Use `.env.example` for templates.
+
+### Supabase CLI (v2.84.8)
+
+The Supabase CLI is installed via npm at `node_modules/supabase/bin/supabase.exe`. It is **not** on PATH, so always use the full path or create an alias.
+
+**Access**:
+```powershell
+.\node_modules\supabase\bin\supabase.exe --version
+```
+
+**Link to Remote Project** (run once per workspace):
+```powershell
+.\node_modules\supabase\bin\supabase.exe link --project-ref <YOUR_PROJECT_REF>
+```
+Project ref is a 20-character lowercase string (e.g., `abcdefghijklmnopqrst`). Find it in Supabase Dashboard → Project Settings → General → Project ID. Currently linked to `ldzztrnghaaonparyggz`.
+
+**Apply Migrations**:
+```powershell
+.\node_modules\supabase\bin\supabase.exe db push
+```
+
+**Deploy Edge Functions** (use `--use-api` to bypass Docker):
+```powershell
+.\node_modules\supabase\bin\supabase.exe functions deploy get-fleet-metrics --use-api
+.\node_modules\supabase\bin\supabase.exe functions deploy trigger-panic-shutdown --use-api
+```
+
+**With Infisical Secret Injection**:
+```powershell
+infisical run --env=prod -- .\node_modules\supabase\bin\supabase.exe db push
+infisical run --env=prod -- .\node_modules\supabase\bin\supabase.exe functions deploy get-fleet-metrics --use-api
+infisical run --env=prod -- .\node_modules\supabase\bin\supabase.exe functions deploy trigger-panic-shutdown --use-api
+```
+
+**Pro-Tip**: Copy the binary to project root for convenience:
+```powershell
+cp .\node_modules\supabase\bin\supabase.exe .\supabase.exe
+```
+Then use `.\supabase.exe` for all commands.
 
 # AI Project Guardrails
 

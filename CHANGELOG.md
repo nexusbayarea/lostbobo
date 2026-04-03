@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Supabase Client Naming Fallback**: `src/lib/supabase.ts` checks both `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` and `SB_URL`/`SB_ANON_KEY` for Infisical compatibility.
 - **Infisical Project Linking**: Requires `infisical init` to be run interactively to create `.infisical.json` and link the local directory to the SimHPC vault. Without this file, `infisical run` returns zero secrets.
 - **Infisical Universal Auth (Machine Identity)**: Machine identity "RogWin" configured for CI/CD. Login via `infisical login --universal-auth --client-id "<CLIENT_ID>" --client-secret "<CLIENT_SECRET>"` or set `INFISICAL_UNIVERSAL_CLIENT_ID` / `INFISICAL_UNIVERSAL_CLIENT_SECRET` environment variables.
+- **Docker Worker Image v2.5.0**: `simhpc-worker:v2.5.0` built successfully from `Dockerfile.worker` (CUDA 12.8.1 runtime, Python 3.10, all dependencies installed).
+- **Supabase CLI (v2.84.8)**: Installed via npm at `node_modules/supabase/bin/supabase.exe`. Use full path `.\node_modules\supabase\bin\supabase.exe` or copy to root as `supabase.exe`. Link project with `--project-ref <REF>`, push migrations with `db push`, deploy functions with `functions deploy --use-api`.
+- **Supabase Linked & Deployed**: Project `ldzztrnghaaonparyggz` linked. Migrations `002`–`004` pushed. Edge functions `get-fleet-metrics` and `trigger-panic-shutdown` deployed via `--use-api` flag (bypasses Docker).
 
 ### Fixed
 

@@ -178,7 +178,13 @@ The frontend is automatically deployed to Vercel upon merging into the main bran
 - **Primary**: [https://simhpc.com](https://simhpc.com) — Vercel (production)
 - **Backup**: [https://NexusBayArea.github.io/lostbobo](https://NexusBayArea.github.io/lostbobo) — GitHub Pages (staging/debug only)
 
-### Environment Variables (Critical)
+### Supabase Database & Edge Functions
+
+Supabase project: `ldzztrnghaaonparyggz`
+
+- **Migrations**: `002_beta_schema_normalization.sql`, `003_profiles_table.sql`, `004_platform_alerts.sql` — applied via `db push`.
+- **Edge Functions**: `get-fleet-metrics` (server-side fleet metrics, admin-only) and `trigger-panic-shutdown` (emergency fleet termination) — deployed via `functions deploy <name> --use-api`.
+- **CLI Access**: `.\node_modules\supabase\bin\supabase.exe` (or copy to root as `supabase.exe`). Use `--use-api` flag to bypass Docker issues.
 
 Vite requires `VITE_` prefixed variables to be available **at build time**. They are hardcoded into the JavaScript bundle during `npm run build`.
 

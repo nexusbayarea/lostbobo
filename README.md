@@ -186,7 +186,28 @@ Supabase project: `ldzztrnghaaonparyggz`
 - **Edge Functions**: `get-fleet-metrics` (server-side fleet metrics, admin-only) and `trigger-panic-shutdown` (emergency fleet termination) — deployed via `functions deploy <name> --use-api`.
 - **CLI Access**: `.\node_modules\supabase\bin\supabase.exe` (or copy to root as `supabase.exe`). Use `--use-api` flag to bypass Docker issues.
 
-Vite requires `VITE_` prefixed variables to be available **at build time**. They are hardcoded into the JavaScript bundle during `npm run build`.
+### RunPod Worker Deployment
+
+The worker runs on a GPU pod via RunPod. Deployment is fully automated through GitHub Actions:
+
+1. **Push to `main`** → triggers `.github/workflows/deploy.yml`
+2. **GitHub Actions** builds the Docker image and pushes to Docker Hub:
+   - `simhpcworker/simhpc-worker:latest`
+   - `simhpcworker/simhpc-worker:v2.5.0`
+3. **RunPod Auto-Updater** (`services/worker/pull_and_restart.sh`, cron `*/5 * * * *`) detects the new image on Docker Hub, pulls it, and restarts the container automatically (~5 min delay).
+
+**Manual Override** (if auto-updater is disabled):
+```bash
+# Restart the pod via RunPod API
+curl -X POST "https://api.runpod.io/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  -d '{"query": "mutation { podRestart(podId: \"$RUNPOD_POD_ID\") { id status } }"}'
+```
+
+**Required GitHub Secrets**: `DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `RUNPOD_API_KEY`, `RUNPOD_POD_ID`
+
+### Environment Variables (Critical)
 
 | Variable | Purpose | Source |
 | :--- | :--- | :--- |

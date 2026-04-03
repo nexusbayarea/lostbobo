@@ -206,8 +206,8 @@ curl -X POST "https://api.runpod.io/graphql" \
 ```
 
 **Required GitHub Variables** (Settings → Actions → Variables):
-- `INFISICAL_IDENTITY_ID` — Machine identity ID from Infisical (OIDC)
-- `INFISICAL_PROJECT_SLUG` — Infisical project slug
+- `INFISICAL_IDENTITY_ID` — `55d8d8e8-dd7e-4d5c-b7d1-aec3e3a577f2` (Machine identity "RogWin", configured for OIDC)
+- `INFISICAL_PROJECT_SLUG` — Infisical project slug (found in project settings)
 
 **Required GitHub Secrets** (Settings → Actions → Secrets):
 - `RUNPOD_API_KEY`, `RUNPOD_POD_ID` — managed via Infisical, injected at runtime

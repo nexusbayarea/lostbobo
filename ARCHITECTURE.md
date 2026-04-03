@@ -488,19 +488,19 @@ Push to `main` triggers a gated pipeline:
 
 ### Required GitHub Variables (Settings → Actions → Variables)
 
-| Variable | Purpose |
-| :--- | :--- |
-| `INFISICAL_IDENTITY_ID` | Machine identity ID (OIDC) from Infisical |
-| `INFISICAL_PROJECT_SLUG` | Infisical project slug |
+| Variable | Value | Purpose |
+| :--- | :--- | :--- |
+| `INFISICAL_IDENTITY_ID` | `55d8d8e8-dd7e-4d5c-b7d1-aec3e3a577f2` | Machine identity "RogWin" (OIDC) |
+| `INFISICAL_PROJECT_SLUG` | *(from project settings)* | Infisical project slug |
 
 ### Infisical OIDC Setup
 
-1. Create a **Machine Identity** in Infisical → Access Control → Machine Identities
-2. Configure **OIDC Auth** with:
+1. Machine identity **"RogWin"** already exists (`55d8d8e8-dd7e-4d5c-b7d1-aec3e3a577f2`)
+2. Ensure it is configured with **OIDC Auth**:
    - OIDC Discovery URL: `https://token.actions.githubusercontent.com`
    - Issuer: `https://token.actions.githubusercontent.com`
    - Subject: `repo:NexusBayArea/lostbobo:ref:refs/heads/main`
-3. Add the identity to the project with read access to `prod` environment secrets
+3. Verify the identity has read access to `prod` environment secrets
 4. Set `INFISICAL_IDENTITY_ID` and `INFISICAL_PROJECT_SLUG` as GitHub repo **variables** (not secrets — these are public identifiers)
 
 All secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VERCEL_TOKEN`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, etc.) are fetched from Infisical at runtime — no static GitHub secrets required.

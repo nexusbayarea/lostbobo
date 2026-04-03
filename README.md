@@ -188,7 +188,7 @@ Supabase project: `ldzztrnghaaonparyggz`
 
 ### RunPod Worker Deployment
 
-The worker runs on a GPU pod via RunPod. Deployment is fully automated through GitHub Actions:
+The worker runs on a GPU pod via RunPod. Deployment is automated through GitHub Actions:
 
 1. **Push to `main`** → triggers `.github/workflows/deploy.yml`
 2. **GitHub Actions** builds the Docker image and pushes to Docker Hub:
@@ -205,19 +205,43 @@ curl -X POST "https://api.runpod.io/graphql" \
   -d '{"query": "mutation { podRestart(podId: \"$RUNPOD_POD_ID\") { id status } }"}'
 ```
 
-**Required GitHub Variables** (Settings → Actions → Variables):
-- `INFISICAL_IDENTITY_ID` — `cffe0e20-3898-4cc1-bcfb-35cdceab5886` (GitHub-connected machine identity, configured for OIDC)
-- `INFISICAL_PROJECT_SLUG` — Infisical project slug (found in project settings)
-- `SUPABASE_CONNECTION_ID` — `a9eb6778-af82-4150-9d4f-2c44049e24cd` (Supabase connection)
-- `SUPABASE_SYNC_ID` — `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` (Supabase sync)
-- `VERCEL_CONNECTION_ID` — `42c89bfa-3349-4be6-899b-97b2d6e3d461` (Vercel connection)
-- `VERCEL_SYNC_ID` — `9067124a-8808-4947-867d-c43aec229444` (Vercel sync)
-- `GITHUB_SYNC_ID` — `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` (GitHub sync connection)
+### Vercel Frontend Deployment
 
-**Required GitHub Secrets** (Settings → Actions → Secrets):
-- `RUNPOD_API_KEY`, `RUNPOD_POD_ID` — managed via Infisical, injected at runtime
+1. **Push to `main`** → triggers `.github/workflows/deploy-vercel.yml`
+2. **GitHub Actions** builds the frontend with Vite and deploys to Vercel production
+3. Vercel syncs environment variables from Infisical (Vercel integration)
 
-All other secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VERCEL_TOKEN`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`) are fetched from Infisical at runtime via OIDC — no static GitHub secrets needed.
+### Infisical OIDC Authentication
+
+All CI/CD jobs authenticate to Infisical via OIDC (no static credentials):
+
+- **Machine Identity ID**: `cffe0e20-3898-4cc1-bcfb-35cdceab5886`
+- **OIDC Discovery URL**: `https://token.actions.githubusercontent.com`
+- **Subject**: `repo:NexusBayArea/lostbobo:ref:refs/heads/main`
+
+### Required GitHub Variables (Settings → Actions → Variables)
+
+| Variable | Value | Purpose |
+| :--- | :--- | :--- |
+| `INFISICAL_PROJECT_SLUG` | *(from project settings)* | Infisical project slug |
+
+### Infisical Integrations (Synced via Dashboard)
+
+| Integration | Connection ID | Sync ID |
+| :--- | :--- | :--- |
+| GitHub | `cffe0e20-3898-4cc1-bcfb-35cdceab5886` | `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` |
+| Supabase | `a9eb6778-af82-4150-9d4f-2c44049e24cd` | `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` |
+| Vercel | `42c89bfa-3349-4be6-899b-97b2d6e3d461` | `9067124a-8808-4947-867d-c43aec229444` |
+
+### Required GitHub Secrets (Settings → Actions → Secrets)
+
+| Secret | Purpose |
+| :--- | :--- |
+| `VERCEL_TOKEN` | Vercel deployment token |
+| `VERCEL_ORG_ID` | Vercel organization ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID |
+
+All other secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`) are fetched from Infisical at runtime via OIDC.
 
 ### Environment Variables (Critical)
 

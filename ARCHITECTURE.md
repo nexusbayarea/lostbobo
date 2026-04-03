@@ -476,39 +476,49 @@ The production environment uses the **RunPod HTTP Proxy** (mapped to Port 8000 b
 
 ## Deployment Pipeline (v2.5.1)
 
-### Unified CI/CD (`.github/workflows/deploy.yml`)
+### Modular CI/CD Workflows
 
-Push to `main` triggers a gated pipeline:
+Push to `main` triggers independent, path-aware workflows:
+
+| Workflow | File | Trigger |
+|---|---|---|
+| **Audit** | `deploy.yml` | All pushes (ruff lint + format) |
+| **Worker** | `deploy-worker.yml` | `services/worker/**`, `Dockerfile.worker` |
+| **Autoscaler** | `deploy-autoscaler.yml` | `services/worker/runpod_api.py`, `services/worker/autoscaler.py`, `Dockerfile.autoscaler` |
+| **Vercel** | `deploy-vercel.yml` | All pushes (frontend build + deploy) |
+
+### Deployment Chain
 
 1. **Audit**: `ruff check` + `ruff format --check` on `services/worker/worker.py` and `services/api/api.py`. Blocks on failure.
-2. **Infisical OIDC Auth**: Each deploy job fetches secrets from Infisical using `Infisical/secrets-action@v1.0.9` with OIDC authentication (short-lived tokens, no static credentials).
-3. **Deploy Worker**: Build `Dockerfile.worker` → push to `simhpcworker/simhpc-worker:latest` on Docker Hub.
-4. **Deploy Autoscaler**: Build `Dockerfile.autoscaler` → push to `simhpcworker/simhpc-autoscaler:latest` on Docker Hub.
-5. **Deploy Vercel**: Frontend auto-deploys via `vercel-action` with baked `VITE_` env vars from Infisical.
+2. **Infisical OIDC Auth**: Each deploy job fetches secrets from Infisical using `Infisical/secrets-action@v1.0.15` with OIDC authentication (short-lived tokens, no static credentials).
+3. **Deploy Worker**: Build `Dockerfile.worker` → push to `simhpcworker/simhpc-worker:latest`.
+4. **Deploy Autoscaler**: Build `Dockerfile.autoscaler` → push to `simhpcworker/simhpc-autoscaler:latest`.
+5. **Deploy Vercel**: Build frontend with Vite → deploy to Vercel production.
 
 ### Required GitHub Variables (Settings → Actions → Variables)
 
 | Variable | Value | Purpose |
 | :--- | :--- | :--- |
-| `INFISICAL_IDENTITY_ID` | `cffe0e20-3898-4cc1-bcfb-35cdceab5886` | GitHub-connected machine identity (OIDC) |
 | `INFISICAL_PROJECT_SLUG` | *(from project settings)* | Infisical project slug |
-| `SUPABASE_CONNECTION_ID` | `a9eb6778-af82-4150-9d4f-2c44049e24cd` | Supabase connection |
-| `SUPABASE_SYNC_ID` | `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` | Supabase sync |
-| `VERCEL_CONNECTION_ID` | `42c89bfa-3349-4be6-899b-97b2d6e3d461` | Vercel connection |
-| `VERCEL_SYNC_ID` | `9067124a-8808-4947-867d-c43aec229444` | Vercel sync |
-| `GITHUB_SYNC_ID` | `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` | GitHub sync |
+
+### Infisical Integrations (Synced via Dashboard)
+
+| Integration | Connection ID | Sync ID |
+| :--- | :--- | :--- |
+| GitHub | `cffe0e20-3898-4cc1-bcfb-35cdceab5886` | `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` |
+| Supabase | `a9eb6778-af82-4150-9d4f-2c44049e24cd` | `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` |
+| Vercel | `42c89bfa-3349-4be6-899b-97b2d6e3d461` | `9067124a-8808-4947-867d-c43aec229444` |
 
 ### Infisical OIDC Setup
 
 1. Machine identity already exists (`cffe0e20-3898-4cc1-bcfb-35cdceab5886`)
-2. Ensure it is configured with **OIDC Auth**:
+2. Configured with **OIDC Auth**:
    - OIDC Discovery URL: `https://token.actions.githubusercontent.com`
    - Issuer: `https://token.actions.githubusercontent.com`
    - Subject: `repo:NexusBayArea/lostbobo:ref:refs/heads/main`
-3. Verify the identity has read access to `prod` environment secrets
-4. Set `INFISICAL_IDENTITY_ID` and `INFISICAL_PROJECT_SLUG` as GitHub repo **variables** (not secrets — these are public identifiers)
+3. Identity has read access to `prod` environment secrets
 
-All secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VERCEL_TOKEN`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, etc.) are fetched from Infisical at runtime — no static GitHub secrets required.
+All secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VERCEL_TOKEN`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, etc.) are fetched from Infisical at runtime via OIDC — no static GitHub secrets needed.
 
 ---
 

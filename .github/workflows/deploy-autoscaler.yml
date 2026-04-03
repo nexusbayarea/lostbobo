@@ -1,28 +1,56 @@
-name: Deploy SimHPC Autoscaler to Docker Hub (Deprecated — use deploy.yml)
+name: Deploy Autoscaler
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
     paths:
-      - "services/worker/runpod_api.py"
-      - "services/worker/autoscaler.py"
-      - "Dockerfile.autoscaler"
-      - "services/worker/requirements-autoscaler.txt"
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      - 'services/worker/runpod_api.py'
+      - 'services/worker/autoscaler.py'
+      - '.github/workflows/deploy-autoscaler.yml'
+      - 'Dockerfile.autoscaler'
+      - 'services/worker/requirements-autoscaler.txt'
+  workflow_dispatch:
 
 jobs:
-  build-and-push:
+  deploy-autoscaler:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
     steps:
-      - name: Checkout Code
+      # 1. Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      # 2. Inject Infisical secrets (OIDC)
+      - name: Inject Infisical secrets
+        uses: Infisical/secrets-action@v1.0.15
+        with:
+          method: "oidc"
+          identity-id: "cffe0e20-3898-4cc1-bcfb-35cdceab5886"
+          project-slug: "${{ vars.INFISICAL_PROJECT_SLUG }}"
+          env-slug: "prod"
 
-      - name: Build and Push Autoscaler Image
+      # 3. Verify critical env (debug)
+      - name: Verify env
+        run: |
+          echo "DOCKER_USERNAME exists: $([[ -n "$DOCKER_USERNAME" ]] && echo yes || echo no)"
+          echo "DOCKER_ACCESS_TOKEN exists: $([[ -n "$DOCKER_ACCESS_TOKEN" ]] && echo yes || echo no)"
+
+      # 4. Login to Docker Hub
+      - name: Login to Docker Hub
+        run: echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      # 5. Build and push autoscaler image
+      - name: Build and push autoscaler image
         uses: docker/build-push-action@v5
         with:
           context: .

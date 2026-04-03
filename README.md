@@ -209,7 +209,10 @@ curl -X POST "https://api.runpod.io/graphql" \
 - `INFISICAL_IDENTITY_ID` — `cffe0e20-3898-4cc1-bcfb-35cdceab5886` (GitHub-connected machine identity, configured for OIDC)
 - `INFISICAL_PROJECT_SLUG` — Infisical project slug (found in project settings)
 - `SUPABASE_CONNECTION_ID` — `a9eb6778-af82-4150-9d4f-2c44049e24cd` (Supabase connection)
+- `SUPABASE_SYNC_ID` — `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` (Supabase sync)
 - `VERCEL_CONNECTION_ID` — `42c89bfa-3349-4be6-899b-97b2d6e3d461` (Vercel connection)
+- `VERCEL_SYNC_ID` — `9067124a-8808-4947-867d-c43aec229444` (Vercel sync)
+- `GITHUB_SYNC_ID` — `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` (GitHub sync connection)
 
 **Required GitHub Secrets** (Settings → Actions → Secrets):
 - `RUNPOD_API_KEY`, `RUNPOD_POD_ID` — managed via Infisical, injected at runtime

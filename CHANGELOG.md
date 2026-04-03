@@ -5,6 +5,16 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2026-04-03
+
+### Fixed
+
+- **Frontend Crash (Supabase Client)**: `src/lib/supabase.ts` — added fail-fast validation that throws immediately if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are missing. Eliminates silent white-screen crashes caused by empty-string client initialization.
+- **useSimulationUpdates Guards**: Wrapped `fetchHistory()` in try/catch, added `!supabase` guard, protected realtime subscription in try/catch block, and made channel cleanup safe with `if (channel)` check.
+- **useSimulations Guards**: Added `!supabase` guard, wrapped fetch in try/catch, protected realtime subscription, safe channel cleanup.
+- **useAuth Guards**: Added `!supabase` guard in useEffect and getToken() to prevent runtime errors when client is uninitialized.
+- **Documentation**: Updated `ARCHITECTURE.md` with Frontend Environment Variables section explaining Vite build-time injection, Infisical wrapping, and `VITE_` prefix requirements.
+
 ## [2.5.0] - 2026-04-02
 
 ### Added

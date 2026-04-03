@@ -1,6 +1,6 @@
 # SimHPC Architecture
 
-> Last Updated: April 02, 2026
+> Last Updated: April 03, 2026
 > Status: **LIVE (v2.5.0)** — Usage Limits & Rate Limiting Active
 
 ---
@@ -316,6 +316,15 @@ To eliminate the risk of accidental secret exposure and "silent" GPU costs, SimH
 2.  **Memory Sanitization**: Secrets exist only in memory during command execution and are wiped immediately upon completion.
 3.  **Audit-First Deployment**: The `deploy-guardian` enforces a successful linting pass *before* sensitive keys are ever injected for a deployment.
 4.  **Automated Financial Shield**: The `resource-reaper` prevents runaway costs by cross-referencing active GPU pods with live heartbeats, automatically killing zombified instances.
+
+#### Frontend Environment Variables (Build-Time Injection)
+
+Vite replaces `import.meta.env.VITE_*` at **build time**, not runtime. This means:
+
+- **Infisical must wrap the build command**: `infisical run --env=prod -- npm run build`
+- **Vercel**: Variables must be set in Vercel Dashboard → Project → Settings → Environment Variables (Production)
+- **Naming**: Keys MUST be prefixed with `VITE_` to be exposed to the frontend bundle. Non-`VITE_` keys (e.g. `SB_URL`) are invisible to the browser.
+- **Fail-Fast Guard**: `src/lib/supabase.ts` throws immediately if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are missing, converting silent white-screen crashes into explicit errors.
 
 These skills are implemented in `services/skills/` using the `fastmcp` Python framework.
 

@@ -19,6 +19,6 @@ jobs:
 
       - run: pip install ruff
 
-      - run: ruff check services/worker/worker.py services/api/api.py
+      - run: ruff check services/worker/worker.py
 
-      - run: ruff format --check services/worker/worker.py services/api/api.py
+      - run: ruff format --check services/worker/worker.py

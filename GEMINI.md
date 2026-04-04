@@ -4,7 +4,7 @@
 
 We follow a strict monorepo structure to separate concerns and protect intellectual property. All legacy components from `apps/frontend` have been consolidated into the root `src/` directory.
 
-- **`src/`**: React Cockpit application (Unified root source).
+- **`apps/frontend/src/`**: React Cockpit application (Unified frontend source).
 - **`services/api/`**: FastAPI orchestrator (Mercury AI integration, fleet management).
 - **`services/worker/`**: Unified compute plane (Physics execution + Scaling + Reports).
 - **`packages/`**: Shared libraries, SDKs, and internal tools.
@@ -19,7 +19,8 @@ The core database table is `simulations`. A backward-compatible view named `simu
 
 **Supporting tables**: `certificates`, `documents`, `document_chunks`, `simulation_events`, `platform_alerts`.
 
-**TypeScript types** live in `src/types/`:
+**TypeScript types** live in `apps/frontend/src/types/`:
+
 - `db.ts` — Exact Supabase schema mirror
 - `audit.ts` — Audit + verification types
 - `api.ts` — API response contracts
@@ -45,20 +46,23 @@ The core database table is `simulations`. A backward-compatible view named `simu
 
 ## Mission Control Dashboards (v2.5.1)
 
-- **Admin Analytics**: `src/pages/admin/AdminAnalyticsPage.tsx` — Protected by `requireAdmin`. Features Fleet HUD, Panic Button, and Scaling Events.
-- **Alpha Control Room**: `src/pages/AlphaControlRoom.tsx` — Expert-level cockpit with O-D-I-A-V loop components (Telemetry, Lineage, Console).
+- **Admin Analytics**: `apps/frontend/src/pages/admin/AdminAnalyticsPage.tsx` — Protected by `requireAdmin`. Features Fleet HUD, Panic Button, and Scaling Events.
+- **Alpha Control Room**: `apps/frontend/src/pages/AlphaControlRoom.tsx` — Expert-level cockpit with O-D-I-A-V loop components (Telemetry, Lineage, Console).
 - **Active Telemetry**: Driven by `useSimulations` hook with Supabase Realtime synchronization.
 
-# AI Project Guardrails
+## AI Project Guardrails
 
-## 1. Critical File Naming & Security
+### 1. Critical File Naming & Security
+
 - **FORBIDDEN**: Never name the ignore file `_gitignore`. It MUST be exactly `.gitignore`.
 - **ACTION**: If `_gitignore` is detected, rename it to `.gitignore` immediately.
 
-## 2. Structural Separation
-- **Frontend**: Root `src/` directory. No Python or GPU logic.
+### 2. Structural Separation
+
+- **Frontend**: `apps/frontend/` directory. No Python or GPU logic.
 - **Backend**: `services/` directory. Handles all physics and AI orchestration.
 
-## 3. Environment Variable Policy
+### 3. Environment Variable Policy
+
 - **Build Time**: `VITE_` prefixed variables are injected at build time.
 - **Zero-Trust**: Administrative tasks MUST use `infisical run --` for secret injection.

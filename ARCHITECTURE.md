@@ -165,8 +165,8 @@ The onboarding is designed around the **Proof of Value** comparison:
 
 To protect core intellectual property (AI/Physics logic) during the beta phase, the codebase is split:
 
-* **`apps/frontend/`** (Git submodule): Contains the React/Vite application. This directory is a gitlink pointing into `lostbobo.git`. Both the submodule and the parent monorepo share the same remote (`lostbobo.git` → Vercel deployment source). Vercel auto-deploys on push to `lostbobo.git` main.
-* **Parent Monorepo (`SimHPC/`)**: Contains the full platform including `robustness-orchestrator`, AI services, and physics-worker configurations. Commits to the monorepo are pushed to `lostbobo.git` main, triggering the Vercel deploy workflow and the RunPod worker deploy workflow.
+- **`apps/frontend/`** (Git submodule): Contains the React/Vite application. This directory is a gitlink pointing into `lostbobo.git`. Both the submodule and the parent monorepo share the same remote (`lostbobo.git` → Vercel deployment source). Vercel auto-deploys on push to `lostbobo.git` main.
+- **Parent Monorepo (`SimHPC/`)**: Contains the full platform including `robustness-orchestrator`, AI services, and physics-worker configurations. Commits to the monorepo are pushed to `lostbobo.git` main, triggering the Vercel deploy workflow and the RunPod worker deploy workflow.
 
 ---
 
@@ -176,7 +176,8 @@ SimHPC v2.5.1 uses a flattened structure to eliminate redundancy:
 
 ```text
 SimHPC/ (Monorepo)
-├── src/                     # React/Vite Unified Cockpit (Primary UI)
+├── apps/
+│   └── frontend/            # React/Vite Unified Cockpit (Restored)
 ├── services/
 ├── services/
 │   ├── api/                 # FastAPI Orchestration Layer
@@ -204,9 +205,9 @@ SimHPC v2.5 consolidates all compute, scaling, and reporting logic into `service
 
 ### A. Core Components
 
-* **`worker.py`**: The primary execution engine (v2.5.0). It polls the Redis job queue, manages local threading for parallel solvers, generates engineering PDF reports via `fpdf2`, and synchronizes all state with Supabase.
-* **`autoscaler.py`**: Implements the **Option C** hibernation strategy (v2.3.0). It monitors the queue length (`pending + inflight`) and proactively stops/resumes GPU pods to maintain a "Warm Fleet" readiness.
-* **`runpod_api.py`**: A low-level client for the RunPod GraphQL API, handling pod lifecycle events (create, stop, start, terminate).
+- **`worker.py`**: The primary execution engine (v2.5.0). It polls the Redis job queue, manages local threading for parallel solvers, generates engineering PDF reports via `fpdf2`, and synchronizes all state with Supabase.
+- **`autoscaler.py`**: Implements the **Option C** hibernation strategy (v2.3.0). It monitors the queue length (`pending + inflight`) and proactively stops/resumes GPU pods to maintain a "Warm Fleet" readiness.
+- **`runpod_api.py`**: A low-level client for the RunPod GraphQL API, handling pod lifecycle events (create, stop, start, terminate).
 
 ### B. Redis Polling Mechanism
 
@@ -297,21 +298,21 @@ Protected by `X-Admin-Secret` header:
 
 SimHPC v2.5 introduces native Model Context Protocol (MCP) skills for the Antigravity IDE/CLI, allowing for direct infrastructure and secret management from the AI agent:
 
-*   **`simhpc-ops`**: Real-time fleet metrics (burn rate, active pods) fetched via `get-fleet-metrics` edge function.
-*   **`simhpc-secrets`**: Secure synchronization of production environment variables from GCP Secret Manager.
-*   **`gcp-vault`**: Secure `gcloud` execution bridge using Infisical for memory-sanitized secret injection (zero-leak policy).
-*   **`deploy-guardian`**: Deployment safety gate enforcing Ruff linting and clean-room deployment via Infisical.
-*   **`resource-reaper`**: Automated cost-containment tool that terminates "Zombie" GPU pods (RunPod) based on stale Supabase heartbeats (>15m).
-*   **`panic-button`**: Emergency shutdown skill (`services/skills/panic_button.py`) — terminates all RunPod pods, logs critical alert to `platform_alerts`.
+- **`simhpc-ops`**: Real-time fleet metrics (burn rate, active pods) fetched via `get-fleet-metrics` edge function.
+- **`simhpc-secrets`**: Secure synchronization of production environment variables from GCP Secret Manager.
+- **`gcp-vault`**: Secure `gcloud` execution bridge using Infisical for memory-sanitized secret injection (zero-leak policy).
+- **`deploy-guardian`**: Deployment safety gate enforcing Ruff linting and clean-room deployment via Infisical.
+- **`resource-reaper`**: Automated cost-containment tool that terminates "Zombie" GPU pods (RunPod) based on stale Supabase heartbeats (>15m).
+- **`panic-button`**: Emergency shutdown skill (`services/skills/panic_button.py`) — terminates all RunPod pods, logs critical alert to `platform_alerts`.
 
 ### Zero-Trust Secret Posture (v2.5.0)
 
 To eliminate the risk of accidental secret exposure and "silent" GPU costs, SimHPC has transitioned to a **Zero-Trust Environment**:
 
-1.  **Infisical Integration**: All high-privilege secrets (GCP, RunPod, Supabase Service Role, `RUNPOD_POD_ID`, `RUNPOD_SSH_KEY`) are injected at runtime via `infisical run --`. Local `.env` files are deprecated in favor of placeholders in `.env.example`.
-2.  **Memory Sanitization**: Secrets exist only in memory during command execution and are wiped immediately upon completion.
-3.  **Audit-First Deployment**: The `deploy-guardian` enforces a successful linting pass *before* sensitive keys are ever injected for a deployment.
-4.  **Automated Financial Shield**: The `resource-reaper` prevents runaway costs by cross-referencing active GPU pods with live heartbeats, automatically killing zombified instances.
+- **Infisical Integration**: All high-privilege secrets (GCP, RunPod, Supabase Service Role, `RUNPOD_POD_ID`, `RUNPOD_SSH_KEY`) are injected at runtime via `infisical run --`. Local `.env` files are deprecated in favor of placeholders in `.env.example`.
+- **Memory Sanitization**: Secrets exist only in memory during command execution and are wiped immediately upon completion.
+- **Audit-First Deployment**: The `deploy-guardian` enforces a successful linting pass *before* sensitive keys are ever injected for a deployment.
+- **Automated Financial Shield**: The `resource-reaper` prevents runaway costs by cross-referencing active GPU pods with live heartbeats, automatically killing zombified instances.
 
 #### Frontend Environment Variables (Build-Time Injection)
 
@@ -341,14 +342,14 @@ SimHPC is built around the **Operational Cockpit** concept, implementing a tight
 
 ### Persistence Layer
 
-* **Redis**: Job states, rate limits, telemetry.
-* **Supabase**: User data, auth, PostgreSQL, `worker_heartbeat`, `simulations`.
-* **Supabase Storage**: Bucket named `reports` for storing engineering PDF reports.
-* **Realtime**: `simulations` table allows live toast notifications via `useSimulationUpdates` and live telemetry via `useSimulations` (progress, thermal_drift, pressure_spike).
-* **Guidance Engine**: `POST /api/v1/alpha/generate-report/{job_id}` — Mercury AI generates structural health reports from telemetry. Results persisted in `result_summary.ai_report` for cross-session access.
-* **Edge Functions**: `get-fleet-metrics` — Supabase Edge Function computes active pods and hourly spend server-side. Admin-only via `app_metadata` role check. Deploy with `supabase functions deploy get-fleet-metrics`. Auto-creates billing alerts when spend > $10/hr (deduplicated per hour).
-* **Panic Button**: `trigger-panic-shutdown` — Supabase Edge Function that terminates all RunPod pods and logs a critical alert. Admin-only, double-confirmation required in UI. Deploy with `supabase functions deploy trigger-panic-shutdown`.
-* **Platform Alerts**: `platform_alerts` table (migration `004_platform_alerts.sql`) — stores billing, thermal, and system alerts with severity levels. Realtime-enabled for live sidebar notifications.
+- **Redis**: Job states, rate limits, telemetry.
+- **Supabase**: User data, auth, PostgreSQL, `worker_heartbeat`, `simulations`.
+- **Supabase Storage**: Bucket named `reports` for storing engineering PDF reports.
+- **Realtime**: `simulations` table allows live toast notifications via `useSimulationUpdates` and live telemetry via `useSimulations` (progress, thermal_drift, pressure_spike).
+- **Guidance Engine**: `POST /api/v1/alpha/generate-report/{job_id}` — Mercury AI generates structural health reports from telemetry. Results persisted in `result_summary.ai_report` for cross-session access.
+- **Edge Functions**: `get-fleet-metrics` — Supabase Edge Function computes active pods and hourly spend server-side. Admin-only via `app_metadata` role check. Deploy with `supabase functions deploy get-fleet-metrics`. Auto-creates billing alerts when spend > $10/hr (deduplicated per hour).
+- **Panic Button**: `trigger-panic-shutdown` — Supabase Edge Function that terminates all RunPod pods and logs a critical alert. Admin-only, double-confirmation required in UI. Deploy with `supabase functions deploy trigger-panic-shutdown`.
+- **Platform Alerts**: `platform_alerts` table (migration `004_platform_alerts.sql`) — stores billing, thermal, and system alerts with severity levels. Realtime-enabled for live sidebar notifications.
 
 ---
 
@@ -367,12 +368,12 @@ SimHPC is designed as an **Operational Cockpit** that facilitates high-stakes en
 
 In the Alpha environment, the Control Room features a real-time `System Status` indicator powered by the **Aggregated Health API (`GET /api/v1/system/status`)**:
 
-* **Mercury AI**: Verified via active chat completions ping to `mercury-2`.
-* **RunPod GPU**: Checked via real-time Redis connectivity status.
-* **Supabase**: Verified via active client initialization check.
-* **Worker**: Checked via **Heartbeat Strategy** (Supabase `worker_heartbeat` table, pinged every cycle by active workers).
-* **Security Guard**: API includes a production check that blocks `localhost` Redis usage when running on Vercel to prevent "Offline" blips.
-* **Local Debugging**: The repository includes a `.vscode/launch.json` configured for the development server (Port `59824`). Use the **"Launch Chrome (Frontend)"** profile to debug the React application with full source map support.
+- **Mercury AI**: Verified via active chat completions ping to `mercury-2`.
+- **RunPod GPU**: Checked via real-time Redis connectivity status.
+- **Supabase**: Verified via active client initialization check.
+- **Worker**: Checked via **Heartbeat Strategy** (Supabase `worker_heartbeat` table, pinged every cycle by active workers).
+- **Security Guard**: API includes a production check that blocks `localhost` Redis usage when running on Vercel to prevent "Offline" blips.
+- **Local Debugging**: The repository includes a `.vscode/launch.json` configured for the development server (Port `59824`). Use the **"Launch Chrome (Frontend)"** profile to debug the React application with full source map support.
 
 ### Unified Health Check (`GET /api/v1/health`)
 
@@ -403,22 +404,23 @@ The dedicated health endpoint probes all critical dependencies and returns a str
 
 To balance user security with high-performance worker throughput, SimHPC employs a split Supabase key architecture:
 
-* **Client Plane (Frontend)**: Utilizes `VITE_SUPABASE_ANON_KEY`. Restricted by Row Level Security (RLS) to ensure users can only access their own simulations and profile data.
-* **Compute Plane (Worker)**: Utilizes `SUPABASE_SERVICE_ROLE_KEY`. Bypasses RLS to allow the worker to update simulation statuses, upload PDFs, and record heartbeats without per-request user authentication overhead.
+- **Client Plane (Frontend)**: Utilizes `VITE_SUPABASE_ANON_KEY`. Restricted by Row Level Security (RLS) to ensure users can only access their own simulations and profile data.
+- **Compute Plane (Worker)**: Utilizes `SUPABASE_SERVICE_ROLE_KEY`. Bypasses RLS to allow the worker to update simulation statuses, upload PDFs, and record heartbeats without per-request user authentication overhead.
 
 ### 2. Stable Connectivity (RunPod Proxy)
 
 The production environment uses the **RunPod HTTP Proxy** (mapped to Port 8000 by default) for all API communications.
 
-* **Stable URLs**: Use the RunPod HTTP Proxy URL (per-pod) for a static endpoint that persists across pod restarts.
-* **Direct Access**: Pod IPs and SSH keys are managed via the Infisical vault and are rotated per deployment.
-* **CORS Hardening**: The API orchestrator explicitly allows requests from `simhpc.com` and Vercel preview domains. The wildcard origin `*` is strictly prohibited in production.
-* **Git Security**: Ensure `.gitignore` is correctly named with a leading dot. Never commit `.env` files to version control. If a secret is accidentally committed, use `git rm --cached .env` to untrack it and rotate the keys immediately.
-* **Zero-Trust**: Use `infisical run --` for all administrative and deployment tasks. Hardcoded pod IDs and SSH keys are prohibited in tracked files.
+- **Stable URLs**: Use the RunPod HTTP Proxy URL (per-pod) for a static endpoint that persists across pod restarts.
+- **Direct Access**: Pod IPs and SSH keys are managed via the Infisical vault and are rotated per deployment.
+- **CORS Hardening**: The API orchestrator explicitly allows requests from `simhpc.com` and Vercel preview domains. The wildcard origin `*` is strictly prohibited in production.
+- **Git Security**: Ensure `.gitignore` is correctly named with a leading dot. Never commit `.env` files to version control. If a secret is accidentally committed, use `git rm --cached .env` to untrack it and rotate the keys immediately.
+- **Zero-Trust**: Use `infisical run --` for all administrative and deployment tasks. Hardcoded pod IDs and SSH keys are prohibited in tracked files.
+
 ### Authentication Flow
 
 1. User signs up/in via Supabase (Magic Link) or Google One Tap.
-    * **Google Client ID:** `552738566412-t6ba9ar8jnsk7vsd399vhh206569p61e.apps.googleusercontent.com`
+    - **Google Client ID:** `552738566412-t6ba9ar8jnsk7vsd399vhh206569p61e.apps.googleusercontent.com`
 2. Backend verifies JWT via `python-jose`.
 3. **Tier Verification:** API queries Supabase `profiles` table to determine `plan_id`.
 4. **Persistence:** `simulations` table (Supabase) receives status updates from workers.
@@ -426,15 +428,15 @@ The production environment uses the **RunPod HTTP Proxy** (mapped to Port 8000 b
 
 ### Connectivity & CORS
 
-* **Allowed Origins**: Hardened to `simhpc.nexusbayarea.com`, `simhpc.com`, and Vercel preview branches.
-* **Environment Sync**: Critical keys (`REDIS_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SIMHPC_API_KEY`) must be synchronized between Vercel and RunPod for full system availability.
+- **Allowed Origins**: Hardened to `simhpc.nexusbayarea.com`, `simhpc.com`, and Vercel preview branches.
+- **Environment Sync**: Critical keys (`REDIS_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SIMHPC_API_KEY`) must be synchronized between Vercel and RunPod for full system availability.
 
 ### Rate Limiting
 
-* **Login/Signup**: 5 attempts/minute per IP.
-* **Simulations (Spam Protection)**: 10s cooldown between runs per user (Redis-enforced).
-* **Weekly Quota (Free Tier)**: 10 runs per rolling 7 days (Supabase-enforced).
-* **Concurrency**: 1 concurrent, 60s timeout, small mesh only (Free Tier).
+- **Login/Signup**: 5 attempts/minute per IP.
+- **Simulations (Spam Protection)**: 10s cooldown between runs per user (Redis-enforced).
+- **Weekly Quota (Free Tier)**: 10 runs per rolling 7 days (Supabase-enforced).
+- **Concurrency**: 1 concurrent, 60s timeout, small mesh only (Free Tier).
 
 ---
 
@@ -454,21 +456,21 @@ The production environment uses the **RunPod HTTP Proxy** (mapped to Port 8000 b
 
 ### RobustnessService
 
-* Handles parameter sampling (±5%, ±10%, Latin Hypercube, Monte Carlo, Sobol).
-* Manages baseline caching and input validation.
-* Caps concurrent jobs to prevent GPU exhaustion.
+- Handles parameter sampling (±5%, ±10%, Latin Hypercube, Monte Carlo, Sobol).
+- Manages baseline caching and input validation.
+- Caps concurrent jobs to prevent GPU exhaustion.
 
 ### AIReportService
 
-* Mercury AI (Inception Labs) integration for interpretive reports.
-* **Role**: Interprets natural language inputs and generates explanatory notebook text.
-* **Constraints**: 24-hour TTL cache, scientific tone enforcement.
+- Mercury AI (Inception Labs) integration for interpretive reports.
+- **Role**: Interprets natural language inputs and generates explanatory notebook text.
+- **Constraints**: 24-hour TTL cache, scientific tone enforcement.
 
 ### PDFService
 
-* FPDF-based PDF generation.
-* Matplotlib charts for sensitivity rankings.
-* Artifact storage in Supabase Storage with signed URL access.
+- FPDF-based PDF generation.
+- Matplotlib charts for sensitivity rankings.
+- Artifact storage in Supabase Storage with signed URL access.
 
 ---
 
@@ -479,7 +481,7 @@ The production environment uses the **RunPod HTTP Proxy** (mapped to Port 8000 b
 Push to `main` triggers independent, path-aware workflows:
 
 | Workflow | File | Trigger |
-|---|---|---|
+| :--- | :--- | :--- |
 | **Audit** | `deploy.yml` | All pushes (ruff lint + format) |
 | **Worker** | `deploy-worker.yml` | `services/worker/**`, `Dockerfile.worker` |
 | **Autoscaler** | `deploy-autoscaler.yml` | `services/worker/runpod_api.py`, `services/worker/autoscaler.py`, `Dockerfile.autoscaler` |

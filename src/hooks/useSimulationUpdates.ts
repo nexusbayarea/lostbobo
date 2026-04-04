@@ -7,12 +7,14 @@ import { SimulationUpdate } from '../types/realtime';
 export const useSimulationUpdates = (userId: string | undefined) => {
   const [simulations, setSimulations] = useState<SimulationRow[]>([]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!userId || !supabase) return;
+
+    const client = supabase;
 
     const fetchHistory = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from('simulations')
           .select('*')
           .eq('user_id', userId)
@@ -28,10 +30,10 @@ export const useSimulationUpdates = (userId: string | undefined) => {
 
     fetchHistory();
 
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let channel: ReturnType<typeof client.channel> | undefined;
 
     try {
-      channel = supabase
+      channel = client
         .channel('simulation-updates')
         .on(
           'postgres_changes',
@@ -87,7 +89,7 @@ export const useSimulationUpdates = (userId: string | undefined) => {
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel);
+        client.removeChannel(channel);
       }
     };
   }, [userId]);

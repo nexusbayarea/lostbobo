@@ -40,9 +40,11 @@ export function useSimulations(userId: string | undefined) {
       return;
     }
 
+    const client = supabase;
+
     const fetchSims = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from('simulations')
           .select('*')
           .eq('user_id', userId)
@@ -60,10 +62,10 @@ export function useSimulations(userId: string | undefined) {
 
     fetchSims();
 
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let channel: ReturnType<typeof client.channel> | undefined;
 
     try {
-      channel = supabase
+      channel = client
         .channel('simulations-telemetry')
         .on(
           'postgres_changes',
@@ -97,7 +99,7 @@ export function useSimulations(userId: string | undefined) {
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel);
+        client.removeChannel(channel);
       }
     };
   }, [userId]);

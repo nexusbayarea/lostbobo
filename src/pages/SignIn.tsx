@@ -17,10 +17,16 @@ export function SignIn() {
     return null;
   }
 
-  const handleSignIn = async (e: React.FormEvent) => {
+    const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!supabase) {
+      setError('Supabase client not initialized');
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 

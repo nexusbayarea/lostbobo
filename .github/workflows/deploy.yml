@@ -5,27 +5,20 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  # Job 1: The Quality Gate
   audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          submodules: false
 
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Ruff
-        run: pip install ruff
+      - run: pip install ruff
 
-      - name: Lint Check
-        run: ruff check services/worker/worker.py services/api/api.py
+      - run: ruff check services/worker/worker.py services/api/api.py
 
-      - name: Format Check
-        run: ruff format --check services/worker/worker.py services/api/api.py
+      - run: ruff format --check services/worker/worker.py services/api/api.py

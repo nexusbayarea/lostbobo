@@ -491,10 +491,10 @@ Push to `main` triggers independent, path-aware workflows:
 
 ### Deployment Chain
 
-1. **Audit**: `ruff check` + `ruff format --check` on `services/worker/worker.py` and `services/api/api.py`. Blocks on failure.
+1. **Audit**: `ruff check` + `ruff format --check` on `services/worker/worker.py`. Blocks on failure.
 2. **Deploy Worker**: Build `Dockerfile.worker` → push to `simhpcworker/simhpc-worker:latest` using GitHub secrets for Docker Hub auth.
 3. **Deploy Autoscaler**: Build `Dockerfile.autoscaler` → push to `simhpcworker/simhpc-autoscaler:latest` using GitHub secrets for Docker Hub auth.
-4. **Deploy Vercel**: Build frontend with Vite (`base: '/'`) → deploy `dist/` to Vercel production using GitHub secrets.
+4. **Deploy Vercel**: Vercel's native GitHub integration handles build and deploy automatically — no GitHub Actions workflow needed.
 
 ### Required GitHub Secrets (Settings → Actions → Secrets)
 

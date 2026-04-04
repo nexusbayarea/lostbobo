@@ -190,7 +190,7 @@ Supabase project: `ldzztrnghaaonparyggz`
 
 The worker runs on a GPU pod via RunPod. Deployment is automated through GitHub Actions:
 
-1. **Push to `main`** → triggers `.github/workflows/deploy-worker.yml`
+1. **Push to `main`** → triggers `.github/workflows/deploy-worker.yml` (path-triggered by `services/worker/**` or `Dockerfile.worker`)
 2. **GitHub Actions** builds the Docker image and pushes to Docker Hub:
    - `simhpcworker/simhpc-worker:latest`
    - `simhpcworker/simhpc-worker:v2.5.0`
@@ -198,10 +198,13 @@ The worker runs on a GPU pod via RunPod. Deployment is automated through GitHub 
 
 ### Vercel Frontend Deployment
 
-1. **Push to `main`** → triggers `.github/workflows/deploy-vercel.yml`
-2. **GitHub Actions** builds the frontend with Vite (`base: '/'`) and deploys `dist/` to Vercel production
-3. Vercel SPA rewrites configured via `vercel.json` (all routes → `index.html`)
-4. `vite.config.ts` has `base: '/'` to ensure correct asset path resolution
+The frontend is deployed via Vercel's native GitHub integration (not GitHub Actions):
+
+1. **Push to `main`** → Vercel automatically detects the change
+2. **Vercel** pulls the repo, installs deps, runs `npm run build`, and deploys to production
+3. Environment variables are configured in Vercel Dashboard → Project → Settings → Environment Variables
+
+The GitHub Actions `deploy-vercel.yml` workflow is a fallback but is not required — Vercel's native integration handles everything.
 
 ### Required GitHub Secrets (Settings → Actions → Secrets)
 

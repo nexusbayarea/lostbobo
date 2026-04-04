@@ -208,8 +208,9 @@ curl -X POST "https://api.runpod.io/graphql" \
 ### Vercel Frontend Deployment
 
 1. **Push to `main`** → triggers `.github/workflows/deploy-vercel.yml`
-2. **GitHub Actions** builds the frontend with Vite and deploys to Vercel production
-3. Vercel syncs environment variables from Infisical (Vercel integration)
+2. **GitHub Actions** builds the frontend with Vite (`base: '/'`) and deploys `dist/` to Vercel production
+3. Vercel SPA rewrites configured via `vercel.json` (all routes → `index.html`)
+4. `vite.config.ts` has `base: '/'` to ensure correct asset path resolution
 
 ### Infisical OIDC Authentication
 

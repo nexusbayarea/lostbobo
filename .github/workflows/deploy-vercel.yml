@@ -33,14 +33,14 @@ jobs:
         run: npm ci
         working-directory: apps/frontend
 
-      # 4. Build frontend (Vite sees env from Vercel sync)
+      # 4. Build frontend (Vite sees env from Infisical)
       - name: Build app
         run: npm run build
         working-directory: apps/frontend
 
-      # 5. Deploy to Vercel
+      # 5. Deploy to Vercel (from dist/ output)
       - name: Deploy to Vercel
-        run: npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --local-config=vercel.json
         working-directory: apps/frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

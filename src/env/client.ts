@@ -2,12 +2,12 @@ import { frontendSchema } from './schema';
 
 const parsed = frontendSchema.safeParse(import.meta.env);
 
-if (!parsed.success) {
-  throw new Error(
-    'Invalid frontend environment variables. ' +
-    'Check build-time injection. ' +
-    JSON.stringify(parsed.error.format(), null, 2)
-  );
-}
+export const env = parsed.success ? parsed.data : {
+  VITE_SUPABASE_URL: '',
+  VITE_SUPABASE_ANON_KEY: '',
+  VITE_API_URL: '',
+};
 
-export const env = parsed.data;
+if (!parsed.success) {
+  console.warn('⚠️ Environment variables not set at build time. They must be available at runtime.');
+}

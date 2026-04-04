@@ -6,31 +6,19 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # 2. Inject Infisical secrets
-      - name: Inject Infisical secrets
-        uses: Infisical/secrets-action@v1.0.15
-        with:
-          method: "oidc"
-          identity-id: "cffe0e20-3898-4cc1-bcfb-35cdceab5886"
-          project-slug: "${{ vars.INFISICAL_PROJECT_SLUG }}"
-          env-slug: "prod"
-
-      # 3. Setup Node
+      # 2. Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -38,27 +26,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: apps/frontend/package-lock.json
 
-      # 4. Install deps
+      # 3. Install deps
       - name: Install dependencies
         run: npm ci
         working-directory: apps/frontend
 
-      # 5. Validate environment (Zod schema — blocks bad deploy)
-      - name: Validate environment
-        run: npx tsx scripts/validate-env.ts
-        working-directory: apps/frontend
-        env:
-          APP_ENV: prod
-
-      # 6. Build frontend (Vite sees env from Infisical)
+      # 4. Build frontend (Vite sees env from Vercel dashboard)
       - name: Build app
         run: npm run build
         working-directory: apps/frontend
 
-      # 7. Deploy to Vercel (from dist/ output)
+      # 5. Deploy to Vercel (from dist/ output)
       - name: Deploy to Vercel
-        run: npx vercel deploy --prod --token=$VERCEL_TOKEN
+        run: npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: apps/frontend
         env:
-          VERCEL_ORG_ID: $VERCEL_ORG_ID
-          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

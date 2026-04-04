@@ -190,20 +190,11 @@ Supabase project: `ldzztrnghaaonparyggz`
 
 The worker runs on a GPU pod via RunPod. Deployment is automated through GitHub Actions:
 
-1. **Push to `main`** → triggers `.github/workflows/deploy.yml`
+1. **Push to `main`** → triggers `.github/workflows/deploy-worker.yml`
 2. **GitHub Actions** builds the Docker image and pushes to Docker Hub:
    - `simhpcworker/simhpc-worker:latest`
    - `simhpcworker/simhpc-worker:v2.5.0`
 3. **RunPod Auto-Updater** (`services/worker/pull_and_restart.sh`, cron `*/5 * * * *`) detects the new image on Docker Hub, pulls it, and restarts the container automatically (~5 min delay).
-
-**Manual Override** (if auto-updater is disabled):
-```bash
-# Restart the pod via RunPod API
-curl -X POST "https://api.runpod.io/graphql" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  -d '{"query": "mutation { podRestart(podId: \"$RUNPOD_POD_ID\") { id status } }"}'
-```
 
 ### Vercel Frontend Deployment
 
@@ -212,39 +203,17 @@ curl -X POST "https://api.runpod.io/graphql" \
 3. Vercel SPA rewrites configured via `vercel.json` (all routes → `index.html`)
 4. `vite.config.ts` has `base: '/'` to ensure correct asset path resolution
 
-### Infisical OIDC Authentication
-
-All CI/CD jobs authenticate to Infisical via OIDC (no static credentials):
-
-- **Machine Identity ID**: `cffe0e20-3898-4cc1-bcfb-35cdceab5886`
-- **OIDC Discovery URL**: `https://token.actions.githubusercontent.com`
-- **Subject**: `repo:NexusBayArea/lostbobo:ref:refs/heads/main`
-
-> **Troubleshooting "OIDC auth method not found for identity"**: Go to Infisical Dashboard → Project Settings → Machine Identities → Select the identity → Auth Methods tab → Add OIDC Auth with the issuer/subject above. This is required because the identity currently only has Universal Auth (client ID/secret), not OIDC.
-
-### Required GitHub Variables (Settings → Actions → Variables)
-
-| Variable | Value | Purpose |
-| :--- | :--- | :--- |
-| `INFISICAL_PROJECT_SLUG` | *(from project settings)* | Infisical project slug |
-
-### Infisical Integrations (Synced via Dashboard)
-
-| Integration | Connection ID | Sync ID |
-| :--- | :--- | :--- |
-| GitHub | `cffe0e20-3898-4cc1-bcfb-35cdceab5886` | `06b1f798-0110-4b6c-9a6f-f8cbc9abe662` |
-| Supabase | `a9eb6778-af82-4150-9d4f-2c44049e24cd` | `bb23acd6-2ec9-4ce6-a7f5-36a77ea750a4` |
-| Vercel | `42c89bfa-3349-4be6-899b-97b2d6e3d461` | `9067124a-8808-4947-867d-c43aec229444` |
-
 ### Required GitHub Secrets (Settings → Actions → Secrets)
 
 | Secret | Purpose |
 | :--- | :--- |
+| `DOCKER_ACCESS_TOKEN` | Docker Hub access token |
+| `DOCKER_USERNAME` | Docker Hub username |
 | `VERCEL_TOKEN` | Vercel deployment token |
 | `VERCEL_ORG_ID` | Vercel organization ID |
 | `VERCEL_PROJECT_ID` | Vercel project ID |
 
-All other secrets (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`) are fetched from Infisical at runtime via OIDC.
+> **Note**: CI/CD currently uses GitHub secrets directly. Infisical OIDC integration is planned — see `ARCHITECTURE.md` for OIDC setup instructions.
 
 ### Environment Variables (Critical)
 

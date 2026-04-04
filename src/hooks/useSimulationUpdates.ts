@@ -45,7 +45,7 @@ export const useSimulationUpdates = (userId: string | undefined) => {
             const updated = payload.new as SimulationUpdate;
 
             setSimulations((current) =>
-              current.map((sim) => (sim.id === updated.id ? { ...sim, ...updated } as SimulationRow : sim))
+              current.map((sim) => (sim.id === updated.id ? { ...sim, ...updated } : sim))
             );
 
             if (updated.status === 'completed') {

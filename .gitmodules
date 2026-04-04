@@ -1,3 +1,0 @@
-[submodule "services/api"]
-	path = services/api
-	url = https://github.com/NexusBayArea/SimHPC.git

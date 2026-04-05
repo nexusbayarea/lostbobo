@@ -4,15 +4,16 @@ SimHPC RunPod Deployment Script
 
 Automates the full deployment pipeline:
 1. Build and push Docker images to Docker Hub
-2. Restart RunPod pod to pull latest images
+2. Fetch secrets from Infisical
+3. Recreate RunPod pod with env vars from Infisical
 
 Usage:
     python scripts/deploy_worker.py
 
 Requires:
-    - pip install runpod docker
+    - pip install runpod
     - Infisical CLI installed and authenticated
-    - RUNPOD_API_KEY and RUNPOD_ID in Infisical (prod environment)
+    - All required secrets in Infisical
 """
 
 import os
@@ -20,6 +21,16 @@ import sys
 import json
 import subprocess
 import runpod
+
+
+REQUIRED_SECRETS = [
+    "RUNPOD_API_KEY",
+    "RUNPOD_ID",
+    "REDIS_URL",
+    "MERCURY_API_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+]
 
 
 def run_command(cmd, shell=True, check=True):
@@ -36,7 +47,7 @@ def run_command(cmd, shell=True, check=True):
 
 
 def get_infisical_secrets(*keys):
-    """Fetch secrets from Infisical prod environment."""
+    """Fetch secrets from Infisical."""
     secrets = {}
     for key in keys:
         result = subprocess.run(
@@ -46,7 +57,6 @@ def get_infisical_secrets(*keys):
             text=True,
         )
         if result.returncode == 0:
-            # Get value from stdout (stderr contains "new release" message)
             value = result.stdout.strip()
             secrets[key] = value
         else:
@@ -58,14 +68,12 @@ def build_and_push_images():
     """Build and push worker and autoscaler images to Docker Hub."""
     print("\n=== Building Docker images ===")
 
-    # Build worker image
     print("Building worker image...")
     run_command(
         "docker build -f Dockerfile.worker -t simhpcworker/simhpc-worker:latest ."
     )
     run_command("docker push simhpcworker/simhpc-worker:latest")
 
-    # Build autoscaler image
     print("Building autoscaler image...")
     run_command(
         "docker build -f Dockerfile.autoscaler -t simhpcworker/simhpc-autoscaler:latest ."
@@ -75,50 +83,71 @@ def build_and_push_images():
     print("Docker images pushed successfully!")
 
 
-def restart_pod(api_key, pod_id):
-    """Restart RunPod pod to pull latest images."""
-    print(f"\n=== Restarting pod {pod_id} ===")
+def recreate_pod(api_key, pod_id, env_vars):
+    """Terminate old pod and create new one with env vars."""
+    print(f"\n=== Recreating pod {pod_id} ===")
 
     runpod.api_key = api_key
 
-    # Stop the pod
-    print("Stopping pod...")
-    stop_result = runpod.stop_pod(pod_id)
-    print(f"Stop result: {stop_result}")
+    # Terminate old pod
+    print("Terminating old pod...")
+    runpod.terminate_pod(pod_id)
 
-    # Resume the pod
-    print("Resuming pod...")
-    resume_result = runpod.resume_pod(pod_id, gpu_count=1)
-    print(f"Resume result: {resume_result}")
+    # Create new pod with env vars
+    print("Creating new pod with env vars from Infisical...")
+    pod = runpod.create_pod(
+        name="simhpc-worker",
+        image_name="simhpcworker/simhpc-worker:latest",
+        gpu_type_id="NVIDIA A40",
+        gpu_count=1,
+        volume_in_gb=20,
+        container_disk_in_gb=20,
+        ports="8888/http,22/tcp",
+        env=env_vars,
+    )
+    new_pod_id = pod["id"]
+    print(f"New pod created: {new_pod_id}")
 
-    print("Pod restarted successfully!")
+    # Update RUNPOD_ID in Infisical
+    print(f"Updating RUNPOD_ID in Infisical...")
+    subprocess.run(
+        f"infisical secrets set RUNPOD_ID={new_pod_id}",
+        shell=True,
+        capture_output=True,
+    )
+
+    return new_pod_id
 
 
 def deploy():
     """Main deployment function."""
     print("=== SimHPC RunPod Deployment ===")
 
-    # Get secrets from Infisical
+    # Get all secrets from Infisical
     print("\nFetching secrets from Infisical...")
-    secrets = get_infisical_secrets("RUNPOD_API_KEY", "RUNPOD_ID")
+    secrets = get_infisical_secrets(*REQUIRED_SECRETS)
 
-    if not secrets.get("RUNPOD_API_KEY"):
-        print("Error: RUNPOD_API_KEY not found in Infisical")
-        sys.exit(1)
-
-    if not secrets.get("RUNPOD_ID"):
-        print("Error: RUNPOD_ID not found in Infisical")
-        sys.exit(1)
-
-    print(f"Got RUNPOD_ID: {secrets['RUNPOD_ID']}")
+    for key in REQUIRED_SECRETS:
+        if not secrets.get(key):
+            print(f"Error: {key} not found in Infisical")
+            sys.exit(1)
 
     # Build and push images
     build_and_push_images()
 
-    # Restart pod
-    restart_pod(secrets["RUNPOD_API_KEY"], secrets["RUNPOD_ID"])
+    # Prepare env vars for pod
+    env_vars = {
+        "REDIS_URL": secrets["REDIS_URL"],
+        "MERCURY_API_KEY": secrets["MERCURY_API_KEY"],
+        "SUPABASE_URL": secrets["SUPABASE_URL"],
+        "SUPABASE_SERVICE_ROLE_KEY": secrets["SUPABASE_SERVICE_ROLE_KEY"],
+    }
 
-    print("\n=== Deployment complete ===")
+    # Recreate pod with env vars
+    new_pod_id = recreate_pod(secrets["RUNPOD_API_KEY"], secrets["RUNPOD_ID"], env_vars)
+
+    print(f"\n=== Deployment complete ===")
+    print(f"New pod: {new_pod_id}")
 
 
 if __name__ == "__main__":

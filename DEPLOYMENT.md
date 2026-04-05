@@ -1,6 +1,6 @@
 # SimHPC Deployment SOP (Standard Operating Procedure)
 
-> Version: 2.6.1 | Last Updated: April 5, 2026
+> Version: 2.6.2 | Last Updated: April 5, 2026
 
 ---
 
@@ -380,7 +380,18 @@ docker push simhpcworker/simhpc-autoscaler:latest
 
 #### 3. Deploy to RunPod Pod
 
-The automated restart script is the easiest way:
+The automated script fetches ALL secrets from Infisical and recreates the pod with env vars:
+
+```bash
+python scripts/deploy_worker.py
+```
+
+This script:
+1. Fetches all secrets from Infisical (RUNPOD_API_KEY, RUNPOD_ID, REDIS_URL, MERCURY_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+2. Builds and pushes Docker images to Docker Hub
+3. Terminates the old pod
+4. Creates a new pod with all environment variables from Infisical
+5. Updates RUNPOD_ID in Infisical
 
 ```bash
 # Restart pod

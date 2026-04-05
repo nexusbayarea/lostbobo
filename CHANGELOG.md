@@ -63,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dashboard Route**: Changed `/dashboard/alpha` to `/dashboard/live` in routing and sidebar link.
 - **Logo Dark Mode**: "Sim" text now renders as white in dark mode for better contrast.
 - **Logo Light Mode**: "Sim" text changed to white for consistent branding across all backgrounds.
+- **Logo Day Mode**: "Sim" text changed to `text-slate-900` (near-black) for readability on light backgrounds.
+- **Logo Icon Dark Mode**: Logo hexagonal mesh icon now renders white in dark mode on Dashboard and Live pages.
 
 ---
 

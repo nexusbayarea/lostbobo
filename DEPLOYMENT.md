@@ -1,6 +1,6 @@
 # SimHPC Deployment SOP (Standard Operating Procedure)
 
-> Version: 2.6.0 | Last Updated: April 5, 2026
+> Version: 2.6.1 | Last Updated: April 5, 2026
 
 ---
 

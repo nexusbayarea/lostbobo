@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **index.html**: Added inline theme detection script to prevent flash of unstyled content.
 - **Light Mode Background**: Changed from pure white (`#ffffff`) to warm cream (`#f1ede0`, HSL `46 38% 91%`) across all light-mode surfaces. Updated `--background`, `--secondary`, `--muted`, `--accent`, `--border`, and `--input` CSS variables. Replaced hardcoded `bg-white` with `bg-background` in Hero, Pricing, WhoItsFor, Stack, and ValueDifferentiator sections.
 - **Google OAuth**: Added "Continue with Google" button to both SignIn and SignUp pages using Supabase `signInWithOAuth({ provider: 'google' })`. Redirects to `/dashboard` after successful auth. GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET configured via Infisical.
+- **Supabase Env Var Naming**: Fixed Supabase client to use `VITE_SUPABASE_ANON` (matching Vercel env var) instead of `VITE_SUPABASE_ANON_KEY`. Added fallback chain: `VITE_SUPABASE_ANON` → `VITE_SUPABASE_ANON_KEY` → `SUPABASE_ANON_KEY`. Updated Zod schema to match.
+- **Auth Pages Styling**: Added Navigation and Footer to SignIn and SignUp pages. Updated form styling for light/dark theme compatibility.
+- **SPA Routing**: Added rewrite rule to `apps/frontend/vercel.json` for client-side routing.
 
 ---
 

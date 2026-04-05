@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const frontendSchema = z.object({
   VITE_SUPABASE_URL: z.string().optional().default(''),
-  VITE_SUPABASE_ANON_KEY: z.string().optional().default(''),
+  VITE_SUPABASE_ANON: z.string().optional().default(''),
   VITE_API_URL: z.string().optional().default(''),
 });
 

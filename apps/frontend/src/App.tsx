@@ -8,6 +8,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
 import { AlphaControlRoom } from '@/pages/AlphaControlRoom';
+import { EngineerNotebook } from '@/pages/EngineerNotebook';
 
 export default function App() {
   return (
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AlphaControlRoom />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notebook"
+            element={
+              <ProtectedRoute>
+                <EngineerNotebook />
               </ProtectedRoute>
             }
           />

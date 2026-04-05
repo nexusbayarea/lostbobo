@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SPA Routing**: Added rewrite rule to `apps/frontend/vercel.json` for client-side routing.
 - **Vercel Build Fix**: Updated `deploy-vercel.yml` workflow to build from `apps/frontend/` directory. Added `env/` module files that were missing from `apps/frontend/src/`.
 - **Documentation**: Updated README.md with full environment variable table, Google OAuth setup SOP, and correct naming conventions. Updated ARCHITECTURE.md, GEMINI.md, AI_DIRECTIVES.md with correct env var names.
+- **Dashboard**: Changed tier label from "Beta Pilot" to "Pilot". Alpha Cockpit link now opens in a new tab (`target="_blank"`).
 
 ---
 

@@ -235,7 +235,7 @@ export function Pricing() {
           transition={{ duration: 0.7, delay: 0.4 }}
           className="text-center text-sm text-slate-500 dark:text-slate-400 mt-8"
         >
-          All plans include a 14-day free trial. No credit card required.
+          Free trial, no credit card required.
         </motion.p>
       </div>
     </section>

@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install requirements to a local folder to be copied later
-COPY requirements.txt .
+COPY services/worker/requirements-autoscaler.txt ./requirements.txt
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # STAGE 2: Production
@@ -23,8 +23,8 @@ WORKDIR /app
 # Copy ONLY the installed packages from the builder
 COPY --from=builder /root/.local /root/.local
 # Copy the updated runpod_api.py and autoscaler logic
-COPY src/runpod_api.py .
-COPY src/autoscaler.py .
+COPY services/worker/runpod_api.py .
+COPY services/worker/autoscaler.py .
 
 # Ensure the local pip binaries are in the path
 ENV PATH=/root/.local/bin:$PATH

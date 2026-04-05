@@ -290,6 +290,116 @@ After adding new `.sql` files to `supabase/migrations/`, push them to Supabase:
 
 ---
 
+## 11. RunPod GPU Worker Deployment
+
+### Architecture
+
+The RunPod worker runs on demand GPU pods managed by the autoscaler:
+
+```
+GitHub → Docker Hub → RunPod (auto-pull & restart)
+```
+
+### Prerequisites
+
+- Docker Hub credentials (`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`) in GitHub Secrets
+- RunPod API key and pod ID stored in **Infisical**
+- Worker image: `simhpcworker/simhpc-worker:latest`
+- Autoscaler image: `simhpcworker/simhpc-autoscaler:latest`
+
+### Step-by-Step SOP
+
+#### 1. Build and Push Worker Image
+
+The worker image auto-deploys via GitHub Actions when `services/worker/**` or `Dockerfile.worker` changes:
+
+```bash
+git add -A && git commit -m "update worker" && git push origin main
+```
+
+Or manually:
+
+```bash
+docker build -f Dockerfile.worker -t simhpcworker/simhpc-worker:latest .
+docker push simhpcworker/simhpc-worker:latest
+```
+
+#### 2. Build and Push Autoscaler Image
+
+The autoscaler image auto-deploys via GitHub Actions when `services/worker/runpod_api.py`, `services/worker/autoscaler.py`, or `Dockerfile.autoscaler` changes:
+
+```bash
+docker build -f Dockerfile.autoscaler -t simhpcworker/simhpc-autoscaler:latest .
+docker push simhpcworker/simhpc-autoscaler:latest
+```
+
+#### 3. Deploy to RunPod Pod
+
+Retrieve secrets from Infisical:
+
+```bash
+# Get RunPod credentials from Infisical
+infisical secrets list --env=prod | findstr RUNPOD
+
+# Required secrets:
+# RUNPOD_API_KEY    - RunPod GraphQL API key
+# RUNPOD_POD_ID     - Target pod ID
+# RUNPOD_SSH_KEY    - SSH private key for pod access
+```
+
+Deploy the new worker image to the RunPod pod:
+
+```bash
+# Restart the pod to pull latest image
+curl -X POST "https://api.runpod.io/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  -d '{"query": "mutation { podRestart(podId: \"'$RUNPOD_POD_ID'\") { id status } }"}'
+```
+
+The RunPod auto-updater (cron inside the pod) will detect the new image and restart within ~5 minutes.
+
+#### 4. Verify Deployment
+
+```bash
+# Check pod status
+curl -X POST "https://api.runpod.io/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  -d '{"query": "{ myself { pods { id name desiredStatus runtime imageName } } }"}'
+
+# SSH into pod (if needed for debugging)
+ssh -i $RUNPOD_SSH_KEY root@$POD_IP
+
+# Check worker logs inside pod
+docker logs -f $(docker ps -q --filter "ancestor=simhpcworker/simhpc-worker:latest")
+```
+
+#### 5. Local Testing (Without GPU)
+
+Use the simplified docker-compose for local testing:
+
+```bash
+# Start Redis + Autoscaler + Mock Worker
+docker-compose up --build
+
+# Services:
+# Redis:    localhost:6379
+# Mock Worker: runs worker logic without GPU
+```
+
+### Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| Pod won't restart | Check `RUNPOD_API_KEY` is valid and pod exists |
+| Old image running | RunPod auto-updater polls every 5 min; manually restart pod |
+| SSH connection refused | Verify `RUNPOD_SSH_KEY` matches pod's public key |
+| Worker crashes on start | Check `docker logs` inside pod for Python errors |
+| Redis connection fails | Verify `REDIS_URL` env var points to correct Redis instance |
+
+---
+
 ## 7. Docker Images
 
 | Image | Tags | Size |

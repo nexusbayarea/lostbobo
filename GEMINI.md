@@ -42,7 +42,7 @@ The core database table is `simulations`. A backward-compatible view named `simu
 - **RunPod HTTP Proxy (v2.3.0)**: Always use the RunPod HTTP Proxy URL for `VITE_API_URL` to prevent "Offline" errors.
 - **Google Auth (v2.5.1)**: Google Client ID `552738566412-t6ba9ar8jnsk7vsd399vhh206569p61e.apps.googleusercontent.com`.
 - **Infisical Setup**: Run `infisical init` in the project root. Secrets may use `SB_URL`/`SB_ANON_KEY` naming.
-- **Supabase Client Naming**: `src/lib/supabase.ts` checks both `VITE_SUPABASE_URL` and `SB_URL` for compatibility.
+- **Supabase Client Naming**: `src/lib/supabase.ts` checks `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON`, and `VITE_SUPABASE_ANON_KEY` with fallbacks to `SUPABASE_URL`/`SUPABASE_ANON_KEY`.
 
 ## Mission Control Dashboards (v2.5.1)
 

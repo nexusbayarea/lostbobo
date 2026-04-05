@@ -47,7 +47,7 @@ Variable access is strictly tiered based on the plane of execution.
 
 | Scope | Allowed Variable Types | Example Keys |
 | :--- | :--- | :--- |
-| **Frontend** | Public/Browser-prefixed only | `VITE_SUPABASE_URL`, `NEXT_PUBLIC_STRIPE_KEY` |
+| **Frontend** | Public/Browser-prefixed only | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON`, `VITE_API_URL` |
 | **Backend** | High-privilege/System keys | `SUPABASE_SERVICE_ROLE_KEY`, `RUNPOD_API_KEY` |
 
 > [!CAUTION]

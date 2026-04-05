@@ -321,7 +321,7 @@ Vite replaces `import.meta.env.VITE_*` at **build time**, not runtime. This mean
 - **Infisical must wrap the build command**: `infisical run --env=prod -- npm run build`
 - **Vercel**: Variables must be set in Vercel Dashboard → Project → Settings → Environment Variables (Production)
 - **Naming**: Keys MUST be prefixed with `VITE_` to be exposed to the frontend bundle. Non-`VITE_` keys (e.g. `SB_URL`) are invisible to the browser.
-- **Zod Schema Validation**: `src/env/schema.ts` defines typed schemas for frontend (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`), backend (`REDIS_URL`, `RUNPOD_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), and full (merged) validation.
+- **Zod Schema Validation**: `src/env/schema.ts` defines typed schemas for frontend (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON`, `VITE_API_URL`), backend (`REDIS_URL`, `RUNPOD_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), and full (merged) validation.
 - **CI Enforcement**: `scripts/validate-env.ts` runs before every build in CI. Prod mode validates full schema, dev/preview validates frontend only. Build fails immediately with clear error if any variable is missing or malformed.
 - **Runtime Safety**: `src/env/client.ts` validates env at module load time, preventing empty strings from ever reaching `createClient()`.
 
@@ -404,7 +404,7 @@ The dedicated health endpoint probes all critical dependencies and returns a str
 
 To balance user security with high-performance worker throughput, SimHPC employs a split Supabase key architecture:
 
-- **Client Plane (Frontend)**: Utilizes `VITE_SUPABASE_ANON_KEY`. Restricted by Row Level Security (RLS) to ensure users can only access their own simulations and profile data.
+- **Client Plane (Frontend)**: Utilizes `VITE_SUPABASE_ANON`. Restricted by Row Level Security (RLS) to ensure users can only access their own simulations and profile data.
 - **Compute Plane (Worker)**: Utilizes `SUPABASE_SERVICE_ROLE_KEY`. Bypasses RLS to allow the worker to update simulation statuses, upload PDFs, and record heartbeats without per-request user authentication overhead.
 
 ### 2. Stable Connectivity (RunPod Proxy)

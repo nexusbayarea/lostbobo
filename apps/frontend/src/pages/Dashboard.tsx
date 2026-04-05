@@ -150,7 +150,7 @@ export function Dashboard() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all group`}
               >
                 <Zap className="w-5 h-5 flex-shrink-0 group-hover:animate-pulse" />
-                {sidebarOpen && <span className="text-sm font-medium">Alpha Cockpit</span>}
+                {sidebarOpen && <span className="text-sm font-medium">Live Center</span>}
               </a>
               <a
                 href="/notebook"
@@ -159,7 +159,7 @@ export function Dashboard() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all group`}
               >
                 <BookOpen className="w-5 h-5 flex-shrink-0 group-hover:animate-pulse" />
-                {sidebarOpen && <span className="text-sm font-medium">Note Book</span>}
+                {sidebarOpen && <span className="text-sm font-medium">Notebook</span>}
               </a>
               
               {isAdmin && (

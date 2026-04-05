@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dashboard**: Changed tier label from "Beta Pilot" to "Pilot". Alpha Cockpit link now opens in a new tab (`target="_blank"`).
 - **Engineer Notebook**: New `/notebook` page with 6 sections (Context, Parameters, Observations, Hypotheses, Next Experiments, Freeform Notes). Autosaves to Supabase `notebooks` table with debounced optimistic UI. Added notebook icon link to Alpha Cockpit sidebar that opens in new tab. Created `005_engineer_notebook.sql` migration with RLS policies and `updated_at` trigger.
 - **Notebook Placement**: Moved Notebook link from Alpha Cockpit sidebar to Dashboard sidebar (under Alpha Cockpit). Uses same icon size and font style as Alpha Cockpit link. Opens in new tab.
+- **Dashboard Labels**: Renamed "Alpha Cockpit" → "Live Center" and "Note Book" → "Notebook".
+- **Alpha Control Room Dark/Light Mode**: Added `dark:` variants to all backgrounds, borders, text colors, and accents. Sidebar, ticker bar, and footer now adapt to theme toggle.
 
 ---
 

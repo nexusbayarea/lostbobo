@@ -13,6 +13,9 @@ on:
           - stop
           - start
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy-runpod:
     runs-on: ubuntu-latest
@@ -26,11 +29,12 @@ jobs:
       - name: Fetch secrets from Infisical
         uses: Infisical/secrets-action@v1.0.15
         with:
-          infisical_url: https://app.infisical.com
-          client_id: ${{ secrets.INFISICAL_CLIENT_ID }}
-          client_secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-          project_id: simhpc
-          env: prod
+          method: universal
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          project-slug: simhpc
+          env-slug: prod
+          domain: https://app.infisical.com
           secrets: |
             RUNPOD_API_KEY
             RUNPOD_POD_ID

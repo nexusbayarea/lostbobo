@@ -51,6 +51,13 @@ with open(path, 'w') as f: f.write(content)"
     nohup uvicorn worker:app --host 0.0.0.0 --port 8000 --reload > /runpod-volume/api.log 2>&1 &
     echo "✅ API started in background. Logs: /runpod-volume/api.log"
     ;;
+  restart-api)
+    echo "🔄 Restarting SimHPC Worker API..."
+    pkill -f uvicorn
+    sleep 2
+    cd /runpod-volume/app && nohup uvicorn worker:app --host 0.0.0.0 --port 8000 --reload > /runpod-volume/api.log 2>&1 &
+    echo "✅ API restarted in background. Logs: /runpod-volume/api.log"
+    ;;
   status)
     echo "📊 SimHPC Stack Status:"
     POD_ID=$(infisical secrets get RUNPOD_ID --plain 2>/dev/null || echo "UNKNOWN")

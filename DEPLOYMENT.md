@@ -179,11 +179,12 @@ Set in **GitHub → Repo Settings → Secrets → Actions**:
 
 | Secret | Source |
 |---|---|
-| `INFISICAL_TOKEN` | Infisical machine identity token (Universal Auth) |
-| `DOCKERHUB_TOKEN` | Docker Hub → Account Settings → Security → Access Tokens |
-| `RUN_POD_SSH_KEY` | RunPod SSH private key |
+| `INFISICAL_CLIENT_ID` | Infisical machine identity client ID |
+| `INFISICAL_CLIENT_SECRET` | Infisical machine identity client secret |
+| `DOCKER_ACCESS_TOKEN` | Docker Hub access token (from Infisical) |
+| `DOCKER_USERNAME` | Docker Hub username (from Infisical) |
 
-> **Note**: All other secrets (Redis, Supabase, RunPod API, Mercury) are pulled from Infisical at build/runtime. Only these 3 secrets are needed in GitHub.
+> **Note**: Docker credentials are fetched from Infisical at runtime via the Infisical action. Only the Infisical machine identity credentials need to be stored in GitHub.
 
 ---
 
@@ -201,7 +202,7 @@ Set in **GitHub → Repo Settings → Secrets → Actions**:
 
 ### Required GitHub Secrets
 
-Same as Worker: `INFISICAL_TOKEN`, `DOCKERHUB_TOKEN`, `RUN_POD_SSH_KEY`
+Same as Worker: `INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`
 
 ---
 

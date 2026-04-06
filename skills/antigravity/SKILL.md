@@ -136,4 +136,4 @@ docker push simhpcworker/simhpc-autoscaler:latest
 |---|---|
 | **Vercel** | Infisical Vercel Integration auto-syncs `VITE_SUPABASE_URL`, `VITE_API_URL` |
 | **RunPod** | Autoscaler uses `INFISICAL_TOKEN` to pull `MERCURY_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` dynamically |
-| **GitHub Actions** | Only 3 secrets needed: `INFISICAL_TOKEN`, `DOCKERHUB_TOKEN`, `RUN_POD_SSH_KEY` |
+| **GitHub Actions** | Infisical secrets-action fetches Docker credentials from Infisical at runtime. Only `INFISICAL_CLIENT_ID` and `INFISICAL_CLIENT_SECRET` stored in GitHub. |

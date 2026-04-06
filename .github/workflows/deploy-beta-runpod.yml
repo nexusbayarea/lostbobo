@@ -12,14 +12,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v5
 
+      - name: Install Infisical CLI
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
+          sudo apt-get install -y infisical
+
+      - name: Load Secrets from Infisical
+        env:
+          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
+        run: |
+          infisical export --env="beta" --format=dotenv > infisical.env
+          cat infisical.env >> "$GITHUB_ENV"
+          # Securely remove temporary file
+          rm infisical.env
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_ACCESS_TOKEN }}
 
       - name: Build and push worker image
         uses: docker/build-push-action@v6
@@ -34,10 +48,10 @@ jobs:
       - name: Deploy to RunPod via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.RUNPOD_SSH_HOST }}
-          username: ${{ secrets.RUNPOD_SSH_USER }}
-          key: ${{ secrets.RUNPOD_SSH_KEY }}
-          port: ${{ secrets.RUNPOD_SSH_PORT }}
+          host: ${{ env.RUNPOD_SSH_HOST }}
+          username: ${{ env.RUNPOD_SSH_USER }}
+          key: ${{ env.RUNPOD_SSH_KEY }}
+          port: ${{ env.RUNPOD_SSH_PORT }}
           script: |
             docker pull simhpcworker/simhpc-worker:latest
             docker stop simhpc-worker || true

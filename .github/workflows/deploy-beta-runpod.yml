@@ -19,6 +19,11 @@ jobs:
           curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
           sudo apt-get update && sudo apt-get install -y infisical
 
+      - name: Initialize Infisical
+        run: |
+          echo "initializing infisical"
+          infisical init --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 --plaintext-output || true
+
       - name: Docker Login & Build
         run: |
           infisical run --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 --env=beta -- bash -c '

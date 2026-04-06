@@ -1,0 +1,41 @@
+# Unified SimHPC: FastAPI + Worker in one container
+FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+# System dependencies
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install API dependencies first (larger, changes less often)
+COPY services/api/requirements.txt ./api-requirements.txt
+RUN pip3 install --no-cache-dir -r api-requirements.txt
+
+# Install Worker dependencies
+COPY services/worker/requirements.txt ./worker-requirements.txt
+RUN pip3 install --no-cache-dir -r worker-requirements.txt
+
+# Copy API source
+COPY services/api/ ./services/api/
+
+# Copy Worker source
+COPY services/worker/ ./services/worker/
+
+# Copy app directory (routes, services, schemas)
+COPY services/api/app/ ./app/
+
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose FastAPI port
+EXPOSE 8000
+
+# Run both API and worker
+CMD ["/start.sh"]

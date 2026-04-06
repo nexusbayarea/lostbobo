@@ -8,10 +8,10 @@ app = getattr(api_mod, "app", None)
 if app is None:
     raise RuntimeError("`api.py` does not define an `app` FastAPI instance")
 
-# Add CORS middleware allowing the Vite dev server origins
+# Add CORS middleware allowing all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:59824", "http://127.0.0.1:59824"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

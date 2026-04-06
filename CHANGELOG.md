@@ -5,6 +5,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.4] - 2026-04-06
+
+### Fixed
+
+- **Simulation Start Error (405)**: Added detailed error message surfacing in `api.ts` — now shows actual HTTP status and backend error detail instead of generic "Failed to start simulation"
+- **Empty Token Guard**: Added authentication check in `Dashboard.tsx` before calling simulation API
+- **Infisical CI Workflow**: Updated `deploy-beta-runpod.yml` — replaced deprecated `--projectId` flag with `.infisical.json` init step, updated env var names from `INFISICAL_CLIENT_ID`/`INFISICAL_CLIENT_SECRET` to `INFISICAL_MACHINE_IDENTITY_ID`/`MAC_ID_SEC`
+
 ## [2.5.3] - 2026-04-05
 
 ### Fixed

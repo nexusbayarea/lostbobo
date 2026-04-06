@@ -1,6 +1,6 @@
 # SimHPC Deployment SOP (Standard Operating Procedure)
 
-> Version: 2.5.3 | Last Updated: April 5, 2026
+> Version: 2.5.4 | Last Updated: April 6, 2026
 
 ---
 
@@ -181,12 +181,14 @@ Set in **GitHub → Repo Settings → Secrets → Actions**:
 
 | Secret | Source |
 |---|---|
-| `INFISICAL_CLIENT_ID` | Infisical machine identity client ID |
-| `INFISICAL_CLIENT_SECRET` | Infisical machine identity client secret |
+| `INFISICAL_MACHINE_IDENTITY_ID` | Infisical machine identity ID (Settings → Machine Identities) |
+| `MAC_ID_SEC` | Infisical machine identity secret |
 | `DOCKER_ACCESS_TOKEN` | Docker Hub access token (from Infisical) |
 | `DOCKER_USERNAME` | Docker Hub username (from Infisical) |
 
 > **Note**: Docker credentials are fetched from Infisical at runtime via the Infisical action. Only the Infisical machine identity credentials need to be stored in GitHub.
+
+> **v2.5.4 Update**: GitHub secret names changed from `INFISICAL_CLIENT_ID`/`INFISICAL_CLIENT_SECRET` to `INFISICAL_MACHINE_IDENTITY_ID`/`MAC_ID_SEC`. The workflow now creates `.infisical.json` automatically — no `infisical init` step needed in CI.
 
 ---
 

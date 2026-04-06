@@ -1,4 +1,4 @@
-name: Deploy Worker (RunPod / Backend Worker)
+name: Deploy Worker to Docker Hub
 
 on:
   push:

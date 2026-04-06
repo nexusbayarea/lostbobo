@@ -16,51 +16,42 @@ on:
 jobs:
   deploy-runpod:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install Infisical CLI
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
-          sudo apt-get update && sudo apt-get install -y infisical
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Initialize Infisical
-        run: |
-          infisical init --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 --plaintext-output || true
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: Install Python and RunPod SDK
-        run: |
-          sudo apt-get install -y python3 python3-pip
-          pip3 install runpod
+      - name: Build and push worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.worker
+          push: true
+          tags: |
+            simhpcworker/simhpc-worker:latest
+            simhpcworker/simhpc-worker:v2.5.3
 
-      - name: Deploy to RunPod
-        run: |
-          infisical run --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 --env=prod -- python3 -c "
-import runpod
-import os
-
-pod_id = os.getenv('RUNPOD_ID')
-action = os.getenv('ACTION', 'restart')
-
-print(f'=== Pod ID: {pod_id}')
-print(f'=== Action: {action}')
-
-if action == 'restart':
-    print(f'Restarting pod {pod_id}...')
-    result = runpod.restart_pod(pod_id)
-elif action == 'stop':
-    print(f'Stopping pod {pod_id}...')
-    result = runpod.stop_pod(pod_id)
-elif action == 'start':
-    print(f'Starting pod {pod_id}...')
-    result = runpod.resume_pod(pod_id)
-
-print(f'=== Result: {result}')
-print('Pod action completed successfully')
-"
-        env:
-          ACTION: ${{ github.event.inputs.action }}
+      - name: Deploy to RunPod via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.RUNPOD_SSH_HOST }}
+          username: ${{ secrets.RUNPOD_SSH_USER }}
+          key: ${{ secrets.RUNPOD_SSH_KEY }}
+          port: ${{ secrets.RUNPOD_SSH_PORT }}
+          script: |
+            docker pull simhpcworker/simhpc-worker:latest
+            docker stop simhpc-worker || true
+            docker rm simhpc-worker || true
+            docker run -d --name simhpc-worker \
+              --gpus all \
+              simhpcworker/simhpc-worker:latest
+            echo "Container restarted with latest image"

@@ -14,11 +14,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY services/worker/requirements-autoscaler.txt ./requirements.txt
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-# STAGE 2: Production
+# STAGE 2: Production v2.5.2-BETA
 # Start with a clean, tiny base
 FROM python:3.11-slim
 
 WORKDIR /app
+
+# Install Infisical CLI inside the container for secret injection
+RUN apt-get update && apt-get install -y curl bash && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash && \
+    apt-get install -y infisical && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the installed packages from the builder
 COPY --from=builder /root/.local /root/.local
@@ -31,5 +37,6 @@ ENV PATH=/root/.local/bin:$PATH
 # Ensure logs are sent straight to terminal without buffering
 ENV PYTHONUNBUFFERED=1
 
-# Run the autoscaler v2.2.1
+# Use Infisical to wrap the execution
+ENTRYPOINT ["infisical", "run", "--"]
 CMD ["python", "autoscaler.py"]

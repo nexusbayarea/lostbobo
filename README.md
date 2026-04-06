@@ -1,10 +1,12 @@
 # SimHPC Mission Control Cockpit
 
+> Version: 2.5.3 | Last Updated: April 5, 2026
+
 The SimHPC Frontend is **LIVE** and accessible at [https://simhpc.com](https://simhpc.com).
 
 This is the public-facing repository for the SimHPC Mission Control Cockpit, a premium interface for aerospace and thermal engineering simulations.
 
-## Architecture (v2.5.1)
+## Architecture (v2.5.3)
 
 ### Single Source of Truth Structure
 
@@ -34,16 +36,20 @@ SimHPC v2.5 consolidates all backend and worker logic into a unified, clean stru
 
 ### Local Alpha Launch
 
-To launch the full "Mission Control" stack locally:
+To launch the full "Mission Control" stack locally using Infisical for secret injection:
 
-1. **Prep your .env**: Ensure your root directory has a `.env` file with your `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SIMHPC_API_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON`, and `VITE_API_URL`.
-2. **Fire it up**:
-
+1. **Connect to the secret vault** (one-time setup):
    ```bash
-   docker-compose up --build
+   infisical login
+   infisical init
    ```
 
-   This starts Redis, the FastAPI orchestrator, the GPU-ready physics worker, and the Nginx-served frontend.
+2. **Fire it up** (secrets injected at runtime):
+   ```bash
+   infisical run -- docker-compose up --build
+   ```
+
+   This starts Redis, the FastAPI orchestrator, the GPU-ready physics worker, and the Nginx-served frontend. No `.env` file needed.
 
 3. **Verify**:
 
@@ -65,19 +71,24 @@ To launch the full "Mission Control" stack locally:
 - **Safety**: `MAX_PODS=3`, budget caps enforced, Redis-persisted activity state
 - **Warm Control**: `Wake GPU` button uses `/api/v1/admin/fleet/warm` for 90s wake-ups.
 
-## v2.5.1: Structural Consolidation & Truth Alignment
+## v2.5.3: RunPod Pipeline & Resilience
 
+- **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
+- **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation
+- **Cancel Endpoint**: Added `DELETE /api/v1/simulations/{sim_id}` for job cancellation
+- **Simulation Pipeline**: Background async pipeline with real-time progress updates
+- **RunPod Integration**: Real GPU job submission and status polling via `RunPodJobClient`
+- **Retry System**: Exponential backoff with max 3 attempts for transient failures
+- **Recovery Worker**: Background task recovers orphaned jobs on API restart
+- **Distributed Locking**: Prevents duplicate job execution across API instances
+- **Telemetry Queue**: Progress pushed to WebSocket for live dashboard updates
+- **Supabase-first**: Listing simulations pulls from Supabase as source of truth
 - **Antigravity Mission Control**: Integrated native MCP skills for fleet management, secure deployments, and financial auditing directly from the AI agent.
-- **Zero-Trust Security**: Transitioned to Infisical-based secret injection (`infisical run --`), eliminating local `.env` risks. All pod IDs, SSH keys, and server details are managed via Infisical.
-- **Single Source of Truth**: Eliminated redundant files. All worker/scaling logic now lives in `services/worker/`.
+- **Zero-Trust Security**: Transitioned to Infisical-based secret injection (`infisical run --`), eliminating local `.env` risks.
+- **Single Source of Truth**: All worker/scaling logic in `services/worker/`.
 - **Core Table**: `simulation_history` → `simulations` with backward-compatible view.
-- **New Tables**: `certificates`, `documents`, `document_chunks`, `simulation_events`.
-- **TypeScript Types**: `db.ts`, `audit.ts`, `api.ts`, `realtime.ts`, `view.ts` — exact schema mirror.
-- **RLS**: Org-level and user-level row security with service-role bypass.
-- **Backend Alignment**: API and worker updated to write to `simulations` table.
-- **Frontend Alignment**: All components updated to use `SimulationRow` type.
 
-### Antigravity Mission Control (v2.5.1)
+### Antigravity Mission Control (v2.5.3)
 
 SimHPC now supports a professional-grade, agent-led "Mission Control" via the Antigravity IDE/CLI. The following MCP skills are available:
 

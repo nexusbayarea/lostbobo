@@ -40,7 +40,9 @@ export function Dashboard() {
 
   // Sync state with active run if any
   useEffect(() => {
-    const hasRunning = simulations.some(s => s.status === 'running' || s.status === 'auditing');
+    const hasRunning = simulations.some(s => 
+      ['queued', 'running', 'retrying', 'auditing'].includes(s.status)
+    );
     setIsRunning(hasRunning);
   }, [simulations]);
 
@@ -80,7 +82,9 @@ export function Dashboard() {
   const handleCancelRun = async () => {
     // Current limitation: we would need a specific jobId to cancel
     // Find the first running job if possible
-    const runningJob = simulations.find(s => s.status === 'running' || s.status === 'auditing');
+    const runningJob = simulations.find(s => 
+      ['queued', 'running', 'retrying', 'auditing'].includes(s.status)
+    );
     if (!runningJob) {
       setIsRunning(false);
       return;

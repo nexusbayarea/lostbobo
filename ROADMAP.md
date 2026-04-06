@@ -43,6 +43,7 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 - [x] **Cockpit Backend Sync (v2.4.1)** - Unified O-D-I-A-V loop state aggregator and explicit command APIs (April 2026)
 - [x] **Supabase Initialization Fix (v2.5.3)** - Fixed Vercel environment variable injection via `envPrefix` (April 2026)
 - [x] **Logo Styling Update (v2.5.3)** - Removed glows/shadows and updated to theme-aware colors (April 2026)
+- [x] **SQL Security Hardening (v2.5.3)** - Hardened functions (SET search_path) and views (security_invoker) (April 2026)
 
 ### Phase 2: Enterprise Features (Completed ✅)
 

@@ -824,6 +824,7 @@ async def lifespan(app: FastAPI):
         logger.warning("SIMHPC_API_KEY not set - running in development mode")
 
     bg_worker = asyncio.create_task(telemetry_worker())
+    recovery_task = asyncio.create_task(simulations_router.recovery_worker())
 
     # Initialize Onboarding Service
     global onboarding_service
@@ -834,10 +835,11 @@ async def lifespan(app: FastAPI):
 
     yield
     bg_worker.cancel()
+    recovery_task.cancel()
     logger.info("SimHPC Platform shutting down")
 
 
-app = FastAPI(title="SimHPC Platform", version="2.5.0", lifespan=lifespan)
+app = FastAPI(title="SimHPC Platform", version="2.5.3", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -869,6 +871,7 @@ simulations_router.init_routes(
     check_rate_limit,
     get_weekly_usage,
     WEEKLY_LIMIT,
+    telemetry_queue,
 )
 
 certificates_router.init_routes(

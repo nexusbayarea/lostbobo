@@ -24,7 +24,9 @@ export function AlphaControlRoom() {
   const [activeTab, setActiveTab] = useState('observe');
   
   // HUD Data
-  const activeCount = simulations.filter(s => s.status === 'running' || s.status === 'auditing').length;
+  const activeCount = simulations.filter(s => 
+    ['queued', 'running', 'retrying', 'auditing'].includes(s.status)
+  ).length;
   const completedCount = simulations.filter(s => s.status === 'completed').length;
   const errorCount = simulations.filter(s => s.status === 'failed').length;
 

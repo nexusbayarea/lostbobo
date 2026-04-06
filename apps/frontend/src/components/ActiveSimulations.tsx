@@ -8,7 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 export function ActiveSimulations() {
   const { user } = useAuth();
   const { simulations, loading } = useSimulations(user?.id);
-  const activeSims = simulations.filter(s => s.status === 'running' || s.status === 'auditing');
+  const activeSims = simulations.filter(s => 
+    ['queued', 'running', 'retrying', 'auditing'].includes(s.status)
+  );
 
   return (
     <Card className="bg-slate-900 border-slate-800 shadow-2xl h-full flex flex-col">

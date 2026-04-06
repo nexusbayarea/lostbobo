@@ -3,7 +3,7 @@ export interface SimulationRow {
   user_id: string;
   job_id: string | null;
   scenario_name: string | null;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status: 'queued' | 'running' | 'retrying' | 'completed' | 'failed' | 'cancelled' | 'auditing';
   result_summary: Record<string, unknown> | null;
   gpu_result: Record<string, unknown> | null;
   created_at: string;

@@ -1,6 +1,6 @@
 # SimHPC Deployment SOP (Standard Operating Procedure)
 
-> Version: 2.6.2 | Last Updated: April 5, 2026
+> Version: 2.5.3 | Last Updated: April 5, 2026
 
 ---
 
@@ -17,7 +17,48 @@ SimHPC has four deployable components:
 
 ---
 
-## 0. Redis (Upstash) Setup
+## 0. Antigravity Infisical Setup (v2.5.2-BETA)
+
+### The Infisical Handshake
+
+Authenticate and connect to the secret vault:
+
+```bash
+infisical login
+infisical init
+```
+
+This connects to the `v2.5.2-BETA` Secret Vault. All subsequent commands use `infisical run --` for secret injection.
+
+### Secret-Safe Build
+
+Build Docker images without local `.env` files:
+
+```bash
+infisical run -- env | grep -v "_gitignore" > .env.tmp && \
+docker-compose build --no-cache && \
+rm .env.tmp
+```
+
+### Runtime Injector
+
+Start the local stack with secrets injected directly into memory:
+
+```bash
+infisical run -- docker-compose up
+```
+
+### Required Secrets in Infisical
+
+| Secret | Description |
+|---|---|
+| `REDIS_URL` | Full Upstash connection URL (rediss://...) |
+| `RUNPOD_API_KEY` | RunPod API key (rpa_...) |
+| `RUNPOD_ID` | RunPod pod ID |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `MERCURY_API_KEY` | Mercury AI API key |
+| `INFISICAL_TOKEN` | Machine identity token for automated workflows |
 
 ### Create Upstash Database
 
@@ -47,17 +88,6 @@ infisical secrets set REDIS_TCP=rediss://default:YOUR_TOKEN@noble-tapir-XXXX.ups
 # Set Redis Token
 infisical secrets set REDIS_TOKEN=YOUR_TOKEN
 ```
-
-### Required Secrets in Infisical
-
-| Secret | Description |
-|---|---|
-| `REDIS_URL` | Full Upstash connection URL (rediss://...) |
-| `RUNPOD_API_KEY` | RunPod API key (rpa_...) |
-| `RUNPOD_ID` | RunPod pod ID |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `MERCURY_API_KEY` | Mercury AI API key |
 
 ---
 
@@ -115,6 +145,7 @@ In **Vercel Dashboard → Project → Settings → General → Build & Developme
 
 - GitHub secrets configured (see below)
 - Docker Hub account with `simhpcworker` org
+- Infisical secrets set (see Section 0)
 
 ### Automatic Deploy
 
@@ -148,8 +179,11 @@ Set in **GitHub → Repo Settings → Secrets → Actions**:
 
 | Secret | Source |
 |---|---|
-| `DOCKER_ACCESS_TOKEN` | Docker Hub → Account Settings → Security → Access Tokens |
-| `DOCKER_USERNAME` | Docker Hub username |
+| `INFISICAL_TOKEN` | Infisical machine identity token (Universal Auth) |
+| `DOCKERHUB_TOKEN` | Docker Hub → Account Settings → Security → Access Tokens |
+| `RUN_POD_SSH_KEY` | RunPod SSH private key |
+
+> **Note**: All other secrets (Redis, Supabase, RunPod API, Mercury) are pulled from Infisical at build/runtime. Only these 3 secrets are needed in GitHub.
 
 ---
 
@@ -167,7 +201,7 @@ Set in **GitHub → Repo Settings → Secrets → Actions**:
 
 ### Required GitHub Secrets
 
-Same as Worker: `DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`
+Same as Worker: `INFISICAL_TOKEN`, `DOCKERHUB_TOKEN`, `RUN_POD_SSH_KEY`
 
 ---
 
@@ -197,11 +231,11 @@ npm install
 npm run dev
 ```
 
-### Full Stack (Docker Compose)
+### Full Stack (Docker Compose) with Infisical
 
 ```bash
-# Create .env file with required variables
-docker-compose up --build
+# Secrets are injected at runtime — no .env file needed
+infisical run -- docker-compose up --build
 ```
 
 Services:
@@ -229,7 +263,7 @@ Services:
 
 ### Docker Hub push fails
 
-- Verify `DOCKER_ACCESS_TOKEN` and `DOCKER_USERNAME` in GitHub secrets
+- Verify `DOCKERHUB_TOKEN` in GitHub secrets
 - Check token has read/write access to `simhpcworker` org
 
 ### RunPod worker not picking up new image

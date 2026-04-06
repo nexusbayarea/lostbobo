@@ -9,13 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **SQL Security (Linter)**: Hardened PostgreSQL functions and views against search path hijacking and RLS bypass:
+- **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch causing "Failed to fetch" errors
+- **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation
+- **Cancel Endpoint**: Added `DELETE /api/v1/simulations/{sim_id}` for job cancellation
+- **SQL Security (Lager)**: Hardened PostgreSQL functions and views against search path hijacking and RLS bypass:
   - Added `SET search_path = public` to `update_updated_at_column` and `update_notebook_entry_updated_at` trigger functions.
   - Set `SECURITY DEFINER` on trigger functions for consistent execution.
   - Added `WITH (security_invoker = true)` to `simulation_history` and `certificate_verification_view` views to ensure they respect querying user's RLS policies.
 - **Supabase Initialization (Vercel)**: Fixed "Supabase client not initialized" error on Vercel by adding `envPrefix: ['VITE_', 'SUPABASE_']` to `vite.config.ts`. This allows Vite to pick up environment variables provided by the Supabase-Vercel integration (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 - **Auth Error Messaging**: Improved error messages on SignIn and SignUp pages when the Supabase client is uninitialized, providing actionable guidance on environment variables.
 - **Environment Schema**: Updated `frontendSchema` and `env/client.ts` to include all possible Supabase environment variable variants for better robustness.
+
+### Added
+
+- **Simulation Pipeline**: Background async pipeline that updates job status, progress, and persists results to Supabase in real-time
+- **Telemetry Queue Integration**: Progress updates pushed to `telemetry_queue` for WebSocket broadcast
+- **Supabase-first Listing**: `/simulations` now pulls from Supabase as source of truth with Redis fallback
+- **Infisical Integration**: Full secret injection for local dev and production deployments
+- **RunPod Integration**: Real GPU job submission and polling via `RunPodJobClient`
+- **Retry System**: Exponential backoff with max attempts (3) for transient failures
+- **Recovery Worker**: Background task that recovers orphaned jobs on API restart
+- **Distributed Locking**: Prevents duplicate job execution across API instances
 
 ### Changed
 

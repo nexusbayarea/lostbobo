@@ -225,6 +225,12 @@ Automatically restarts your RunPod pod after a successful Docker image push. All
 | `RUNPOD_API_KEY` | RunPod API key |
 | `RUNPOD_POD_ID` | Your pod ID (current: `1kpv9yhwcoj1oo`) |
 
+### GitHub Secrets Required
+
+| Secret | Source |
+|---|---|
+| `INFISICAL_TOKEN` | Infisical → Settings → Access Tokens (create a token with read access) |
+
 ### Manual Deploy to RunPod
 
 All secrets come from Infisical. Use the "Deploy to RunPod" workflow:

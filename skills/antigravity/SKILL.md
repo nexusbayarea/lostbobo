@@ -140,6 +140,9 @@ curl -X POST "https://api.runpod.io/graphql" \
 - `RUNPOD_API_KEY`
 - `RUNPOD_POD_ID`
 
+**Required GitHub Secrets:**
+- `INFISICAL_TOKEN` (from Infisical → Settings → Access Tokens)
+
 ## Examples
 - "Run the Infisical handshake to connect to the vault"
 - "Build a secret-safe Docker image without a local .env"

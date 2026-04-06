@@ -25,7 +25,7 @@ app = FastAPI(title="SimHPC Worker API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Quick fix for Vercel/RunPod handshake
+    allow_origins=["https://simhpc-nexusbayareas-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

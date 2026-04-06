@@ -843,7 +843,7 @@ app = FastAPI(title="SimHPC Platform", version="2.5.3", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Or your specific Vercel URL
+    allow_origins=["https://simhpc-nexusbayareas-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

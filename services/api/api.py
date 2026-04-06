@@ -817,7 +817,7 @@ async def lifespan(app: FastAPI):
         logger.info("Redis connection verified")
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
-        raise RuntimeError("Redis required but unavailable")
+        logger.warning("Continuing without Redis for debugging. Simulations will fail until REDIS_URL is fixed.")
 
     # Validate API key is configured
     if not API_KEY:

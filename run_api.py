@@ -2,11 +2,22 @@ import uvicorn
 import os
 import sys
 
-# Ensure the root and services/api are in the path
-sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "services", "api"))
+# 1. Point specifically to the directory containing worker.py
+# On your pod, this is /runpod-volume/app
+app_path = "/runpod-volume/app"
+
+# Fallback for local development if /runpod-volume/app doesn't exist
+if not os.path.exists(app_path):
+    app_path = os.path.join(os.getcwd(), "services", "api")
+    entry_point = "api:app"
+else:
+    entry_point = "worker:app"
+
+sys.path.append(app_path)
+os.chdir(app_path)
 
 if __name__ == "__main__":
-    print("Starting FastAPI server on 0.0.0.0:8000...")
-    # We point to services.api.api:app as that is the verified main entry point
-    uvicorn.run("services.api.api:app", host="0.0.0.0", port=8000, reload=True)
+    print(f"Starting FastAPI server from {app_path}...")
+    # 2. Change 'services.api.api:app' to 'worker:app' 
+    # This matches the worker.py file found in your app folder
+    uvicorn.run(entry_point, host="0.0.0.0", port=8000, reload=True)

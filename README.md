@@ -242,6 +242,26 @@ These must be set in **Vercel → Project Settings → Environment Variables** (
 | `REDIS_URL` | Redis connection string |
 | `RUNPOD_API_KEY` | RunPod GraphQL API key |
 
+### Deployment Pipeline (v2.5.3)
+
+SimHPC uses a professional-grade deployment pipeline for GPU workers:
+
+1. **`scripts/deploy_to_runpod.py`**: Automated Python script that:
+   - Fetches secrets from **Infisical**.
+   - Builds and pushes the worker Docker image.
+   - Orchestrates the **RunPod** pod lifecycle (Terminate Old → Create New).
+   - Syncs the new Pod ID back to Infisical.
+
+2. **CLI Skill (`scripts/simhpc.sh`)**:
+   - `simhpc deploy`: Triggers the full RunPod deployment.
+   - `simhpc logs`: Streams API logs from the pod volume.
+   - `simhpc restart-api`: Gracefully restarts the FastAPI server on the pod.
+
+To deploy the latest worker stack:
+```bash
+./scripts/simhpc.sh deploy
+```
+
 ---
 
 > **Mercury AI**: See [ARCHITECTURE.md](./ARCHITECTURE.md#appendix-mercury-ai-usage-in-alpha) for usage guidelines and health tests.

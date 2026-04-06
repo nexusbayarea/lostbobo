@@ -13,11 +13,11 @@ SimHPC has four deployable components:
 | **Frontend** (Vercel) | Vercel native GitHub integration | Push to `main` |
 | **Worker** (Docker Hub) | GitHub Actions | Push to `main` (path: `services/worker/**`, `Dockerfile.worker`) |
 | **Autoscaler** (Docker Hub) | GitHub Actions | Push to `main` (path: `services/worker/runpod_api.py`, `services/worker/autoscaler.py`, `Dockerfile.autoscaler`) |
-| **RunPod Worker** | Manual restart | After Docker image update |
+| **RunPod Worker** | `simhpc deploy` | Manual (on-demand) |
 
 ---
 
-## 0. Antigravity Infisical Setup (v2.5.2-BETA)
+## 0. Antigravity Infisical Setup (v2.5.3-PRO)
 
 ### The Infisical Handshake
 

@@ -26,11 +26,17 @@ jobs:
         run: |
           echo '{"workspaceId":"f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4","defaultEnvironment":"beta"}' > .infisical.json
 
-      - name: Load Secrets from Infisical
+      - name: Authenticate with Infisical
         shell: bash
         env:
-          INFISICAL_MACHINE_IDENTITY_ID: ${{ secrets.INFISICAL_MACHINE_ID }}
-          INFISICAL_MACHINE_IDENTITY_SECRET: ${{ secrets.MAC_ID_SEC }}
+          INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
+          INFISICAL_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+        run: |
+          export INFISICAL_TOKEN=$(infisical login --method=universal-auth --client-id="$INFISICAL_CLIENT_ID" --client-secret="$INFISICAL_CLIENT_SECRET" --silent --plain)
+          echo "INFISICAL_TOKEN=$INFISICAL_TOKEN" >> "$GITHUB_ENV"
+
+      - name: Load Secrets from Infisical
+        shell: bash
         run: |
           infisical export --env="beta" --format=dotenv | while read -r line; do
             echo "$line" >> "$GITHUB_ENV"

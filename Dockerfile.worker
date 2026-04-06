@@ -50,11 +50,12 @@ RUN chmod +x worker.py && chown appuser:appuser worker.py
 # Expose ports for SSH (22), Jupyter (8888), and worker (19123)
 EXPOSE 22 8888 19123
 
-# Create startup script
+# Create startup script with proper user handling
 RUN echo '#!/bin/bash' > /start.sh && \
     echo 'export HOME=/home/appuser' >> /start.sh && \
-    echo 'service ssh start' >> /start.sh && \
-    echo 'sudo -u appuser jupyter lab --ip=0.0.0.0 --no-browser --allow-root &' >> /start.sh && \
+    echo 'mkdir -p /run/sshd' >> /start.sh && \
+    echo '/usr/sbin/sshd' >> /start.sh && \
+    echo 'cd /home/appuser && jupyter lab --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token="" --NotebookApp.password="" &' >> /start.sh && \
     echo 'python3 -u worker.py' >> /start.sh && \
     chmod +x /start.sh
 

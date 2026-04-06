@@ -4,13 +4,16 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Install Infisical CLI
         run: |
@@ -18,13 +21,14 @@ jobs:
           sudo apt-get install -y infisical
 
       - name: Load Secrets from Infisical
+        shell: bash
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
-          infisical export --env="beta" --format=dotenv > infisical.env
-          cat infisical.env >> "$GITHUB_ENV"
-          # Securely remove temporary file
-          rm infisical.env
+          # Use export and append to GITHUB_ENV properly
+          infisical export --env="beta" --format=dotenv | while read -r line; do
+            echo "$line" >> "$GITHUB_ENV"
+          done
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

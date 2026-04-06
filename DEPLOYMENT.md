@@ -223,7 +223,7 @@ Automatically restarts your RunPod pod after a successful Docker image push.
 | Secret | Description |
 |---|---|
 | `RUNPOD_API_KEY` | RunPod API key |
-| `RUNPOD_POD_ID` | Your pod ID |
+| `RUNPOD_POD_ID` | Your pod ID (current: `1kpv9yhwcoj1oo`) |
 
 ### Manual Deploy to RunPod
 

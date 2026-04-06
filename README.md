@@ -255,7 +255,10 @@ SimHPC uses a professional-grade deployment pipeline for GPU workers:
 2. **CLI Skill (`scripts/simhpc.sh`)**:
    - `simhpc deploy`: Triggers the full RunPod deployment.
    - `simhpc logs`: Streams API logs from the pod volume.
-   - `simhpc restart-api`: Gracefully restarts the FastAPI server on the pod.
+   - `simhpc start-api`: Starts the worker API in the background with logging.
+   - `simhpc restart-api`: Kills existing uvicorn processes and restarts the API.
+   - `simhpc fix-all`: Injects CORS fix and restarts the API.
+   - `simhpc status`: Displays live health URLs.
 
 To deploy the latest worker stack:
 ```bash

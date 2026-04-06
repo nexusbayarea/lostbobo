@@ -589,7 +589,10 @@ A bash wrapper for common operational tasks on the worker pod:
 
 - **`simhpc deploy`**: Execute the full Python deployment pipeline.
 - **`simhpc logs`**: View real-time logs from the FastAPI server running on the pod.
-- **`simhpc restart-api`**: Bounce the FastAPI server without restarting the entire pod.
+- **`simhpc start-api`**: Starts the worker API in the background with logging to `/runpod-volume/api.log`.
+- **`simhpc restart-api`**: Kills existing uvicorn processes and restarts the API using `worker:app`.
+- **`simhpc fix-all`**: Automatically applies CORS fixes and restarts the API.
+- **`simhpc status`**: Displays live health URLs for the RunPod API and Frontend.
 
 **Usage**:
 ```bash

@@ -13,9 +13,6 @@ on:
           - stop
           - start
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy-runpod:
     runs-on: ubuntu-latest
@@ -26,21 +23,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Fetch secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.15
-        with:
-          method: universal
-          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
-          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-          project-slug: simhpc
-          env-slug: prod
-          domain: https://app.infisical.com
-          secrets: |
-            RUNPOD_API_KEY
-            RUNPOD_POD_ID
+      - name: Install Infisical CLI
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
+          sudo apt-get update && sudo apt-get install -y infisical
 
       - name: RunPod Pod Action
         run: |
+          # Export token and run infisical to get secrets
+          export INFISICAL_TOKEN="${{ secrets.INFISICAL_TOKEN }}"
+          
+          infisical secrets export --env=prod --secret-names=RUNPOD_API_KEY,RUNPOD_POD_ID --format=json > /tmp/secrets.json
+          
+          RUNPOD_API_KEY=$(grep -o '"RUNPOD_API_KEY": *"[^"]*"' /tmp/secrets.json | cut -d'"' -f4)
+          RUNPOD_POD_ID=$(grep -o '"RUNPOD_POD_ID": *"[^"]*"' /tmp/secrets.json | cut -d'"' -f4)
+          
           echo "=== Pod ID: $RUNPOD_POD_ID"
           echo "=== Action: $ACTION"
           

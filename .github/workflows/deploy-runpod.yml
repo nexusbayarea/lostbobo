@@ -38,7 +38,7 @@ import os
 import runpod
 
 runpod.api_key = os.getenv('RUNPOD_API_KEY')
-pod_id = os.getenv('RUNPOD_ID')
+pod_id = '1kpv9yhwcoj1oo'
 action = os.getenv('ACTION', 'restart')
 
 print(f'=== Pod ID: {pod_id}')
@@ -59,5 +59,4 @@ print('Pod action completed successfully')
 "
         env:
           RUNPOD_API_KEY: ${{ secrets.INFISICAL_TOKEN }}
-          RUNPOD_POD_ID: ${{ secrets.RUNPOD_POD_ID }}
           ACTION: ${{ github.event.inputs.action }}

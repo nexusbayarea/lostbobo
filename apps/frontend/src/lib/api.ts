@@ -22,7 +22,18 @@ export const api = {
       },
       body: JSON.stringify(params),
     });
-    if (!response.ok) throw new Error('Failed to start simulation');
+    if (!response.ok) {
+      let detail = `Failed to start simulation (${response.status})`;
+      try {
+        const body = await response.json();
+        if (body.detail) {
+          detail = typeof body.detail === 'string' ? body.detail : body.detail.message || JSON.stringify(body.detail);
+        }
+      } catch {
+        // body not JSON, use status-based message
+      }
+      throw new Error(detail);
+    }
     return response.json();
   },
 

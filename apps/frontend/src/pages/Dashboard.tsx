@@ -51,6 +51,12 @@ export function Dashboard() {
       setIsRunning(true);
       const token = await getToken();
       
+      if (!token) {
+        toast.error('Authentication error: Please sign in again');
+        setIsRunning(false);
+        return;
+      }
+      
       const config = {
         parameters: parameters.map(p => ({
           name: p.name,

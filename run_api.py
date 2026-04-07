@@ -26,9 +26,7 @@ except ImportError as e:
 # Force add CORS middleware just in case
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://simhpc-nexusbayareas-projects.vercel.app"
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

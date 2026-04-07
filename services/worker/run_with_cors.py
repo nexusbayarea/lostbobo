@@ -11,7 +11,7 @@ if app is None:
 # Add CORS middleware allowing all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://simhpc-nexusbayareas-projects.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

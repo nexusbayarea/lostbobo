@@ -12,6 +12,21 @@ Build, push, and deploy SimHPC unified stack to RunPod GPU instances.
 
 ## Version: 2.5.5
 
+## Vault-First Protocol
+
+**Golden Rule:** Never put secrets in files tracked by Git. Use `os.getenv()` or `process.env`.
+
+### Required Infisical Keys
+
+| Key | Purpose |
+|-----|---------|
+| `RUNPOD_API_KEY` | Provisioning new pods |
+| `VITE_API_URL` | Dynamic proxy URL for frontend |
+| `ALLOWED_ORIGINS` | CORS origins |
+| `REDIS_URL` | Cache connection |
+| `SUPABASE_JWT_SECRET` | Auth verification |
+| `SIMHPC_API_KEY` | API access |
+
 ## Unified Deployment
 
 Deploy API, Worker, and Autoscaler in a single pod for maximum performance.
@@ -65,7 +80,7 @@ CMD ["./start.sh"]
 ```bash
 #!/bin/bash
 
-echo "Starting SimHPC v2.5.4 Unified..."
+echo "Starting SimHPC v2.5.5 Unified..."
 
 cd /app
 export PYTHONPATH=/app
@@ -82,94 +97,64 @@ python3 -u autoscaler.py &
 wait
 ```
 
-## Phase 4: Dynamic Pod Synchronization
+## Deploy Commands
 
-When a new Pod is provisioned, capture and inject values into the pipeline:
+```bash
+# 1. Build & Push Docker
+docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
+docker push simhpcworker/simhpc-unified:latest
 
-1. **`RUNPOD_POD_ID`**: The unique identifier (e.g., `q8sk0ehjvmevy6`)
-2. **`RUNPOD_HTTPS_PROXY`**: `https://{POD_ID}-8000.proxy.runpod.net`
-3. **`RUNPOD_SSH_CMD`**: `ssh root@{POD_IP} -p {PORT}`
+# 2. Provision Pod (reads RUNPOD_API_KEY from env)
+python scripts/deploy_unified.py
 
-### sync-pod.sh Script
+# 3. Sync metadata to Infisical & Vercel
+./scripts/sync-pod.sh <POD_ID>
+```
 
-Add this script to `scripts/sync-pod.sh` to automate Infisical and Vercel updates:
+### sync-pod.sh
 
 ```bash
 #!/bin/bash
-# Usage: ./scripts/sync-pod.sh <POD_ID>
-
 POD_ID=$1
 HTTPS_URL="https://${POD_ID}-8000.proxy.runpod.net"
 
-if [ -z "$POD_ID" ]; then
-    echo "Error: No Pod ID provided."
-    exit 1
-fi
-
-echo "Updating Infisical with new Pod Metadata..."
 infisical secrets set RUNPOD_POD_ID=$POD_ID --env=production
 infisical secrets set VITE_API_URL=$HTTPS_URL --env=production
-
-echo "Triggering Vercel Frontend Update..."
 infisical run --env=production -- vercel env add VITE_API_URL production $HTTPS_URL --force
-infisical run --env=production -- vercel --prod --yes
-
-echo "Sync Complete. Frontend is now pointing to $HTTPS_URL"
+infisical run --env=production -- vercel --prod --yes --force
 ```
 
-## Build & Deploy Commands
-
-```bash
-# Build
-docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
-
-# Push
-docker push simhpcworker/simhpc-unified:latest
-
-# Deploy (Python)
-python scripts/deploy_unified.py
-```
-
-## Complete Deploy Script (v2.5.5)
-
-Use this script to build, deploy, and sync the entire stack:
+## Complete Deploy Flow
 
 ```bash
 #!/bin/bash
 
-echo "[1/5] Building & Pushing Unified Docker Image..."
+echo "[1/4] Building & Pushing Docker..."
 docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
 docker push simhpcworker/simhpc-unified:latest
 
-echo "[2/5] Provisioning New RunPod Instance..."
+echo "[2/4] Provisioning Pod..."
 NEW_POD_ID=$(python3 scripts/deploy_unified.py | grep -oP '(?<=pod_id: )[a-z0-9]+')
 
-echo "[3/5] Syncing Metadata to Infisical & Vercel..."
+echo "[3/4] Syncing to Infisical & Vercel..."
 ./scripts/sync-pod.sh $NEW_POD_ID
 
-echo "[4/5] Updating GitHub Repository..."
-git add .
-git commit -m "deploy: update pod to $NEW_POD_ID"
-git push origin main
+echo "[4/4] Updating GitHub..."
+git add . && git commit -m "deploy: pod $NEW_POD_ID" && git push
 
-echo "[5/5] Fleet Synchronized."
+echo "Fleet Synchronized."
 ```
 
 ## Current Deployment (v2.5.5)
 
-| Service | Pod Name | Pod ID | GPU | HTTP Proxy |
-|---|---|---|---|---|
-| Unified | SimHPC-Unified-v2.5.5 | q41n3g4zwr84wt | NVIDIA A40 | https://q41n3g4zwr84wt-8000.proxy.runpod.net |
+| Service | Pod ID | HTTP Proxy |
+|---------|--------|------------|
+| Unified | q41n3g4zwr84wt | https://q41n3g4zwr84wt-8000.proxy.runpod.net |
 
 **Vercel**: https://frontend-chi-plum-13.vercel.app
-
-## Infisical Integration
-
-Use Infisical for secret management instead of hardcoded env vars.
 
 ## Examples
 
 - "Build and push the unified image to Docker Hub"
 - "Deploy a new GPU pod to RunPod"
 - "Sync new pod metadata to Infisical and Vercel"
-- "Sync secrets and deploy with Infisical"

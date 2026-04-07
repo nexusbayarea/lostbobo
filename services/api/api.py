@@ -841,13 +841,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SimHPC Platform", version="2.5.3", lifespan=lifespan)
 
+# Add this BEFORE any other routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Explicitly handle OPTIONS requests for the specific path
+@app.options("/api/v1/simulations")
+async def preflight_simulations():
+    return {}
 
 # --- ROUTE INITIALIZATION ---
 simulations_router.init_routes(

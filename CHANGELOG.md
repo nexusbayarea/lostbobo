@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.5.4] - 2026-04-06
 
+### Added
+
+- **Full Fleet Build (v2.5.3)**: Built and pushed hardened, non-root Docker images for the entire SimHPC ecosystem:
+  - `simhpc-worker:v2.5.3`: NVIDIA CUDA 12.8.1 runtime with CVE remediations and non-root execution.
+  - `simhpc-api:v2.5.3`: Hardened multi-stage build with gunicorn/uvicorn and non-root user.
+  - `simhpc-autoscaler:v2.5.3`: Infisical-integrated multi-stage build for secure secret injection.
+
 ### Fixed
 
 - **Simulation Start Error (405)**: Added detailed error message surfacing in `api.ts` — now shows actual HTTP status and backend error detail instead of generic "Failed to start simulation"

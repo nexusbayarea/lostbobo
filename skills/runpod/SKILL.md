@@ -153,6 +153,17 @@ echo "Fleet Synchronized."
 
 **Vercel**: https://frontend-chi-plum-13.vercel.app
 
+## Manual Pod Restart (to pull new image)
+
+If the pod needs to pick up a new Docker image:
+```bash
+# Stop the pod
+runpod stop q41n3g4zwr84wt
+
+# Start it again (will pull latest image)
+runpod start q41n3g4zwr84wt
+```
+
 ## Examples
 
 - "Build and push the unified image to Docker Hub"

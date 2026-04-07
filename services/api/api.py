@@ -81,12 +81,12 @@ CORS_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()]
 try:
     from supabase import create_client, Client
 
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    SB_URL = os.getenv("SB_URL")
+    SB_SERVICE_KEY = os.getenv("SB_SERVICE_KEY")
 
     supabase_client: Optional[Client] = None
-    if SUPABASE_URL and SUPABASE_SERVICE_KEY:
-        supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    if SB_URL and SB_SERVICE_KEY:
+        supabase_client = create_client(SB_URL, SB_SERVICE_KEY)
         logger.info("Supabase client initialized for control commands")
     else:
         logger.warning(

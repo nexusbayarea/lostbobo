@@ -6,14 +6,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Mandatory Secret - The system will fail fast if not configured
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
-if not SUPABASE_JWT_SECRET:
+SB_JWT_SECRET = os.getenv("SB_JWT_SECRET")
+if not SB_JWT_SECRET:
     raise RuntimeError(
-        "CRITICAL SECURITY: SUPABASE_JWT_SECRET is missing. "
+        "CRITICAL SECURITY: SB_JWT_SECRET is missing. "
         "JWT verification is disabled until this secret is set."
     )
 
-SUPABASE_AUDIENCE = os.getenv("SUPABASE_AUDIENCE", "authenticated")
+SB_AUDIENCE = os.getenv("SB_AUDIENCE", "authenticated")
 
 
 def verify_user(authorization: str = Header(None)):
@@ -31,9 +31,9 @@ def verify_user(authorization: str = Header(None)):
     try:
         payload = jwt.decode(
             token,
-            SUPABASE_JWT_SECRET,
+            SB_JWT_SECRET,
             algorithms=["HS256"],
-            audience=SUPABASE_AUDIENCE,
+            audience=SB_AUDIENCE,
             options={
                 "verify_exp": True,
                 "verify_aud": True,

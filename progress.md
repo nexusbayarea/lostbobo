@@ -6,7 +6,27 @@
 
 ## Current Status
 
-- **v2.6.10**: **Manifest Fixed** + **crossorigin Added** + **Alpha Control New Tab**
+- **v2.6.11**: **Manifest Simplified** + **Icons Removed** + **Navigation Cleanup**
+
+## v2.6.11: Manifest Cleanup (April 2026)
+
+### Fix Applied
+
+1. **Simplified Manifest** - Removed broken icon references from `site.webmanifest`:
+   ```json
+   {
+     "name": "SimHPC",
+     "short_name": "SimHPC",
+     "start_url": "/",
+     "display": "standalone",
+     "background_color": "#0f172a",
+     "theme_color": "#0f172a"
+   }
+   ```
+
+2. **Removed broken icon references** - Icons don't exist in public folder
+
+---
 
 ## v2.6.10: Manifest Fix (April 2026)
 

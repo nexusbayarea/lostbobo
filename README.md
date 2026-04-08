@@ -80,6 +80,8 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
   - simhpcworker/simhpc-worker:latest
   - simhpcworker/simhpc-api:latest
   - simhpcworker/simhpc-autoscaler:latest
+- **Config Sync**: Added config_loader.py for Supabase-based config with drift detection
+- **CI Fix**: Updated auto-deploy-runpod.yml workflow with proper Infisical token injection
 
 - **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
 - **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation

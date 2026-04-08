@@ -153,6 +153,34 @@ runpod stop $POD_ID
 runpod start $POD_ID
 ```
 
+## Config Sync (Drift Detection)
+
+Workers load config from Supabase with hash verification:
+
+```python
+# services/worker/config_loader.py
+from supabase import create_client
+
+supabase = create_client(os.getenv("SB_URL"), os.getenv("SB_SERVICE_ROLE_KEY"))
+
+def load_config(env="prod"):
+    return supabase.table("config_versions").select("config, hash").eq("env", env).order("created_at", ascending=False).limit(1).single().execute()
+
+# Drift detection - worker auto-restarts if config changes
+```
+
+### Supabase Tables Required
+
+```sql
+create table config_versions (
+  id uuid primary key default gen_random_uuid(),
+  env text not null,
+  config jsonb not null,
+  hash text not null,
+  created_at timestamptz default now()
+);
+```
+
 ## Examples
 
 - "Build and push the unified image to Docker Hub"

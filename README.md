@@ -77,10 +77,22 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 - **Experiment Notebook**: Opens in new tab from dashboard sidebar
 - **Vercel Routing Fix**: Updated vercel.json rewrites to redirect all paths to index.html for proper React Router deep linking
 - **Docker Images Pushed**: 
-  - simhpcworker/simhpc-unified:latest
-  - simhpcworker/simhpc-worker:latest
-  - simhpcworker/simhpc-api:latest
-  - simhpcworker/simhpc-autoscaler:latest
+  - simhpcworker/simhpc-unified:latest (GPU worker + API + autoscaler)
+  - simhpcworker/simhpc-worker:latest (GPU physics worker)
+  - simhpcworker/simhpc-api:latest (FastAPI orchestrator)
+  - simhpcworker/simhpc-autoscaler:latest (RunPod autoscaler)
+
+### To deploy to RunPod (when Infisical available):
+
+```bash
+# Restart existing pod to pull new image
+infisical run -- python scripts/restart_pod.py
+
+# Or sync pod metadata to Infisical & Vercel
+./scripts/sync-pod.sh q41n3g4zwr84wt
+```
+
+**Current Pod**: q41n3g4zwr84wt (https://q41n3g4zwr84wt-8000.proxy.runpod.net)
 
 - **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
 - **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation

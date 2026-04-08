@@ -151,16 +151,19 @@ echo "Fleet Synchronized."
 |---------|--------|------------|
 | Unified | q41n3g4zwr84wt | https://q41n3g4zwr84wt-8000.proxy.runpod.net |
 
-**Vercel**: https://frontend-chi-plum-13.vercel.app
+**Docker Image**: simhpcworker/simhpc-unified:latest (pushed April 8, 2026)
+
+**Vercel**: https://simhpc.com
 
 ## Manual Pod Restart (to pull new image)
 
-If the pod needs to pick up a new Docker image:
+If the pod needs to pick up a new Docker image (must have RUNPOD_API_KEY from Infisical):
 ```bash
-# Stop the pod
-runpod stop q41n3g4zwr84wt
+# Using the restart script with Infisical
+infisical run -- python scripts/restart_pod.py
 
-# Start it again (will pull latest image)
+# Or manually:
+runpod stop q41n3g4zwr84wt
 runpod start q41n3g4zwr84wt
 ```
 

@@ -100,15 +100,13 @@ wait
 ## Deploy Commands
 
 ```bash
-# 1. Build & Push Docker
-docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
-docker push simhpcworker/simhpc-unified:latest
+# Push code to trigger GitHub Actions
+git push origin main
 
-# 2. Provision Pod (reads RUNPOD_API_KEY from env)
-python scripts/deploy_unified.py
-
-# 3. Sync metadata to Infisical & Vercel
-./scripts/sync-pod.sh <POD_ID>
+# The workflow will:
+# 1. Login to Docker Hub (using native synced secrets)
+# 2. Build & push simhpcworker/simhpc-unified:latest
+# 3. Trigger auto-deploy-runpod.yml to restart pod
 ```
 
 ### sync-pod.sh
@@ -118,10 +116,10 @@ python scripts/deploy_unified.py
 POD_ID=$1
 HTTPS_URL="https://${POD_ID}-8888.proxy.runpod.net"
 
+# Note: Use native GitHub secrets or Infisical CLI locally
 infisical secrets set RUNPOD_POD_ID=$POD_ID --env=production
 infisical secrets set VITE_API_URL=$HTTPS_URL --env=production
 infisical run --env=production -- vercel env add VITE_API_URL production $HTTPS_URL --force
-infisical run --env=production -- vercel --prod --yes --force
 ```
 
 ## Current Deployment (v2.5.6)

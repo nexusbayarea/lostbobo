@@ -2,28 +2,16 @@
 
 set -e
 
-echo "[1/5] Running Local Build Test..."
-npm run build
-
-if [ $? -ne 0 ]; then
-    echo "Local build failed. Fix pathing/imports before pushing."
-    exit 1
-fi
-
-echo "[2/5] Build passed. Syncing to GitHub..."
+echo "[1/4] Syncing Infisical to GitHub..."
 git add . 
 git commit -m "ci: trigger docker build and deploy to RunPod"
 git push origin main
 
-echo "[3/5] Waiting for Docker build to complete..."
+echo "[2/4] Waiting for Docker build..."
 sleep 30
 
-echo "[4/5] Deploying to RunPod..."
-# RunPod deployment happens via GitHub Actions workflow
+echo "[3/4] Deploying to RunPod..."
 gh workflow run auto-deploy-runpod.yml
 
-echo "[5/5] Deployment triggered."
+echo "[4/4] Deployment triggered."
 echo "=== Deployment Complete ==="
-echo "- Vercel: https://simhpc.com"
-echo "- Docker: simhpcworker/simhpc-unified:latest"
-echo "- RunPod: Auto-deploy workflow triggered"

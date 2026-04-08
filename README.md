@@ -71,7 +71,7 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 - **Safety**: `MAX_PODS=3`, budget caps enforced, Redis-persisted activity state
 - **Warm Control**: `Wake GPU` button uses `/api/v1/admin/fleet/warm` for 90s wake-ups.
 
-## v2.5.6: Port 8888 Migration & SB Prefix
+## v2.5.6: Port 8888 Migration & Native Secret Sync
 
 - **Port Migration**: Changed from port 8000 to 8888 for RunPod compatibility
 - **SB Prefix**: Supabase keys now use SB_ prefix for Infisical compatibility
@@ -80,8 +80,8 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
   - simhpcworker/simhpc-worker:latest
   - simhpcworker/simhpc-api:latest
   - simhpcworker/simhpc-autoscaler:latest
-- **Config Sync**: Added config_loader.py for Supabase-based config with drift detection
-- **CI Fix**: Updated auto-deploy-runpod.yml workflow with proper Infisical token injection
+- **Native Secret Sync**: Uses Infisical GitHub App integration (no CLI in CI)
+- **Config Loader**: Added config_loader.py for Supabase-based config with drift detection
 
 - **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
 - **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation

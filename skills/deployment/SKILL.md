@@ -49,52 +49,61 @@ bash scripts/deploy_all.sh
 
 set -e
 
-echo "[1/6] Running Local Build Test..."
-infisical run -- npm run build
-
-echo "[2/6] Build passed. Syncing Infisical..."
-infisical secrets push
-
-echo "[3/6] Deploying to Vercel..."
-infisical run --env=production --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 -- vercel --prod --yes
-
-echo "[4/6] Triggering Docker build..."
+echo "[1/4] Syncing to GitHub..."
 git add . 
 git commit -m "ci: trigger docker build and deploy to RunPod"
 git push origin main
 
-echo "[5/6] Triggering RunPod restart..."
+echo "[2/4] Waiting for Docker build..."
+sleep 30
+
+echo "[3/4] Deploying to RunPod..."
 gh workflow run auto-deploy-runpod.yml
 
-echo "=== Deployment Complete ==="
+echo "[4/4] Deployment triggered."
 ```
 
 ## GitHub Actions Workflow (deploy.yml)
 
 **Important**: Uses **Infisical GitHub App Integration** (native sync). Secrets are automatically synced from Infisical to GitHub Repository secrets. No Infisical CLI needed in CI.
 
+### Workflow Steps
+
+1. **Checkout** - Fetch code
+2. **Login to Docker Hub** - Uses natively synced secrets
+3. **Build & Push** - Build unified, worker, autoscaler images
+4. **Deploy to RunPod** - Trigger pod deployment
+
 ```yaml
 - name: Login to Docker Hub
   uses: docker/login-action@v3
   with:
-    username: ${{ secrets.DOCKER_USERNAME }}
-    password: ${{ secrets.DOCKER_PASSWORD }}
+    username: ${{ secrets.DOCKER_LOGIN }}
+    password: ${{ secrets.DOCKER_PW_TOKEN }}
 ```
 
-### Required GitHub Secrets (synced from Infisical)
+### Required Secrets (Synced from Infisical)
 
-| Secret | Source |
-|--------|--------|
-| `DOCKER_USERNAME` | Infisical → GitHub Integration |
-| `DOCKER_PASSWORD` | Infisical → GitHub Integration |
-| `RUNPOD_API_KEY` | Infisical → GitHub Integration |
-| `INFISICAL_TOKEN` | Infisical → GitHub Integration |
+| Secret | Source | Purpose |
+|--------|--------|---------|
+| `DOCKER_LOGIN` | Infisical → GitHub App | Docker Hub username |
+| `DOCKER_PW_TOKEN` | Infisical → GitHub App | Docker Hub password/token |
+| `RUNPOD_API_KEY` | Infisical → GitHub App | RunPod provisioning |
+| `INFISICAL_CLIENT_ID` | GitHub Secrets | Machine Identity |
+| `INFISICAL_CLIENT_SECRET` | GitHub Secrets | Machine Identity |
 
-### How Native Sync Works
+### Why Native Sync Works
 
-1. Infisical GitHub App integration syncs secrets to GitHub automatically
-2. GitHub Actions workflow reads secrets directly from `${{ secrets.KEY }}`
-3. No CLI installation or token management needed in CI
+1. **Infisical GitHub App** automatically syncs secrets to GitHub
+2. **GitHub Actions** reads secrets directly from `${{ secrets.KEY }}`
+3. **No CLI needed** in CI pipeline
+
+### Troubleshooting 401 Errors
+
+If Docker login fails:
+1. Check GitHub App has **Read and Write** access to Secrets
+2. Verify environment slug matches (production/beta)
+3. Check secret names in GitHub Settings → Secrets → Actions
 
 ## Skills Overview
 

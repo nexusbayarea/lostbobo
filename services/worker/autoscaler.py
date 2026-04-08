@@ -47,13 +47,15 @@ from runpod_api import (
 # ---------------------------------------------------------------------------
 REDIS_URL        = os.getenv("REDIS_URL",      "redis://localhost:6379/0")
 QUEUE_NAME       = os.getenv("QUEUE_NAME",     "simhpc_jobs")
-CHECK_INTERVAL   = int(os.getenv("CHECK_INTERVAL",   "15"))
-IDLE_TIMEOUT     = int(os.getenv("IDLE_TIMEOUT",     "300"))   # 5 min
+CHECK_INTERVAL   = int(os.getenv("CHECK_INTERVAL",   "10"))    # Increased resolution
+IDLE_TIMEOUT     = int(os.getenv("IDLE_TIMEOUT",     "120"))   # Reduced from 300s -> 120s for cost savings
+
+# Dormant Shutdown (v2.6.0): Terminate pods inactive for > 48 hours to save volume costs
+LONG_TERM_IDLE_TIMEOUT = int(os.getenv("LONG_TERM_IDLE_TIMEOUT", "172800")) 
 
 # Cost guards
 DAILY_WARN_USD   = float(os.getenv("DAILY_COST_WARN_USD",     "5.0"))
 DAILY_CAP_USD    = float(os.getenv("DAILY_COST_HARD_CAP_USD", "15.0"))
-
 # Network Volume config (set in RunPod dashboard, referenced here for logs)
 NETWORK_VOLUME_MOUNT = os.getenv("NETWORK_VOLUME_MOUNT", "/workspace")
 
@@ -173,8 +175,9 @@ def scale():
     running, stopped   = sync_pods()
     current            = len(running)
 
-    # Charge cost only for running pods (stopped = disk only ≈ free)
-    _update_cost_tracking(current, DEFAULT_GPU_TYPE)
+    # V2.6.0: Pass actual CHECK_INTERVAL for 100% cost accuracy
+    from runpod_api import terminate_pod
+    _update_cost_tracking(current, CHECK_INTERVAL, DEFAULT_GPU_TYPE)
 
     now = time.time()
 
@@ -262,19 +265,33 @@ def scale():
                 except Exception as e:
                     logger.error(f"Failed to stop {pod_id}: {e}")
 
+    # ── DORMANT TERMINATION (v2.6.0) ──────────────────────────────────
+    # To save on disk costs, terminate pods stopped for > 48 hours
+    if q_len == 0 and stopped:
+        idle_sec = now - last_active_time
+        if idle_sec > LONG_TERM_IDLE_TIMEOUT:
+            logger.info(f"DORMANT: Pods stopped for > 48h. TERMINATING to save volume costs.")
+            for pod_id in stopped:
+                try:
+                    terminate_pod(pod_id)
+                    logger.info(f"Terminated dormant pod: {pod_id}")
+                    _record_event("pod_dormant_terminated", pod_id, f"idle_sec={idle_sec}")
+                except Exception as e:
+                    logger.error(f"Failed to terminate dormant {pod_id}: {e}")
+
 
 # ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 def main():
     logger.info("=" * 60)
-    logger.info("SimHPC Autoscaler v2.3.0 — Option C: On-demand + Network Volume")
+    logger.info("SimHPC Autoscaler v2.6.0 — Cost-Optimized Option C")
     logger.info("=" * 60)
-    logger.info(f"Strategy: STOP on idle (never terminate)")
-    logger.info(f"Idle timeout: {IDLE_TIMEOUT}s | Max pods: {MAX_PODS}")
+    logger.info(f"Strategy: STOP on idle (120s) | TERMINATE on dormant (48h)")
+    logger.info(f"Idle timeout: {IDLE_TIMEOUT}s | Dormant timeout: {LONG_TERM_IDLE_TIMEOUT}s")
+    logger.info(f"Check interval: {CHECK_INTERVAL}s | Max pods: {MAX_PODS}")
     logger.info(f"Cost caps: warn=${DAILY_WARN_USD} / hard=${DAILY_CAP_USD}")
-    logger.info(f"Network Volume mount: {NETWORK_VOLUME_MOUNT}")
-    logger.info(f"Estimated idle cost: ~$0.10/day (disk) + $0.20/day (volume)")
+    logger.info(f"Estimated idle cost: ~$0.12/day (disk + volume)")
 
     hc = health_check()
     if hc["status"] == "healthy":

@@ -2,10 +2,71 @@
 
 > **Note**: This file tracks high-level development milestones and architectural decisions.
 > For a detailed, versioned changelog, see [CHANGELOG.md](./CHANGELOG.md).
+> For comprehensive audit and fixes, see [COMPREHENSIVE_AUDIT.md](./COMPREHENSIVE_AUDIT.md).
 
 ## Current Status
 
-- **v2.5.5**: **Vercel Proxy Layer** + **Unified `/api/*` Route** + **Auth Passthrough** + **Permanent CORS Fix**
+- **v2.5.7**: **Vercel Proxy Layer Enabled** + **vercel.json API Rewrite** + **Permanent CORS Fix**
+
+## v2.5.7: Vercel Proxy Layer Active (April 2026)
+
+### Changes Applied
+
+1. **vercel.json updated** - Added API rewrite rule:
+   ```json
+   { "source": "/api(/.*)?", "destination": "/api/[...path]" }
+   ```
+   This routes all `/api/*` requests through the proxy.
+
+2. **Proxy exists** - `apps/frontend/api/[...path].ts` already handles proxying requests to RunPod.
+
+### How It Works
+
+- Frontend calls `/api/v1/simulations` (same-origin)
+- Vercel rewrites to `/api/[...path].ts`
+- Proxy forwards to `https://{pod}.proxy.runpod.net/api/v1/simulations`
+- No CORS needed - server-to-server call
+
+### Environment Variables (Vercel)
+
+| Key | Value |
+|-----|-------|
+| `RUNPOD_API_KEY` | Your RunPod API key |
+| `RUNPOD_POD_NAME` | Pod name to filter (optional) |
+
+---
+
+## v2.5.6: Comprehensive Audit Applied (April 2026)
+
+### Key Fixes Applied
+
+1. **APIReference Import Fix** - Removed broken import from `apps/frontend/src/pages/index.ts`
+2. **CORS Configuration** - Updated `ALLOWED_ORIGINS` with explicit origins (no wildcards)
+3. **GitHub CI** - Updated Node version to 22, added Infisical token support
+4. **Vercel Build** - Fixed by removing non-existent component import
+
+### Test Commands
+
+```bash
+# Test health endpoint
+curl https://your-pod.proxy.runpod.net/api/v1/health
+
+# Test profile fetch
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  https://your-pod.proxy.runpod.net/api/v1/user/profile
+```
+
+### Environment Variables Required
+
+| Key | Value |
+|-----|-------|
+| `ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://localhost:59824,http://127.0.0.1:59824,https://simhpc-nexusbayareas-projects.vercel.app,https://simhpc.nexusbayarea.com,https://simhpc.com` |
+| `SB_URL` | Supabase project URL |
+| `SB_SERVICE_KEY` | Supabase service role key |
+| `SB_JWT_SECRET` | Supabase JWT secret |
+| `REDIS_URL` | Redis connection string |
+
+---
 
 ## v2.5.5 Architecture: Vercel Proxy Layer
 
@@ -182,6 +243,7 @@ echo "[5/5] Pushing to GitHub..."
 git push origin main
 ```
 
+- **v2.6.0**: Cost-Optimized Autoscaler (120s Idle Timeout) + Dormant Termination (48h) + Direct-Action Admin API (`runpod_service.py`) + Admin Dashboard Auto-Term Visibility + Accurate Cost Tracking
 - **v2.5.6**: Advanced Dynamic API Proxy (Vercel) + Cold Start Resilience (Retry/Backoff) + Caching + `@app.get("/health")` Endpoint + Resolved CORS permanently
 - **v2.5.5**: Unified API Proxy (Vercel) Implementation + Vercel Build Fix (APIReference) + Python Worker Lint Fix (`ruff --fix`) + Frontend API Proxy Alignment + Deployment SOP v2.5.5
 - **v2.5.4**: Detailed Error Surface in `api.ts` + Empty Token Guard + Infisical Machine Identity v2.5.4

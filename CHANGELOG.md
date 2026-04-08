@@ -5,6 +5,25 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-04-07
+
+### Added
+
+- **Cost-Optimized Autoscaler**:
+  - Reduced `IDLE_TIMEOUT` from 300s to 120s for faster GPU release.
+  - Implemented **Dormant Termination**: Automatically destroys pods inactive for > 48 hours to eliminate long-term disk and network volume costs.
+  - Precise Cost Tracking: Now uses actual polling intervals for 100% accurate daily burn estimates.
+- **Direct-Action Admin API**:
+  - Implemented `runpod_service.py` in the API layer for immediate pod `stop` and `terminate` commands.
+  - Decoupled manual interventions from the autoscaler loop for instant UI responsiveness.
+- **Admin UI Enhancements**:
+  - Added **Auto-Term Countdown** to the Admin Dashboard for dormant pods.
+  - Real-time visibility into cost-optimization strategy.
+
+### Changed
+
+- **Improved Polling Resolution**: Increased autoscaler check frequency to 10s for more responsive scaling.
+
 ## [2.5.6] - 2026-04-07
 
 ### Added

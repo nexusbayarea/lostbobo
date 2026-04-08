@@ -6,6 +6,8 @@ import time
 import logging
 from datetime import datetime
 
+from app.services import runpod_service
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -25,12 +27,21 @@ def init_routes(redis, admin_dep):
     verify_admin = admin_dep
 
     def _fallback():
-        return {
-            "status": "error",
-            "message": "Warm pod via Redis pub/sub not implemented",
-        }
+        # V2.6.0: Try to resume any stopped pod
+        try:
+            pods = runpod_service.list_pods()
+            stopped = [p for p in pods if p.get("desiredStatus") == "STOPPED"]
+            if stopped:
+                pod_id = stopped[0]["id"]
+                runpod_service.resume_pod(pod_id)
+                return {"status": "warming", "pod_id": pod_id}
+            return {"status": "none_found", "message": "No stopped pods to warm"}
+        except Exception as e:
+            logger.error(f"Warm fallback failed: {e}")
+            return {"status": "error", "message": str(e)}
 
     warm_pod_fn = _fallback
+
 
 
 @router.post("/fleet/warm", tags=["Admin — Fleet"])
@@ -206,6 +217,9 @@ async def create_pod_endpoint(
 async def stop_pod(pod_id: str, _: bool = Depends(verify_admin)):
     """Stop a running pod (preserves disk, stops GPU billing)."""
     try:
+        # V2.6.0: Call RunPod directly for immediate responsiveness
+        runpod_service.stop_pod(pod_id)
+
         active = json.loads(r_client.get("active_pods") or "[]")
         active = [p for p in active if p != pod_id]
         r_client.set("active_pods", json.dumps(active))
@@ -216,7 +230,7 @@ async def stop_pod(pod_id: str, _: bool = Depends(verify_admin)):
                     "ts": datetime.now().isoformat(),
                     "event": "pod_stop_requested",
                     "pod_id": pod_id,
-                    "details": "via admin API",
+                    "details": "via direct admin API call",
                 }
             ),
         )
@@ -229,6 +243,9 @@ async def stop_pod(pod_id: str, _: bool = Depends(verify_admin)):
 async def terminate_pod(pod_id: str, _: bool = Depends(verify_admin)):
     """Permanently terminate a pod (deletes disk, zeroes billing)."""
     try:
+        # V2.6.0: Call RunPod directly for immediate responsiveness
+        runpod_service.terminate_pod(pod_id)
+
         active = json.loads(r_client.get("active_pods") or "[]")
         active = [p for p in active if p != pod_id]
         r_client.set("active_pods", json.dumps(active))
@@ -239,7 +256,7 @@ async def terminate_pod(pod_id: str, _: bool = Depends(verify_admin)):
                     "ts": datetime.now().isoformat(),
                     "event": "pod_terminate_requested",
                     "pod_id": pod_id,
-                    "details": "via admin API",
+                    "details": "via direct admin API call",
                 }
             ),
         )

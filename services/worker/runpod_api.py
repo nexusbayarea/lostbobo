@@ -115,15 +115,15 @@ def _record_event(event_type: str, pod_id: str = "", details: str = ""):
     redis_client.ltrim("runpod_events", 0, 499)  # keep last 500
 
 
-def _update_cost_tracking(pod_count: int, gpu_type: str = DEFAULT_GPU_TYPE):
-    """Accumulate estimated cost in Redis."""
+def _update_cost_tracking(pod_count: int, interval_sec: int, gpu_type: str = DEFAULT_GPU_TYPE):
+    """Accumulate estimated cost in Redis based on actual polling interval."""
     hourly = GPU_COST_PER_HOUR.get(gpu_type, 0.39)
-    # Called every CHECK_INTERVAL seconds → pro-rate
-    interval_sec = 10  # CHECK_INTERVAL from autoscaler
+    # Pro-rate based on the actual interval passed from the autoscaler
     cost_delta = (hourly / 3600) * interval_sec * pod_count
     redis_client.incrbyfloat("cost:today_usd", cost_delta)
-    # Reset daily counter at midnight
+    # Reset daily counter at midnight (86400 seconds)
     redis_client.expire("cost:today_usd", 86400)
+
 
 
 # ---------------------------------------------------------------------------

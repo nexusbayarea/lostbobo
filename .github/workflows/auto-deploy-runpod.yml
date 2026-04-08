@@ -28,12 +28,18 @@ jobs:
         run: |
           curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
           sudo apt-get update && sudo apt-get install -y infisical
+          sudo infisical upgrade
+
+      - name: Init Infisical Project
+        run: |
+          echo '{"workspaceId":"f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4","defaultEnvironment":"prod"}' > .infisical.json
 
       - name: Restart RunPod to pull new image
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
-          infisical run --env="prod" --projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4" -- bash -c '
+          export INFISICAL_TOKEN=$INFISICAL_TOKEN
+          infisical run --env=prod --token=$INFISICAL_TOKEN -- bash -c '
 
             echo "Restarting pod to pull new image..."
             
@@ -57,7 +63,8 @@ jobs:
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
-          infisical run --env="prod" --projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4" -- bash -c '
+          export INFISICAL_TOKEN=$INFISICAL_TOKEN
+          infisical run --env=prod --token=$INFISICAL_TOKEN -- bash -c '
             echo "Waiting for pod to come back up..."
             max_attempts=30
             attempt=0

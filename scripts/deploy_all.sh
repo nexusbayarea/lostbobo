@@ -12,12 +12,12 @@ echo "[2/5] Build passed. Syncing Infisical..."
 infisical secrets push
 
 echo "[3/5] Deploying to Vercel..."
-infisical run --env=production --projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4" -- vercel --prod --yes
+infisical run --env=production --projectId=f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 -- vercel --prod --yes
 
 echo "[4/5] Fixing Git Casing..."
 git rm -r --cached .
 git add .
-git commit -m "fix: workflow updates v2.6.3 - Infisical Project ID"
+git commit -m "fix: workflow updates v2.6.4 - Infisical CLI fix"
 
 echo "[5/5] Pushing to GitHub..."
 git push origin main

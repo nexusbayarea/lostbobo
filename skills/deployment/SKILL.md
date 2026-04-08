@@ -71,44 +71,30 @@ echo "=== Deployment Complete ==="
 
 ## GitHub Actions Workflow (deploy.yml)
 
-The workflow now fetches Docker credentials from Infisical before logging in:
+**Important**: Uses **Infisical GitHub App Integration** (native sync). Secrets are automatically synced from Infisical to GitHub Repository secrets. No Infisical CLI needed in CI.
 
 ```yaml
-- name: Install Infisical CLI
-  run: |
-    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo -E bash
-    sudo apt-get update
-    sudo apt-get install infisical -y
-
-- name: Export Docker credentials from Infisical
-  env:
-    INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
-    INFISICAL_PROJECT_ID: f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4
-  run: |
-    eval "$(infisical export --env=production --format=export)"
-    echo "DOCKER_USER=$DOCKER_USERNAME" >> $GITHUB_ENV
-    echo "DOCKER_PASS=$DOCKER_PASSWORD" >> $GITHUB_ENV
-
 - name: Login to Docker Hub
   uses: docker/login-action@v3
   with:
-    username: ${{ env.DOCKER_USER }}
-    password: ${{ env.DOCKER_PASS }}
+    username: ${{ secrets.DOCKER_USERNAME }}
+    password: ${{ secrets.DOCKER_PASSWORD }}
 ```
 
-### Required GitHub Secrets
+### Required GitHub Secrets (synced from Infisical)
 
 | Secret | Source |
 |--------|--------|
-| `INFISICAL_TOKEN` | Infisical → Settings → Machine Identity |
-| `INFISICAL_PROJECT_ID` | f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4 |
+| `DOCKER_USERNAME` | Infisical → GitHub Integration |
+| `DOCKER_PASSWORD` | Infisical → GitHub Integration |
+| `RUNPOD_API_KEY` | Infisical → GitHub Integration |
+| `INFISICAL_TOKEN` | Infisical → GitHub Integration |
 
-### Required Infisical Secrets
+### How Native Sync Works
 
-| Key | Purpose |
-|-----|---------|
-| `DOCKER_USERNAME` | Docker Hub username |
-| `DOCKER_PASSWORD` | Docker Hub password/token |
+1. Infisical GitHub App integration syncs secrets to GitHub automatically
+2. GitHub Actions workflow reads secrets directly from `${{ secrets.KEY }}`
+3. No CLI installation or token management needed in CI
 
 ## Skills Overview
 

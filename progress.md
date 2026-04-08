@@ -6,7 +6,24 @@
 
 ## Current Status
 
-- **v2.6.6**: **site.webmanifest Fix** + **Infisical CLI Fix** + **401 Fix**
+- **v2.6.7**: **Manifest Link Disabled** + **Vercel Auth Fix**
+
+## v2.6.7: Manifest Fix (April 2026)
+
+### Fix Applied
+
+1. **Disabled manifest link** - Commented out in `index.html` to bypass Vercel auth issues
+   - `<link rel="manifest" href="/site.webmanifest" />` is now disabled
+
+### If You Still Have Issues
+
+In Vercel Dashboard → Settings → Deployment Protection:
+
+1. **Vercel Authentication** - Ensure it's OFF (disable)
+2. If there's a "Require Owner role" checkbox - **uncheck it**
+3. Save changes
+
+---
 
 ## v2.6.6: Manifest & CLI Fix (April 2026)
 

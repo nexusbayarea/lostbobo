@@ -126,23 +126,31 @@ infisical run --env=production -- vercel --prod --yes --force
 
 ## Current Deployment (v2.5.6)
 
-| Service | Pod ID | HTTP Proxy (8888) |
-|---------|--------|-------------------|
-| Unified | q41n3g4zwr84wt | https://q41n3g4zwr84wt-8888.proxy.runpod.net |
+**Note**: Pod ID is dynamic and stored in Infisical. Fetch with:
+```bash
+infisical secrets get RUNPOD_POD_ID --env=production
+```
 
-**Docker Image**: simhpcworker/simhpc-unified:latest (pushed April 8, 2026)
+| Service | HTTP Proxy (8888) |
+|---------|-------------------|
+| Unified | https://{POD_ID}-8888.proxy.runpod.net |
+
+**Docker Image**: simhpcworker/simhpc-unified:latest (v2.5.6)
 
 **Vercel**: https://simhpc.com
 
-## Manual Pod Restart (to pull new image)
+## Manual Pod Restart
 
 ```bash
-# Restart existing pod to pull new image
+# Get current pod ID from Infisical
+POD_ID=$(infisical secrets get RUNPOD_POD_ID --env=production --plain)
+
+# Restart to pull new image
 infisical run -- python scripts/restart_pod.py
 
 # Or manually via RunPod CLI:
-runpod stop q41n3g4zwr84wt
-runpod start q41n3g4zwr84wt
+runpod stop $POD_ID
+runpod start $POD_ID
 ```
 
 ## Examples

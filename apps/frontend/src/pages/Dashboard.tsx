@@ -30,9 +30,9 @@ const sidebarItems = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-// External links that open in new tabs
-const externalLinks = [
-  { id: 'alpha', label: 'Alpha Control', icon: Cpu, url: '/dashboard/alpha' },
+// Internal links that use React Router
+const internalLinks = [
+  { id: 'alpha', label: 'Alpha Control', icon: Cpu, path: '/dashboard/alpha' },
 ];
 
 const DEFAULT_PARAMETERS: Parameter[] = [
@@ -212,13 +212,11 @@ export function Dashboard() {
             </button>
           ))}
 
-          {/* External Links */}
-          {externalLinks.map((link) => (
-            <a
+          {/* Internal Links */}
+          {internalLinks.map((link) => (
+            <Link
               key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              to={link.path}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all',
                 'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10',
@@ -238,7 +236,7 @@ export function Dashboard() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
+            </Link>
           ))}
 
           <div className="pt-2 border-t border-slate-200 dark:border-slate-700">

@@ -1,16 +1,16 @@
 # SimHPC Mission Control Cockpit
 
-> Version: 2.5.3 | Last Updated: April 5, 2026
+> Version: 2.5.4 | Last Updated: April 8, 2026
 
 The SimHPC Frontend is **LIVE** and accessible at [https://simhpc.com](https://simhpc.com).
 
 This is the public-facing repository for the SimHPC Mission Control Cockpit, a premium interface for aerospace and thermal engineering simulations.
 
-## Architecture (v2.5.3)
+## Architecture (v2.5.4)
 
 ### Single Source of Truth Structure
 
-SimHPC v2.5 consolidates all backend and worker logic into a unified, clean structure:
+SimHPC v2.5.4 consolidates all backend and worker logic into a unified, clean structure:
 
 - **`services/api/`**: FastAPI orchestrator (Mercury AI integration, fleet management).
 - **`services/worker/`**: The unified compute plane.
@@ -71,7 +71,7 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 - **Safety**: `MAX_PODS=3`, budget caps enforced, Redis-persisted activity state
 - **Warm Control**: `Wake GPU` button uses `/api/v1/admin/fleet/warm` for 90s wake-ups.
 
-## v2.5.3: RunPod Pipeline & Resilience
+## v2.5.4: RunPod Pipeline & Resilience
 
 - **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
 - **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation

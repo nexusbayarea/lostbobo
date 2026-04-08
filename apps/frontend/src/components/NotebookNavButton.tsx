@@ -1,14 +1,13 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function NotebookNavButton({ isSidebarOpen = true }: { isSidebarOpen?: boolean }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const isActive = location.pathname.startsWith("/dashboard/notebook");
 
   return (
     <button
-      onClick={() => navigate("/dashboard/notebook")}
+      onClick={() => window.open("/dashboard/notebook", "_blank")}
       className={`
         group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium
         transition-all duration-150

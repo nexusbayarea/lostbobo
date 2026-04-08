@@ -30,6 +30,11 @@ const sidebarItems = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
+// External links that open in new tabs
+const externalLinks = [
+  { id: 'alpha', label: 'Alpha Control', icon: Cpu, url: '/admin/analytics' },
+];
+
 const DEFAULT_PARAMETERS: Parameter[] = [
   { name: 'boundary_flux', baseValue: 1000, unit: 'W/m²', perturbable: true, min: 500, max: 1500 },
   { name: 'thermal_conductivity', baseValue: 1.0, unit: 'W/(m·K)', perturbable: true, min: 0.5, max: 2.0 },
@@ -206,6 +211,36 @@ export function Dashboard() {
               </AnimatePresence>
             </button>
           ))}
+
+          {/* External Links */}
+          {externalLinks.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all',
+                'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10',
+                !isSidebarOpen && 'justify-center px-2'
+              )}
+            >
+              <link.icon className="w-5 h-5 flex-shrink-0" />
+              <AnimatePresence>
+                {isSidebarOpen && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="font-medium whitespace-nowrap"
+                  >
+                    {link.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          ))}
+
           <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
             <NotebookNavButton isSidebarOpen={isSidebarOpen} />
           </div>

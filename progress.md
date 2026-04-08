@@ -6,7 +6,31 @@
 
 ## Current Status
 
-- **v2.6.8**: **User Profile Endpoint Added** + **API Fix**
+- **v2.6.9**: **Alpha Control Room Added to Dashboard** + **Navigation Update**
+
+## v2.6.9: Alpha Control Room Integration (April 2026)
+
+### Fix Applied
+
+Added **Alpha Control Room** to Dashboard sidebar:
+
+1. **Sidebar Items** - Added `Alpha Control` tab with Cpu icon
+2. **Content Area** - Added Alpha Control Room tab content
+3. **Active Tab Default** - Set to 'robustness' (existing)
+
+### Sidebar Structure
+
+```tsx
+const sidebarItems = [
+  { id: 'alpha', label: 'Alpha Control', icon: Cpu },
+  { id: 'simulations', label: 'Simulations', icon: Play },
+  { id: 'robustness', label: 'Robustness', icon: BarChart3 },
+  { id: 'reports', label: 'Reports', icon: FileText },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
+```
+
+---
 
 ## v2.6.8: User Profile Endpoint (April 2026)
 

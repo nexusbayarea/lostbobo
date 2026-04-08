@@ -35,4 +35,4 @@ jobs:
           push: true
           tags: |
             simhpcworker/simhpc-worker:latest
-            simhpcworker/simhpc-worker:v2.5.3
+            simhpcworker/simhpc-worker:v${{ github.run_number }}

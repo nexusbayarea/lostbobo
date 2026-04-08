@@ -15,18 +15,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Infisical CLI
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
-          sudo apt-get install -y infisical
-
       - name: Deploy to Production
         env:
-          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
+          SB_ACCESS_TOKEN: ${{ secrets.SB_ACCESS_TOKEN }}
+          SB_PROJECT_ID: ${{ secrets.SB_PROJECT_ID }}
+          SB_DB_PASSWORD: ${{ secrets.SB_DB_PASSWORD }}
         run: |
-          infisical run --env=production -- bash -c '
-            supabase login --token "$SB_ACCESS_TOKEN"
-            supabase link --project-ref "$SB_PROJECT_ID" --password "$SB_DB_PASSWORD"
-            supabase db push --password "$SB_DB_PASSWORD"
-            supabase functions deploy --project-ref "$SB_PROJECT_ID"
-          '
+          supabase login --token "$SB_ACCESS_TOKEN"
+          supabase link --project-ref "$SB_PROJECT_ID" --password "$SB_DB_PASSWORD"
+          supabase db push --password "$SB_DB_PASSWORD"
+          supabase functions deploy --project-ref "$SB_PROJECT_ID"

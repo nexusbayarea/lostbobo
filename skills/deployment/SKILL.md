@@ -65,14 +65,12 @@ echo "[4/4] Deployment triggered."
 
 ## GitHub Actions Workflow (deploy.yml)
 
-**Important**: Uses **Infisical GitHub App Integration** (native sync). Secrets are automatically synced from Infisical to GitHub Repository secrets. No Infisical CLI needed in CI.
+**Critical: Use ONLY these secret names (v2.6.4)**
 
-### Workflow Steps
-
-1. **Checkout** - Fetch code
-2. **Login to Docker Hub** - Uses natively synced secrets
-3. **Build & Push** - Build unified, worker, autoscaler images
-4. **Deploy to RunPod** - Trigger pod deployment
+| Secret | Value |
+|--------|-------|
+| `DOCKER_LOGIN` | `simhpcworker` (Docker Hub username) |
+| `DOCKER_PW_TOKEN` | Docker Hub PAT (Personal Access Token) |
 
 ```yaml
 - name: Login to Docker Hub
@@ -82,28 +80,12 @@ echo "[4/4] Deployment triggered."
     password: ${{ secrets.DOCKER_PW_TOKEN }}
 ```
 
-### Required Secrets (Synced from Infisical)
+### Rules (v2.6.4)
 
-| Secret | Source | Purpose |
-|--------|--------|---------|
-| `DOCKER_LOGIN` | Infisical → GitHub App | Docker Hub username |
-| `DOCKER_PW_TOKEN` | Infisical → GitHub App | Docker Hub password/token |
-| `RUNPOD_API_KEY` | Infisical → GitHub App | RunPod provisioning |
-| `INFISICAL_CLIENT_ID` | GitHub Secrets | Machine Identity |
-| `INFISICAL_CLIENT_SECRET` | GitHub Secrets | Machine Identity |
-
-### Why Native Sync Works
-
-1. **Infisical GitHub App** automatically syncs secrets to GitHub
-2. **GitHub Actions** reads secrets directly from `${{ secrets.KEY }}`
-3. **No CLI needed** in CI pipeline
-
-### Troubleshooting 401 Errors
-
-If Docker login fails:
-1. Check GitHub App has **Read and Write** access to Secrets
-2. Verify environment slug matches (production/beta)
-3. Check secret names in GitHub Settings → Secrets → Actions
+- **DO NOT** use `DOCKER_USERNAME` or `DOCKER_PASSWORD`
+- **ALWAYS** use `DOCKER_LOGIN` for username
+- **ALWAYS** use `DOCKER_PW_TOKEN` for PAT
+- **NO** Infisical CLI in YAML - secrets sync natively via GitHub App
 
 ## Skills Overview
 

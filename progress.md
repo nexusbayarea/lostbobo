@@ -6,9 +6,49 @@
 
 ## Current Status
 
-- **v2.5.13**: **Full "No-Env" Transition** + **Dynamic CORS (Regex)** + **Automated POD_ID Capture** + **Autoscaler Fail-Fast**
-- **v2.5.12**: **Secret Handshake Skill** + **Vercel Sync Automation** + **INFISICAL_TOKEN Injection**
-- **v2.5.11**: **Regex CORS (Vercel Branch Support)** + **Autoscaler Fail-Safe** + **Idempotency Keys** + **Job Status Persistence (Supabase)** + **Clean Architecture**
+- **v2.6.3**: **Infisical Project ID Fix** + **AdminAnalyticsPage Path Fixed** + **Workflow Updates**
+
+## v2.6.3: Workflow Fixes (April 2026)
+
+### Fixes Applied
+
+1. **Infisical Project ID** - Added `--projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4"` to all `infisical export` and `infisical run` commands
+   - `deploy-beta-runpod.yml` - Fixed
+   - `auto-deploy-runpod.yml` - Fixed
+
+2. **AdminAnalyticsPage** - Import path verified, file exists at `./pages/admin/AdminAnalyticsPage`
+
+### GitHub Secrets Required
+
+| Secret | Description |
+|--------|-------------|
+| `INFISICAL_TOKEN` | Infisical service token |
+| `INFISICAL_CLIENT_ID` | Infisical client ID |
+| `INFISICAL_CLIENT_SECRET` | Infisical client secret |
+| `INFISICAL_PROJECT_ID` | Infisical project ID |
+| `DOCKER_LOGIN` | Docker Hub username |
+| `DOCKER_PW_TOKEN` | Docker Hub password/token |
+| `RUNPOD_API_KEY` | RunPod API key |
+| `RUNPOD_ID` | RunPod pod ID |
+
+---
+
+## v2.5.13: Full "No-Env" Transition (April 2026)
+
+### Changes Applied
+- Dynamic CORS (Regex) for Vercel branch support
+- Automated POD_ID capture
+- Autoscaler fail-fast
+
+---
+
+## v2.5.12: Secret Handshake Skill (April 2026)
+
+### Changes Applied
+- Vercel sync automation
+- INFISICAL_TOKEN injection
+
+---
 
 ## v2.5.11: Reliability Features (April 2026)
 
@@ -525,6 +565,7 @@ echo "[5/5] Pushing to GitHub..."
 git push origin main
 ```
 
+- **v2.6.3**: **Vercel Build Stability** (File Migration & Path Fixes) + **Infisical Project Integration** (Explicit ProjectID in CI) + **Refreshed Installation Scripts**
 - **v2.6.2**: **CI/CD Hardening** (Infisical Token Standard, Docker Secret Alignment) + **File Path Normalization** (AlphaControlRoom)
 - **v2.6.1**: Bare Except Guard (Specific Exceptions) + Python Worker Hardening (JSON/Type Error Handling) + Hardened Deployment Script
 - **v2.6.0**: Cost-Optimized Autoscaler (120s Idle Timeout) + Dormant Termination (48h) + Direct-Action Admin API (`runpod_service.py`) + Admin Dashboard Auto-Term Visibility + Accurate Cost Tracking

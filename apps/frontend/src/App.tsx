@@ -7,7 +7,7 @@ import { WhoItsFor } from '@/sections/WhoItsFor';
 
 import { Dashboard } from '@/pages/Dashboard';
 import ExperimentNotebook from '@/pages/ExperimentNotebook';
-import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { Benchmarks } from '@/pages/Benchmarks';
 import { Pricing } from '@/pages/Pricing';
 import { About } from '@/pages/About';

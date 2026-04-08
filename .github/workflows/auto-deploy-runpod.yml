@@ -33,7 +33,7 @@ jobs:
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
-          infisical run --env="prod" -- bash -c '
+          infisical run --env="prod" --projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4" -- bash -c '
 
             echo "Restarting pod to pull new image..."
             
@@ -57,7 +57,7 @@ jobs:
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
-          infisical run --env="prod" -- bash -c '
+          infisical run --env="prod" --projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4" -- bash -c '
             echo "Waiting for pod to come back up..."
             max_attempts=30
             attempt=0

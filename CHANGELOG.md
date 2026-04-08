@@ -32,6 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Bare Except Guard**: Replaced bare `except:` blocks with specific exception handling (`json.JSONDecodeError`, `TypeError`, and `Exception`) in `worker.py` and `deploy_to_runpod.py`.
 
+## [2.6.3] - 2026-04-07
+
+### Fixed
+
+- **Vercel Build Stability**: Migrated `AdminAnalyticsPage.tsx`, `WakeGPU.tsx`, and `ProtectedRoute.tsx` from root `src` to `apps/frontend/src` to resolve `ENOENT` build errors and align with Vercel deployment structure.
+- **Infisical Project Integration**: 
+  - Standardized all GitHub workflows to explicitly pass `--projectId="f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4"` during secret export, resolving the "Project Not Connected" error in CI/CD.
+  - Refreshed Infisical installation scripts to use the official Cloudsmith setup mirror for consistent tool versions.
+- **Frontend Path Alignment**: Corrected relative import path for `AdminAnalyticsPage` in `apps/frontend/src/App.tsx`.
+
 ## [2.6.2] - 2026-04-07
 
 ### Fixed

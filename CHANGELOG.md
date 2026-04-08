@@ -5,6 +5,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-04-07
+
+### Fixed
+
+- **Bare Except Guard**: Replaced bare `except:` blocks with specific exception handling (`json.JSONDecodeError`, `TypeError`, and `Exception`) in `worker.py` and `deploy_to_runpod.py` to prevent silent bug hiding and ensure Ruff compliance.
+- **Python Worker Robustness**: Hardened job parsing logic to gracefully handle invalid Redis data without crashing.
+
 ## [2.6.0] - 2026-04-07
 
 ### Added

@@ -7,6 +7,8 @@ import { WhoItsFor } from '@/sections/WhoItsFor';
 
 import { Dashboard } from '@/pages/Dashboard';
 import ExperimentNotebook from '@/pages/ExperimentNotebook';
+import { AlphaControlRoom } from '@/pages/AlphaControlRoom';
+import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
 import { Benchmarks } from '@/pages/Benchmarks';
 import { Pricing } from '@/pages/Pricing';
 import { About } from '@/pages/About';
@@ -23,6 +25,7 @@ import { Contact } from '@/pages/Contact';
 
 import { CookieConsent } from '@/components/CookieConsent';
 import { PageLayout } from '@/components/PageLayout';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 console.log('SimHPC: App.tsx loaded.');
 
@@ -43,22 +46,57 @@ function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/notebook" element={<ExperimentNotebook />} />
-          <Route path="/benchmarks" element={<Benchmarks />} />
-          <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/benchmarks" element={<Benchmarks />} />
           <Route path="/docs" element={<Docs />} />
           <Route path="/api-reference" element={<APIReference />} />
           <Route path="/ccpa" element={<CCPA />} />
           <Route path="/dpa" element={<DPA />} />
           <Route path="/cookies" element={<CookiePolicy />} />
-          <Route path="/contact" element={<Contact />} />
+
+          {/* Protected Dashboard Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/notebook"
+            element={
+              <ProtectedRoute>
+                <ExperimentNotebook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/alpha"
+            element={
+              <ProtectedRoute>
+                <AlphaControlRoom />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminAnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <CookieConsent />
       </BrowserRouter>

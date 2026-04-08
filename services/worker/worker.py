@@ -170,7 +170,7 @@ def main():
             # Try parsing as JSON first in case it's a full job object
             job = json.loads(job_id)
             actual_job_id = job.get("id")
-        except:
+        except (json.JSONDecodeError, TypeError):
             # Fallback: it's just a raw ID string
             actual_job_id = job_id
             job_data = redis_client.get(f"job:{actual_job_id}")

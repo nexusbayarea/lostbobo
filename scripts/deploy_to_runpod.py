@@ -58,8 +58,8 @@ def deploy():
         print(f"🛑 Terminating old pod: {old_pod_id}")
         try:
             runpod.terminate_pod(old_pod_id)
-        except:
-            print("Current pod already gone or ID invalid.")
+        except Exception as e:
+            print(f"Pod termination skipped: {e}")
 
     print(f"✨ Creating new GPU Pod: {GPU_TYPE}")
     new_pod = runpod.create_pod(

@@ -1,7 +1,7 @@
 
 // Point to the Vercel Proxy (which redirects to RunPod)
 const API_BASE_URL = '/api/api/v1';
-const API_KEY = 'shpc_live_40n3yh92ugakps';
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 const getHeaders = (token?: string) => {
   const headers: Record<string, string> = {

@@ -12,6 +12,17 @@ Complete deployment pipeline for SimHPC v2.5.4.
 
 ## Version: 2.5.4
 
+## Docker Images
+
+All images pushed to Docker Hub:
+
+| Image | Tag | Purpose |
+| :--- | :--- | :--- |
+| simhpcworker/simhpc-unified | latest | Combined API + Worker + Autoscaler |
+| simhpcworker/simhpc-worker | latest | GPU physics worker |
+| simhpcworker/simhpc-api | latest | FastAPI orchestrator |
+| simhpcworker/simhpc-autoscaler | latest | RunPod autoscaler |
+
 ## Quick Start
 
 Use the master deploy script for one-click deployment:

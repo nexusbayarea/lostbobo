@@ -76,6 +76,11 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 - **Alpha Control Link**: Now opens in new tab linking to AlphaControlRoom
 - **Experiment Notebook**: Opens in new tab from dashboard sidebar
 - **Vercel Routing Fix**: Updated vercel.json rewrites to redirect all paths to index.html for proper React Router deep linking
+- **Docker Images Pushed**: 
+  - simhpcworker/simhpc-unified:latest
+  - simhpcworker/simhpc-worker:latest
+  - simhpcworker/simhpc-api:latest
+  - simhpcworker/simhpc-autoscaler:latest
 
 - **API Endpoint Fix**: Fixed `/api/v1/usage` → `/api/v1/simulations/usage` mismatch
 - **Robustness Request Model**: Added `RobustnessRunRequest` Pydantic model for proper request validation

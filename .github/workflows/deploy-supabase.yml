@@ -1,0 +1,37 @@
+name: Deploy to Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 1.187.0
+
+      - name: Retrieve Project Ref
+        run: |
+          echo "PROJECT_REF=$(cat supabase/.temp/project-ref)" >> $GITHUB_ENV
+
+      - name: Push Database Migrations
+        run: supabase db push
+        env:
+          SUPABASE_PROJECT_REF: ${{ env.PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy
+        env:
+          SUPABASE_PROJECT_REF: ${{ env.PROJECT_REF }}

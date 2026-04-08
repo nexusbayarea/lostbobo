@@ -26,40 +26,15 @@ jobs:
 
       - name: Install Infisical CLI
         run: |
-          sudo apt-get update && sudo apt-get install -y bash curl
           curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo bash
           sudo apt-get update && sudo apt-get install -y infisical
-          infisical --version
-
-      - name: Init Infisical Project
-        run: |
-          echo '{"workspaceId":"f8464ba0-1b93-45a1-86b5-c8ea5a81a2a4","defaultEnvironment":"prod"}' > .infisical.json
-
-      - name: Authenticate with Infisical
-        shell: bash
-        env:
-          INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
-          INFISICAL_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-        run: |
-          export INFISICAL_TOKEN=$(infisical login --method=universal-auth --client-id="$INFISICAL_CLIENT_ID" --client-secret="$INFISICAL_CLIENT_SECRET" --silent --plain)
-          echo "INFISICAL_TOKEN=$INFISICAL_TOKEN" >> "$GITHUB_ENV"
-
-      - name: Determine which image was pushed
-        run: |
-          if [ "${{ github.event.workflow_run.name }}" = "Deploy Worker" ]; then
-            echo "DEPLOY_TYPE=worker" >> $GITHUB_ENV
-            echo "IMAGE_NAME=simhpc-worker" >> $GITHUB_ENV
-          elif [ "${{ github.event.workflow_run.name }}" = "Deploy Autoscaler" ]; then
-            echo "DEPLOY_TYPE=autoscaler" >> $GITHUB_ENV
-            echo "IMAGE_NAME=simhpc-autoscaler" >> $GITHUB_ENV
-          fi
-          
-          echo "Deploy type: ${{ env.DEPLOY_TYPE }}"
-          echo "Image: ${{ env.IMAGE_NAME }}"
 
       - name: Restart RunPod to pull new image
+        env:
+          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
           infisical run --env="prod" -- bash -c '
+
             echo "Restarting pod to pull new image..."
             
             response=$(curl -s -X POST "https://api.runpod.io/graphql" \
@@ -79,6 +54,8 @@ jobs:
           '
 
       - name: Wait for pod to be ready
+        env:
+          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
         run: |
           infisical run --env="prod" -- bash -c '
             echo "Waiting for pod to come back up..."

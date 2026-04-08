@@ -525,6 +525,7 @@ echo "[5/5] Pushing to GitHub..."
 git push origin main
 ```
 
+- **v2.6.2**: **CI/CD Hardening** (Infisical Token Standard, Docker Secret Alignment) + **File Path Normalization** (AlphaControlRoom)
 - **v2.6.1**: Bare Except Guard (Specific Exceptions) + Python Worker Hardening (JSON/Type Error Handling) + Hardened Deployment Script
 - **v2.6.0**: Cost-Optimized Autoscaler (120s Idle Timeout) + Dormant Termination (48h) + Direct-Action Admin API (`runpod_service.py`) + Admin Dashboard Auto-Term Visibility + Accurate Cost Tracking
 - **v2.5.6**: Advanced Dynamic API Proxy (Vercel) + Cold Start Resilience (Retry/Backoff) + Caching + `@app.get("/health")` Endpoint + Resolved CORS permanently

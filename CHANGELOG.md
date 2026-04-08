@@ -32,6 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Bare Except Guard**: Replaced bare `except:` blocks with specific exception handling (`json.JSONDecodeError`, `TypeError`, and `Exception`) in `worker.py` and `deploy_to_runpod.py`.
 
+## [2.6.2] - 2026-04-07
+
+### Fixed
+
+- **CI/CD Hardening**: 
+  - Standardized Infisical authentication across all GitHub workflows to use `INFISICAL_TOKEN` instead of outdated interactive login methods.
+  - Standardized Docker Hub secrets to `DOCKER_LOGIN` and `DOCKER_PW_TOKEN` to resolve "unauthorized" errors.
+  - Updated Infisical installation scripts to ensure the latest CLI version is used in CI environments.
+- **File Path Resolution**: Verified and normalized `AlphaControlRoom.tsx` casing to ensure consistency for case-sensitive Vercel builds.
+- **Import Audit**: Confirmed `App.tsx` correctly references all existing page components.
+
 ## [2.6.1] - 2026-04-07
 
 ### Fixed

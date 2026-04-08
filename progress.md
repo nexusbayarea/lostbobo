@@ -6,7 +6,17 @@
 
 ## Current Status
 
-- **v2.6.11**: **Manifest Simplified** + **Icons Removed** + **Navigation Cleanup**
+- **v2.6.12**: **AlphaControlRoom Route Added** + **Link Fixed**
+
+## v2.6.12: AlphaControlRoom Route (April 2026)
+
+### Fix Applied
+
+1. **Added AlphaControlRoom import** to App.tsx
+2. **Added route** `/dashboard/alpha` pointing to AlphaControlRoom
+3. **Fixed sidebar link** - Alpha Control now links to `/dashboard/alpha` (opens in new tab)
+
+---
 
 ## v2.6.11: Manifest Cleanup (April 2026)
 

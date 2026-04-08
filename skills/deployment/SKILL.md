@@ -144,6 +144,11 @@ infisical secrets set SSH_PRIVATE_KEY="[PASTE_YOUR_PRIVATE_KEY]"
 **SSH**: `RUNPOD_SSH`, `RUNPOD_TCP_PORT_22` - Only if using SSH deployment
 **Automation**: We deploy via API `podRestart` - no SSH keys needed
 
+## Skill 13: Port Precision (v2.6.4)
+- **SSH Port**: Always use `${{ secrets.RUNPOD_TCP_PORT_22 }}`
+- **Validation**: Never hardcode `22` - pull from Infisical
+- **Note**: We use API restart (`auto-deploy-runpod.yml`) instead of SSH
+
 ## Skills Overview
 
 ### 1. Vercel Deploy

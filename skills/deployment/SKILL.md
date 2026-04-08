@@ -1,16 +1,16 @@
 ---
 name: deployment
-description: Complete deployment pipeline for SimHPC - Vercel, GitHub, and unified stack deployment.
-version: 2.5.4
+description: Complete deployment pipeline for SimHPC - Vercel, GitHub, Docker Hub, Supabase, and RunPod.
+version: 2.5.6
 license: MIT
 compatibility: opencode
 ---
 
 # Deployment Skill Set
 
-Complete deployment pipeline for SimHPC v2.5.4.
+Complete deployment pipeline for SimHPC v2.5.6.
 
-## Version: 2.5.4
+## Version: 2.5.6
 
 ## Docker Images
 
@@ -18,10 +18,21 @@ All images pushed to Docker Hub:
 
 | Image | Tag | Purpose |
 | :--- | :--- | :--- |
-| simhpcworker/simhpc-unified | latest | Combined API + Worker + Autoscaler |
+| simhpcworker/simhpc-unified | latest | Combined API + Worker + Autoscaler (Port 8888) |
 | simhpcworker/simhpc-worker | latest | GPU physics worker |
 | simhpcworker/simhpc-api | latest | FastAPI orchestrator |
 | simhpcworker/simhpc-autoscaler | latest | RunPod autoscaler |
+
+## Supabase Keys (SB Prefix)
+
+**Important**: Infisical doesn't allow "SUPABASE" in key names. Use SB_ prefix:
+
+| Infisical Key | Mapped To |
+|--------------|-----------|
+| SB_URL | VITE_SUPABASE_URL / SUPABASE_URL |
+| SB_ANON_KEY | VITE_SUPABASE_ANON_KEY / SUPABASE_ANON_KEY |
+| SB_SERVICE_ROLE_KEY | SUPABASE_SERVICE_ROLE_KEY |
+| SB_PROJECT_ID | Supabase project ref |
 
 ## Quick Start
 

@@ -154,7 +154,7 @@ POD_ID=$(infisical secrets get RUNPOD_ID --env=production --plain)
 curl -s -X POST "https://api.runpod.io/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$POD_ID\\\" }) { id status } }\"}"
+  -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$POD_ID\\\" }) { id } }\"}"
 ```
 
 ### Why Reset vs Restart?

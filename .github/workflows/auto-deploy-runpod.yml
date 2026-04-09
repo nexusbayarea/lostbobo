@@ -27,7 +27,7 @@ jobs:
           response=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
-            -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+            -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$RUNPOD_ID\\\" }) { id } }\"}")
           
           echo "Response: $response"
           
@@ -49,8 +49,8 @@ jobs:
             status_response=$(curl -s -X POST "https://api.runpod.io/graphql" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $RUNPOD_API_KEY" \
-              -d "{\"query\": \"query { pod(input: { podId: \\"$RUNPOD_ID\\"}) { id status } }\"}")
-            current_status=$(echo "$status_response" | grep -o "\"status\":\"[^\"]*\"" | head -1 | cut -d'"' -f4)
+              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}")
+            current_status=$(echo "$status_response" | grep -o "\"desiredStatus\":\"[^\"]*\"" | head -1 | cut -d'"' -f4)
             if [ "$current_status" = "RUNNING" ]; then
               echo "Pod RUNNING"
               exit 0

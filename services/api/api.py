@@ -1356,6 +1356,58 @@ async def verify_admin(x_admin_secret: str = Header(None)):
 admin_router.init_routes(r_client, verify_admin)
 
 
+# --- Vercel Cron: Force Flush ---
+@app.get("/api/v1/internal/force-flush", tags=["Internal"])
+async def force_flush(authorization: str = Header(None)):
+    """
+    Vercel Cron endpoint to force-flush usage buffer.
+    Schedule: * * * * * (every minute)
+    """
+    CRON_SECRET = os.getenv("CRON_SECRET", "")
+    if CRON_SECRET and authorization != f"Bearer {CRON_SECRET}":
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    await manual_flush_execution()
+    return {"status": "success", "message": "Buffer cleared to Supabase"}
+
+
+async def manual_flush_execution():
+    """Manual flush for Vercel Cron."""
+    global USAGE_BUFFER
+    if not USAGE_BUFFER:
+        return
+
+    async with USAGE_BUFFER_LOCK:
+        batch = USAGE_BUFFER.copy()
+        USAGE_BUFFER.clear()
+
+    if not batch:
+        return
+
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.warning("SUPABASE credentials not set, skipping flush")
+        return
+
+    try:
+        response = await app.state.http_client.post(
+            f"{SUPABASE_URL}/rest/v1/usage_logs",
+            json=batch,
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+        )
+        response.raise_for_status()
+        logger.info(f"Force flush: {len(batch)} events to Supabase")
+    except Exception as e:
+        logger.error(f"Force flush failed: {e}")
+
+
 # --- ALPHA SERVICES (legacy — not yet extracted to route file) ---
 
 

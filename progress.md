@@ -6,7 +6,24 @@
 
 ## Current Status
 
+- **v2.6.14**: **Frontend API & GitHub Workflow Fix** (Merged duplicate declarations + Clean YAML)
 - **v2.6.6**: **API-Only Deployment** (no SSH) + **podReset** + **Clean secrets**
+
+## v2.6.14: Frontend API & GitHub Workflow Fix (April 2026)
+
+### Fixes Applied
+
+1. **Duplicate API Declaration** - Merged the second `api` object into the `ApiClient` class in `apps/frontend/src/lib/api.ts`.
+   - Unified `getUserProfile`, `subscribe`, `startRobustnessRun`, and other methods into the `api` instance.
+   - All methods now consistently use the internal `request` helper for error handling and toasts.
+
+2. **GitHub Workflow Fix (v2.6.7)** - Repaired the corrupted `deploy-runpod.yml` file.
+   - Replaced "Frankenstein" script (containing git diff markers and duplicate steps) with the clean v2.6.7 protocol.
+   - Implemented STAGE 1 (podReset) and Fallback Cycle (Stop -> Resume) for resilient deployments.
+
+3. **Vercel Build Stability** - Resolved the "symbol already declared" error in TypeScript build.
+
+---
 
 ## v2.6.6: API-Only Deployment (April 2026)
 

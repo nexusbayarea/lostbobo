@@ -77,7 +77,7 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 - **Port Migration**: Port 8888 for RunPod compatibility
 - **SB Prefix**: Supabase keys use SB_ prefix for Infisical compatibility
 - **Docker Images**: simhpcworker/simhpc-unified:latest (v2.6.4)
-- **API Deployment**: RunPod via GraphQL `podRestart` (no SSH)
+- **API Deployment**: RunPod via GraphQL `podReset` (no SSH)
 - **Secrets**: DOCKER_LOGIN, DOCKER_PW_TOKEN, RUNPOD_API_KEY, RUNPOD_ID
 - **Frontend Proxy**: Vercel `/api/api/v1` → RunPod (CORS-free)
 

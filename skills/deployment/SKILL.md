@@ -91,7 +91,7 @@ All images pushed to Docker Hub:
 **API Key**: `RUNPOD_API_KEY` - Use for GraphQL/Python scripts
 **Pod Identifier**: `RUNPOD_ID` - Never use `RUNPOD_POD_ID`
 **SSH**: `RUNPOD_SSH`, `RUNPOD_TCP_PORT_22` - Only if using SSH deployment
-**Automation**: We deploy via API `podRestart` - no SSH keys needed
+**Automation**: We deploy via API `podReset` - no SSH keys needed
 
 ## Skill 13: Port Precision (v2.6.4)
 - **SSH Port**: Always use `${{ secrets.RUNPOD_TCP_PORT_22 }}`
@@ -127,8 +127,8 @@ bash scripts/deploy_all.sh
          │
          ▼
 ┌─────────────────┐
-│  Deploy RunPod  │ ──→ API restart (no SSH)
-│  (podRestart)  │
+│  Deploy RunPod  │ ──→ API reset (podReset)
+ │  (podReset)    │
 └─────────────────┘
 ```
 
@@ -155,7 +155,7 @@ bash scripts/deploy_all.sh
     response=$(curl -s -X POST "https://api.runpod.io/graphql" \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $RUNPOD_API_KEY" \
-      -d "{\"query\": \"mutation { podRestart(podId: \\"$RUNPOD_ID\\") { id status } }\"}")
+      -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
 ```
 
 ## Dockerfile Paths

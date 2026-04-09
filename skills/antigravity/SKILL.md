@@ -133,7 +133,7 @@ All secrets fetched from Infisical (no hardcoded keys):
 curl -X POST "https://api.runpod.io/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  -d '{"query": "mutation { podRestart(podId: \"$RUNPOD_POD_ID\") { id status } }"}'
+  -d '{"query": "mutation { podReset(input: { podId: \"$RUNPOD_POD_ID\" }) { id status } }"}'
 ```
 
 **Required Infisical Secrets:**

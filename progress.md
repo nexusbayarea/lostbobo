@@ -12,7 +12,7 @@
 
 ### Changes Applied
 
-1. **GitHub Actions deploy.yml** - Replaced `podStop` → `podResume` with atomic `podRestart` GraphQL mutation
+1. **GitHub Actions deploy.yml** - Replaced `podStop` → `podResume` with atomic `podReset` GraphQL mutation
    - Fixes "not enough free GPUs" error that occurred when trying to resume on same host
    - Removed SSH deployment (no more `appleboy/ssh-action`)
 
@@ -22,7 +22,7 @@
 
 3. **Documentation Updated**
    - README.md: API-only deployment (no SSH)
-   - skills/deployment/SKILL.md: Removed SSH secrets, added podRestart
+   - skills/deployment/SKILL.md: Removed SSH secrets, added podReset
    - skills/runpod/SKILL.md: Removed SSH references, uses GraphQL API
 
 ### Secrets (v2.6.5)

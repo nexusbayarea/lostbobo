@@ -6,10 +6,11 @@ npm run build
 
 echo "[2/3] Syncing to GitHub..."
 git add .
-git commit -m "ci: deploy SimHPC v2.5.6 via native sync"
+git commit -m "ci: deploy SimHPC v2.6.4"
 git push origin main
 
 echo "[3/3] Triggering RunPod via GitHub Action..."
+# Requires gh auth login locally
 gh workflow run auto-deploy-runpod.yml
 
-echo "=== Deployment Complete ==="
+echo "=== Deployment Triggered ==="

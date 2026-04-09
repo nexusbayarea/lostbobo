@@ -34,12 +34,25 @@ jobs:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
         run: |
-          echo "Restarting pod: $RUNPOD_ID"
+          echo "Stopping pod: $RUNPOD_ID"
           
           response=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
-            -d "{\"query\": \"mutation { podRestart(podId: \\\"$RUNPOD_ID\\\") { id status } }\"}")
+            -d "{\"query\": \"mutation { podStop(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+          
+          echo "Stop response: $response"
+          
+          sleep 3
+          
+          echo "Starting pod: $RUNPOD_ID"
+          
+          response=$(curl -s -X POST "https://api.runpod.io/graphql" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $RUNPOD_API_KEY" \
+            -d "{\"query\": \"mutation { podStart(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+          
+          echo "Start response: $response"
           
           echo "Restart response: $response"
           
@@ -63,11 +76,11 @@ jobs:
             response=$(curl -s -X POST "https://api.runpod.io/graphql" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $RUNPOD_API_KEY" \
-              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}")
+              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
             
             echo "Attempt $attempt: $response"
             
-            status=$(echo "$response" | jq -r '.data.pod.desiredStatus // empty')
+            status=$(echo "$response" | jq -r '.data.pod.status // empty')
             
             if [ "$status" = "RUNNING" ]; then
               echo "Pod is RUNNING"

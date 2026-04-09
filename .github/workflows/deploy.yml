@@ -12,11 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install jq
-        run: sudo apt-get install -y jq
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -29,70 +26,56 @@ jobs:
           docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
           docker push simhpcworker/simhpc-unified:latest
 
-      - name: Deploy to RunPod (API)
+      - name: Restart RunPod Pod (Stop + Resume)
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
         run: |
           echo "Stopping pod: $RUNPOD_ID"
           
-          response=$(curl -s -X POST "https://api.runpod.io/graphql" \
+          STOP_RESPONSE=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
-            -d "{\"query\": \"mutation { podStop(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+            -d "{\"query\": \"mutation { podStop(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}")
           
-          echo "Stop response: $response"
+          echo "Stop response: $STOP_RESPONSE"
+          sleep 5
+
+          echo "Resuming pod: $RUNPOD_ID"
           
-          sleep 3
-          
-          echo "Starting pod: $RUNPOD_ID"
-          
-          response=$(curl -s -X POST "https://api.runpod.io/graphql" \
+          RESUME_RESPONSE=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
-            -d "{\"query\": \"mutation { podStart(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+            -d "{\"query\": \"mutation { podResume(input: { podId: \\\"$RUNPOD_ID\\\", gpuCount: 1 }) { id desiredStatus } }\"}")
           
-          echo "Start response: $response"
-          
-          echo "Restart response: $response"
-          
-          if echo "$response" | jq -e '.errors' > /dev/null 2>&1; then
+          echo "Resume response: $RESUME_RESPONSE"
+
+          if echo "$RESUME_RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
             echo "API Error detected"
+            echo "$RESUME_RESPONSE"
             exit 1
           fi
-          
-          echo "Pod restart triggered"
 
-      - name: Wait for pod
+          echo "Pod restart completed"
+
+      - name: Wait for pod to be RUNNING
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
         run: |
-          attempt=0
-          
-          while [ $attempt -lt 30 ]; do
-            attempt=$((attempt + 1))
-            
-            response=$(curl -s -X POST "https://api.runpod.io/graphql" \
+          for i in {1..30}; do
+            STATUS=$(curl -s -X POST "https://api.runpod.io/graphql" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $RUNPOD_API_KEY" \
-              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id status } }\"}")
+              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}" | jq -r '.data.pod.desiredStatus // "UNKNOWN"')
             
-            echo "Attempt $attempt: $response"
+            echo "Attempt $i: Status = $STATUS"
             
-            status=$(echo "$response" | jq -r '.data.pod.status // empty')
-            
-            if [ "$status" = "RUNNING" ]; then
-              echo "Pod is RUNNING"
+            if [ "$STATUS" = "RUNNING" ]; then
+              echo "Pod is now RUNNING"
               exit 0
             fi
-            
-            if [ -n "$status" ]; then
-              echo "Current status: $status"
-            fi
-            
-            sleep 5
+            sleep 10
           done
-          
-          echo "Pod did not reach RUNNING state"
+          echo "Pod did not reach RUNNING state in time"
           exit 1

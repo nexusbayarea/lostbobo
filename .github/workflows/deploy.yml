@@ -35,24 +35,13 @@ jobs:
           docker build -f Dockerfile.autoscaler -t simhpcworker/simhpc-autoscaler:latest .
           docker push simhpcworker/simhpc-autoscaler:latest
 
-      - name: Debug RunPod secrets
-        run: |
-          echo "=== Checking Available Secrets ==="
-          echo "RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY != '' }}"
-          echo "RUNPOD_ID: ${{ secrets.RUNPOD_ID != '' }}"
-          echo "RUNPOD_SSH: ${{ secrets.RUNPOD_SSH != '' }}"
-          echo "RUNPOD_SHH_TCP: ${{ secrets.RUNPOD_SHH_TCP != '' }}"
-          echo "RUNPOD_TCP_PORT_22: ${{ secrets.RUNPOD_TCP_PORT_22 != '' }}"
-          echo "RUNPOD_SSH_KEY: ${{ secrets.RUNPOD_SSH_KEY != '' }}"
-          echo "RUNPOD_USERNAME: ${{ secrets.RUNPOD_USERNAME != '' }}"
-
       - name: Deploy to RunPod via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.RUNPOD_SSH || secrets.RUNPOD_SHH_TCP }}
-          username: ${{ secrets.RUNPOD_USERNAME || 'root' }}
+          host: ${{ secrets.RUNPOD_SHH_TCP }}
+          port: ${{ secrets.RUNPOD_TCP_PORT_22 }}
+          username: ${{ secrets.RUNPOD_USERNAME }}
           key: ${{ secrets.RUNPOD_SSH_KEY }}
-          port: ${{ secrets.RUNPOD_TCP_PORT_22 || '22' }}
           script: |
             docker pull simhpcworker/simhpc-unified:latest
             docker stop simhpc-unified || true

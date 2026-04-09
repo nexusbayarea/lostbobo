@@ -6,7 +6,37 @@
 
 ## Current Status
 
-- **v2.6.13**: **AlphaControlRoom Fixed** + **Route Added**
+- **v2.6.5**: **API-Only Deployment** + **Enhanced API Client**
+
+## v2.6.5: API-Only Deployment (April 2026)
+
+### Changes Applied
+
+1. **GitHub Actions deploy.yml** - Replaced `podStop` → `podResume` with atomic `podRestart` GraphQL mutation
+   - Fixes "not enough free GPUs" error that occurred when trying to resume on same host
+   - Removed SSH deployment (no more `appleboy/ssh-action`)
+
+2. **Enhanced api.ts** - Added toast error handling with sonner integration
+   - Automatic error toasts for failed API calls
+   - Cleaner request/response handling
+
+3. **Documentation Updated**
+   - README.md: API-only deployment (no SSH)
+   - skills/deployment/SKILL.md: Removed SSH secrets, added podRestart
+   - skills/runpod/SKILL.md: Removed SSH references, uses GraphQL API
+
+### Secrets (v2.6.5)
+
+| Secret | Purpose |
+|--------|---------|
+| `DOCKER_LOGIN` | Docker Hub username |
+| `DOCKER_PW_TOKEN` | Docker Hub PAT |
+| `RUNPOD_API_KEY` | RunPod GraphQL API key |
+| `RUNPOD_ID` | Pod identifier |
+
+No SSH secrets needed - deployment is fully API-based.
+
+---
 
 ## v2.6.13: AlphaControlRoom Fix (April 2026)
 

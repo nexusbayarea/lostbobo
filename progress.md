@@ -6,8 +6,18 @@
 
 ## Current Status
 
+- **v2.6.15**: **Deployment Workflow Refinement** (Final v2.6.5 Protocol YAML)
 - **v2.6.14**: **Frontend API & GitHub Workflow Fix** (Merged duplicate declarations + Clean YAML)
-- **v2.6.6**: **API-Only Deployment** (no SSH) + **podReset** + **Clean secrets**
+
+## v2.6.15: Deployment Workflow Refinement (April 2026)
+
+### Fixes Applied
+
+1. **GitHub Workflow Update** - Finalized `deploy-runpod.yml` with the v2.6.5 Protocol.
+   - Enhanced commentary and refined stage labeling for STAGE 1 (podReset) and Fallback Cycle.
+   - Verified resilient error handling for Internal Server Errors or missing Pods.
+
+---
 
 ## v2.6.14: Frontend API & GitHub Workflow Fix (April 2026)
 

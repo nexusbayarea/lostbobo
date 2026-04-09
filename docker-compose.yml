@@ -1,44 +1,199 @@
-version: '3.8'
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════
+# SimHPC Production Docker Compose
+# Features: Health checks, resource limits, logging, networking
+# ═══════════════════════════════════════════════════════════
 
 services:
-  # 1. The Message Broker (Queue Metrics)
+  # ───────────────────────────────────────────────────────────
+  # Redis Service (Cache & Job Queue)
+  # ───────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
+    container_name: simhpc-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
     ports:
       - "6379:6379"
+    volumes:
+      # Persist Redis data
+      - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 10s
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 512M
+      reservations:
+        cpus: '0.25'
+        memory: 256M
+    restart: unless-stopped
+    networks:
+      - simhpc-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # 2. The Autoscaler v2.2.1
-  autoscaler:
+  # ───────────────────────────────────────────────────────────
+  # SimHPC API Service
+  # ───────────────────────────────────────────────────────────
+  api:
     build:
       context: .
-      dockerfile: Dockerfile.autoscaler
+      dockerfile: Dockerfile.optimized
+      cache_from:
+        - simhpc:latest
+    image: simhpc:latest
+    container_name: simhpc-api
+    ports:
+      - "8888:8888"
     depends_on:
       redis:
         condition: service_healthy
-    env_file: .env.local
     environment:
-      - REDIS_URL=redis://redis:6379
-      - MAX_PODS=3
-      - IDLE_TERMINATION_S=300
-      - QUEUE_THRESHOLD=5
-    restart: always
+      # Infisical or environment-based secrets
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_AUDIENCE=${SUPABASE_AUDIENCE:-authenticated}
+      - SIMHPC_API_KEY=${SIMHPC_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Python settings
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    resources:
+      limits:
+        cpus: '2'
+        memory: 2G
+      reservations:
+        cpus: '1'
+        memory: 1G
+    restart: unless-stopped
+    networks:
+      - simhpc-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only_root_filesystem: false
+    # Optional: Use tmpfs for /tmp
+    tmpfs:
+      - /tmp
+      - /var/tmp
 
-  # 3. Local Mock Worker (For testing logic without a GPU)
-  mock-worker:
-    image: python:3.11-slim
+  # ───────────────────────────────────────────────────────────
+  # (Optional) Prometheus - Metrics collection
+  # ───────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: simhpc-prometheus
+    ports:
+      - "9090:9090"
     volumes:
-      - ./src:/app
-    working_dir: /app
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    resources:
+      limits:
+        cpus: '1'
+        memory: 512M
+    networks:
+      - simhpc-net
+    restart: unless-stopped
+
+  # ───────────────────────────────────────────────────────────
+  # (Optional) Grafana - Monitoring dashboard
+  # ───────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: simhpc-grafana
+    ports:
+      - "3000:3000"
     environment:
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=${DATABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-    command: python -u mock_worker.py
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
-      redis:
-        condition: service_healthy
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 256M
+    networks:
+      - simhpc-net
+    restart: unless-stopped
+
+networks:
+  simhpc-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ═══════════════════════════════════════════════════════════
+# Usage:
+#
+# Start all services:
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f api
+#   docker-compose logs -f redis
+#
+# Health check status:
+#   docker-compose ps
+#
+# Stop all services:
+#   docker-compose down
+#
+# Environment variables (.env file):
+#   ALLOWED_ORIGINS=https://example.com
+#   REDIS_PASSWORD=secure-password
+#   SUPABASE_JWT_SECRET=your-secret
+#   SIMHPC_API_KEY=your-api-key
+#   ENVIRONMENT=production
+#   GRAFANA_PASSWORD=secure-password
+#
+# ═══════════════════════════════════════════════════════════

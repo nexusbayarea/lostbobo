@@ -54,7 +54,7 @@ To launch the full "Mission Control" stack locally using Infisical for secret in
 3. **Verify**:
 
    - **Frontend**: <http://localhost> (Dashboard with Cyan LEDs)
-   - **API Health**: <http://localhost:8000/api/v1/health> (returns `{"status": "healthy", ...}`)
+   - **API Health**: <http://localhost:8888/api/v1/health> (returns `{"status": "healthy", ...}`)
    - **Worker Logs**: Look for `Heartbeat sent` in terminal output
    - **Lint Clean**: `pre-commit run --all-files` — all passed
    - **CI Gate**: GitHub Actions runs ruff on every push to `main`/`v2.5.1-DEV`

@@ -283,8 +283,8 @@ infisical run -- docker-compose up --build
 
 Services:
 - **Frontend**: http://localhost:80
-- **API**: http://localhost:8000
-- **API Health**: http://localhost:8000/api/v1/health
+- **API**: http://localhost:8888
+- **API Health**: http://localhost:8888/api/v1/health
 - **Redis**: localhost:6379
 
 ---
@@ -627,7 +627,7 @@ git add -A && git commit -m "your message" && git push origin main
 
 # 4. Verify
 curl https://simhpc.com                    # Frontend
-curl http://localhost:8000/api/v1/health   # API (local)
+curl http://localhost:8888/api/v1/health   # API (local)
 docker pull simhpcworker/simhpc-worker     # Worker image
 ```
 

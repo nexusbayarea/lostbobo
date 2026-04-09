@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Strategic Diagnosis
 - **"Control-Plane Gap" Identification**: Diagnosed the root cause of `no_active_pods` error as a missing worker discovery and registry mechanism.
-- **Worker Process Conflict**: Identified that containers were defaulting to Jupyter Lab (Port 8888) instead of the SimHPC Worker API (Port 8000).
+- **Worker Process Conflict**: Identified that containers were defaulting to Jupyter Lab (Port 8888) instead of the SimHPC Worker API (Port 8888).
 - **Routing Analysis**: Discovered that non-compute requests were incorrectly dependent on active compute pods.
 
 ## [2.6.21] - 2026-04-09

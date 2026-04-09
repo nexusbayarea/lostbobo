@@ -26,10 +26,7 @@ jobs:
 
       - name: Build & Push Unified Image
         run: |
-          docker build \
-            -f Dockerfile.unified \
-            -t simhpcworker/simhpc-unified:latest \
-            .
+          docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
           docker push simhpcworker/simhpc-unified:latest
 
       - name: Deploy to RunPod (API)

@@ -73,7 +73,7 @@ def deploy():
         gpu_count=1,
         volume_in_gb=20,
         container_disk_in_gb=20,
-        ports="8888/http,22/tcp",
+        ports="8080/http,8000/http,22/tcp",
         env=env_vars,
     )
 
@@ -84,7 +84,7 @@ def deploy():
     run_command(f"infisical secrets set RUNPOD_ID={new_id}")
 
     print(f"\n✅ Deployment Successful!")
-    print(f"🔗 API URL: https://{new_id}-8888.proxy.runpod.net")
+    print(f"🔗 API URL: https://{new_id}-8080.proxy.runpod.net")
 
 
 if __name__ == "__main__":

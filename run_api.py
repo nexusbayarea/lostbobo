@@ -35,5 +35,5 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    print(f"🚀 Starting SimHPC Worker API (Port 8888)...")
-    uvicorn.run(app, host="0.0.0.0", port=8888)
+    print(f"🚀 Starting SimHPC Worker API (Port 8080)...")
+    uvicorn.run(app, host="0.0.0.0", port=8080)

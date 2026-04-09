@@ -30,7 +30,7 @@ try:
         gpu_count=1,
         volume_in_gb=20,
         container_disk_in_gb=20,
-        ports="8888/http",
+        ports="8080/http,8000/http",
         env={"PYTHONUNBUFFERED": "1", "INFISICAL_TOKEN": INFISICAL_TOKEN},
     )
 
@@ -39,7 +39,7 @@ try:
     pod_id = new_pod["id"]
     print(f"\n🚀 DEPLOYMENT SUCCESSFUL")
     print(f"POD_ID: {pod_id}")
-    print(f"HTTP_PROXY: https://{pod_id}-8888.proxy.runpod.net")
+    print(f"HTTP_PROXY: https://{pod_id}-8080.proxy.runpod.net")
 
 except Exception as e:
     print(f"❌ DEPLOYMENT FAILED: {e}")

@@ -52,6 +52,8 @@ services:
     image: simhpc:latest
     container_name: simhpc-api
     ports:
+      - "8080:8080"
+      - "8000:8000"
       - "8888:8888"
     depends_on:
       redis:
@@ -65,11 +67,12 @@ services:
       - SIMHPC_API_KEY=${SIMHPC_API_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PORT=8080
       # Python settings
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3

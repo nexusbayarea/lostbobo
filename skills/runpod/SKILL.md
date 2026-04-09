@@ -139,18 +139,27 @@ infisical run --env=production -- vercel env add VITE_API_URL production $HTTPS_
 
 **Vercel**: https://simhpc.com
 
-## Manual Pod Restart (GraphQL API)
+## Manual Pod Reset (GraphQL API)
 
 ```bash
 # Get current pod ID from Infisical
 POD_ID=$(infisical secrets get RUNPOD_ID --env=production --plain)
 
-# Restart via GraphQL API (no SSH needed)
+# Reset via GraphQL API (forces fresh docker pull - REQUIRED for deployments)
 curl -s -X POST "https://api.runpod.io/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNPOD_API_KEY" \
   -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$POD_ID\\\" }) { id status } }\"}"
 ```
+
+### Why Reset vs Restart?
+
+| Action | Effect | Use Case |
+|--------|--------|----------|
+| `podRestart` | Reboots container, uses cached image | Quick debug |
+| `podReset` | Wipes container, pulls fresh image | **CI/CD deployments** |
+
+**Reset is required** because `podRestart` won't pull new Docker image layers — only `podReset` triggers a fresh `docker pull`.
 
 ## Config Sync (Drift Detection)
 

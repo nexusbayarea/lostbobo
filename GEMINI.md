@@ -40,6 +40,9 @@ The core database table is `simulations`. A backward-compatible view named `simu
 
 - **Vercel is Production Primary**: Handles root `src/` build and deployment automatically via native GitHub integration.
 - **RunPod HTTP Proxy (v2.3.0)**: Always use the RunPod HTTP Proxy URL for `VITE_API_URL` to prevent "Offline" errors.
+- **Production Port 8888**: RunPod Public Proxy defaults to Port 8888 for stable routing. 
+- **Jupyter Conflict Resolution**: Always include `fuser -k 8888/tcp || true` in `start.sh` to terminate default Jupyter processes before starting the FastAPI app.
+- **Vercel API Configuration**: Ensure `API_BASE_URL` in Vercel follows the `https://[POD_ID]-8888.proxy.runpod.net` format and requires a manual redeploy after Infisical sync.
 - **Google Auth (v2.5.1)**: Google Client ID `552738566412-t6ba9ar8jnsk7vsd399vhh206569p61e.apps.googleusercontent.com`.
 - **Infisical Setup**: Run `infisical init` in the project root. Secrets may use `SB_URL`/`SB_ANON_KEY` naming.
 - **Supabase Client Naming**: `src/lib/supabase.ts` checks `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON`, and `VITE_SUPABASE_ANON_KEY` with fallbacks to `SUPABASE_URL`/`SUPABASE_ANON_KEY`.

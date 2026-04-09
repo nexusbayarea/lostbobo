@@ -6,16 +6,17 @@
 
 ## Current Status
 
+- **v2.6.16**: **Port 8888 & Jupyter Conflict Resolution** (Formalized production port + start.sh guard)
 - **v2.6.15**: **Deployment Workflow Refinement** (Final v2.6.5 Protocol YAML)
-- **v2.6.14**: **Frontend API & GitHub Workflow Fix** (Merged duplicate declarations + Clean YAML)
 
-## v2.6.15: Deployment Workflow Refinement (April 2026)
+## v2.6.16: Port 8888 & Jupyter Conflict Resolution (April 2026)
 
 ### Fixes Applied
 
-1. **GitHub Workflow Update** - Finalized `deploy-runpod.yml` with the v2.6.5 Protocol.
-   - Enhanced commentary and refined stage labeling for STAGE 1 (podReset) and Fallback Cycle.
-   - Verified resilient error handling for Internal Server Errors or missing Pods.
+1. **Production Port 8888** - Confirmed Port 8888 as the canonical "Production Port" for RunPod Public Proxy compatibility.
+2. **Jupyter Conflict Guard** - Verified `start.sh` implements `fuser -k 8888/tcp` to terminate the default Jupyter server before starting FastAPI.
+3. **Unified Entrypoint** - Confirmed `api:app` (pointing to `services/api/api.py`) as the primary gateway for all SimHPC services.
+4. **Vercel Troubleshooting** - Documented the requirement to update `API_BASE_URL` in Vercel to match the `[POD_ID]-8888.proxy.runpod.net` format and trigger a manual redeploy.
 
 ---
 

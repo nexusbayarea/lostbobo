@@ -1,16 +1,16 @@
 ---
 name: deployment
 description: Complete deployment pipeline for SimHPC - Vercel, GitHub, Docker Hub, Supabase, and RunPod.
-version: 2.5.6
+version: 2.6.4
 license: MIT
 compatibility: opencode
 ---
 
 # Deployment Skill Set
 
-Complete deployment pipeline for SimHPC v2.5.6.
+Complete deployment pipeline for SimHPC v2.6.4.
 
-## Version: 2.5.6
+## Version: 2.6.4
 
 ## Docker Images
 
@@ -34,43 +34,14 @@ All images pushed to Docker Hub:
 | SB_SERVICE_ROLE_KEY | SUPABASE_SERVICE_ROLE_KEY |
 | SB_PROJECT_ID | Supabase project ref |
 
-## Quick Start
-
-Use the master deploy script for one-click deployment:
-
-```bash
-bash scripts/deploy_all.sh
-```
-
-## Master Script (deploy_all.sh)
-
-```bash
-#!/bin/bash
-
-set -e
-
-echo "[1/4] Syncing to GitHub..."
-git add . 
-git commit -m "ci: trigger docker build and deploy to RunPod"
-git push origin main
-
-echo "[2/4] Waiting for Docker build..."
-sleep 30
-
-echo "[3/4] Deploying to RunPod..."
-gh workflow run auto-deploy-runpod.yml
-
-echo "[4/4] Deployment triggered."
-```
-
 ## GitHub Actions Workflow (deploy.yml)
 
-**Critical: Use ONLY these secret names (v2.6.4)**
+### Secrets (v2.6.4) - Strict Naming
 
 | Secret | Value |
 |--------|-------|
 | `DOCKER_LOGIN` | `simhpcworker` (Docker Hub username) |
-| `DOCKER_PW_TOKEN` | Docker Hub PAT (Personal Access Token) |
+| `DOCKER_PW_TOKEN` | Docker Hub PAT |
 
 ```yaml
 - name: Login to Docker Hub
@@ -91,32 +62,9 @@ echo "[4/4] Deployment triggered."
 
 | Secret | Purpose |
 |--------|---------|
-| `SSH_HOST` | Remote IP of the GPU/A40 instance |
-| `SSH_USERNAME` | SSH username (usually `root`) |
-| `SSH_PRIVATE_KEY` | Ed25519 or RSA private key for passwordless entry |
-
-```yaml
-- name: Deploy to RunPod via SSH
-  uses: appleboy/ssh-action@v1.0.3
-  with:
-    host: ${{ secrets.SSH_HOST }}
-    username: ${{ secrets.SSH_USERNAME }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    port: 22
-    script: |
-      docker pull simhpcworker/simhpc-unified:latest
-      docker stop simhpc-unified || true
-      docker rm simhpc-unified || true
-      docker run -d --name simhpc-unified --gpus all simhpcworker/simhpc-unified:latest
-```
-
-### Required Infisical Secrets for SSH
-
-```bash
-infisical secrets set SSH_HOST="[YOUR_SERVER_IP]"
-infisical secrets set SSH_USERNAME="root"
-infisical secrets set SSH_PRIVATE_KEY="[PASTE_YOUR_PRIVATE_KEY]"
-```
+| `RUNPOD_SSH` | SSH host IP |
+| `RUNPOD_USERNAME` | SSH username (usually `root`) |
+| `RUNPOD_SSH_KEY` | Private key for passwordless entry |
 
 ## Skill 11: RunPod Infrastructure Constraints (v2.6.4)
 
@@ -149,70 +97,57 @@ infisical secrets set SSH_PRIVATE_KEY="[PASTE_YOUR_PRIVATE_KEY]"
 - **Validation**: Never hardcode `22` - pull from Infisical
 - **Note**: We use API restart (`auto-deploy-runpod.yml`) instead of SSH
 
-## Skills Overview
+## Quick Start
 
-### 1. Vercel Deploy
-See: `vercel-deploy.md`
+Use the master deploy script for one-click deployment:
 
-Deploy frontend with Infisical secret injection.
+```bash
+bash scripts/deploy_all.sh
+```
 
-### 2. GitHub Safe Push
-See: `github-safe-push.md`
+## Master Script (deploy_all.sh)
 
-Secure push with secret scanning and linting.
+```bash
+#!/bin/bash
+set -e
 
-### 3. Supabase Sync
-See: `supabase-sync.md`
+echo "[1/3] Local Build Test..."
+npm run build
 
-Sync SB_ secrets to VITE_SUPABASE_ for Vercel.
+echo "[2/3] Syncing to GitHub..."
+git add .
+git commit -m "ci: deploy SimHPC v2.6.4"
+git push origin main
+
+echo "[3/3] Triggering RunPod via GitHub Action..."
+# Requires gh auth login locally
+gh workflow run auto-deploy-runpod.yml
+
+echo "=== Deployment Triggered ==="
+```
 
 ## Deployment Flow
 
 ```
 ┌─────────────────┐
-│  Sync Infisical  │ ← Push latest secrets
+│  Push to GitHub │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Sync SB Secrets │ ← Rename SB_ to VITE_SUPABASE_
+│  Deploy to      │ ──→ Docker Hub (simhpcworker/*)
+│  Docker Hub     │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Deploy to Vercel │ ← Production build
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Git Push      │ ← Safe push with scan
+│  Auto-Deploy    │ ──→ RunPod (podRestart API)
+│  RunPod         │
 └─────────────────┘
-```
-
-## Manual Steps
-
-### Deploy RunPod (Separate)
-
-```bash
-# Build unified image
-docker build -f Dockerfile.unified -t simhpcworker/simhpc-unified:latest .
-
-# Push to Docker Hub
-docker push simhpcworker/simhpc-unified:latest
-
-# Deploy to RunPod
-python scripts/deploy_unified.py
-```
-
-### Update Vercel API URL
-
-```bash
-echo "https://{POD_ID}-8000.proxy.runpod.net" | vercel env add VITE_API_URL production
-vercel --prod --yes
 ```
 
 ## Examples
 
-- "Deploy to Vercel with Infisical secrets"
-- "Safe push to GitHub with secret scan"
-- "Run the full deploy_all script"
+- "Build and push the unified image to Docker Hub"
+- "Deploy a new GPU pod to RunPod"
+- "Sync new pod metadata to Infisical and Vercel"

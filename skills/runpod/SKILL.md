@@ -1,7 +1,7 @@
 ---
 name: runpod-push
 description: Build, push, and deploy SimHPC worker to RunPod GPU instances with Infisical secret management.
-version: 2.5.6
+version: 2.6.4
 license: MIT
 compatibility: opencode
 ---
@@ -10,7 +10,7 @@ compatibility: opencode
 
 Build, push, and deploy SimHPC unified stack to RunPod GPU instances.
 
-## Version: 2.5.6 (Port 8888 Migration)
+## Version: 2.6.4 (Port 8888 + SSH Deployment)
 
 ## Vault-First Protocol
 
@@ -24,6 +24,15 @@ Build, push, and deploy SimHPC unified stack to RunPod GPU instances.
 | `RUNPOD_API_KEY` | Provisioning new pods |
 | `VITE_API_URL` | Dynamic proxy URL (`https://{ID}-8888.proxy.runpod.net`) |
 | `ALLOWED_ORIGINS` | CORS origins |
+
+### RunPod Secrets (v2.6.4)
+
+| Secret | Value |
+|--------|-------|
+| `RUNPOD_SSH` | SSH host IP (e.g., `194.68.245.17`) |
+| `RUNPOD_TCP_PORT_22` | SSH port (e.g., `22167`) |
+| `RUNPOD_USERNAME` | SSH username (usually `root`) |
+| `RUNPOD_SSH_KEY` | Private key content |
 
 ## Unified Deployment
 
@@ -77,7 +86,7 @@ CMD ["./start.sh"]
 
 ```bash
 #!/bin/bash
-echo "🚀 Starting SimHPC v2.5.6 Unified..."
+echo "Starting SimHPC v2.6.4 Unified..."
 
 # Ensure Port 8888 is free (kills default Jupyter Lab)
 fuser -k 8888/tcp || true
@@ -106,7 +115,7 @@ git push origin main
 # The workflow will:
 # 1. Login to Docker Hub (using native synced secrets)
 # 2. Build & push simhpcworker/simhpc-unified:latest
-# 3. Trigger auto-deploy-runpod.yml to restart pod
+# 3. Deploy to RunPod via SSH
 ```
 
 ### sync-pod.sh
@@ -116,24 +125,23 @@ git push origin main
 POD_ID=$1
 HTTPS_URL="https://${POD_ID}-8888.proxy.runpod.net"
 
-# Note: Use native GitHub secrets or Infisical CLI locally
 infisical secrets set RUNPOD_POD_ID=$POD_ID --env=production
 infisical secrets set VITE_API_URL=$HTTPS_URL --env=production
 infisical run --env=production -- vercel env add VITE_API_URL production $HTTPS_URL --force
 ```
 
-## Current Deployment (v2.5.6)
+## Current Deployment (v2.6.4)
 
 **Note**: Pod ID is dynamic and stored in Infisical. Fetch with:
 ```bash
-infisical secrets get RUNPOD_POD_ID --env=production
+infisical secrets get RUNPOD_ID --env=production
 ```
 
 | Service | HTTP Proxy (8888) |
 |---------|-------------------|
 | Unified | https://{POD_ID}-8888.proxy.runpod.net |
 
-**Docker Image**: simhpcworker/simhpc-unified:latest (v2.5.6)
+**Docker Image**: simhpcworker/simhpc-unified:latest (v2.6.4)
 
 **Vercel**: https://simhpc.com
 
@@ -141,7 +149,7 @@ infisical secrets get RUNPOD_POD_ID --env=production
 
 ```bash
 # Get current pod ID from Infisical
-POD_ID=$(infisical secrets get RUNPOD_POD_ID --env=production --plain)
+POD_ID=$(infisical secrets get RUNPOD_ID --env=production --plain)
 
 # Restart to pull new image
 infisical run -- python scripts/restart_pod.py

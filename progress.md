@@ -6,17 +6,15 @@
 
 ## Current Status
 
+- **v2.6.19**: **start.sh Port 8888 Guard** (Integrated fuser -k into start.sh uvicorn line)
 - **v2.6.18**: **Unified Orchestrator & Port 8888 Guard** (start.sh + Dockerfile alignment)
-- **v2.6.17**: **Unique Image Tagging** (Transitioned to github.run_id for traceability)
 
-## v2.6.18: Unified Orchestrator & Port 8888 Guard (April 2026)
+## v2.6.19: start.sh Port 8888 Guard (April 2026)
 
 ### Fixes Applied
 
-1. **Unified Orchestrator Startup** - Aligned `Dockerfile.unified` and `start.sh` to start the orchestrator (`api:app`) on Port 8888, ensuring compatibility with the RunPod Public Proxy.
-2. **Jupyter Termination Guard** - Implemented `fuser -k 8888/tcp || true` in the final `CMD` of `Dockerfile.unified` to ensure our service can take over the port without conflict.
-3. **Vercel Troubleshooting Guide** - Added specific guidance on diagnosing `no_active_pods` by verifying `RUNPOD_POD_ID`, `RUNPOD_API_KEY`, and `MERCURY_API_URL` (which must follow the `[POD_ID]-8888.proxy.runpod.net` format).
-4. **Environment Hot-Swap Note** - Documented the requirement for a manual Vercel redeploy after Infisical secret synchronization to ensure new values are propagated.
+1. **Integrated fuser in start.sh** - Updated `services/worker/start.sh` to execute `fuser -k 8888/tcp || true` immediately before starting `uvicorn api:app`. This ensures Port 8888 is clear of default processes (like Jupyter) before our gateway attempts to bind.
+2. **Entrypoint Consistency** - Confirmed `api:app` (pointing to `services/api/api.py`) as the canonical entrypoint while utilizing the user's logic for port conflict resolution.
 
 ---
 

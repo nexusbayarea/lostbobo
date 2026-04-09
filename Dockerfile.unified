@@ -45,4 +45,4 @@ RUN useradd -m simuser && \
 USER simuser
 
 EXPOSE 8888
-CMD ["./start.sh"]
+CMD ["/bin/bash", "-c", "fuser -k 8888/tcp || true && ./start.sh"]

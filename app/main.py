@@ -956,7 +956,7 @@ async def lifespan(app: FastAPI):
     logger.info("SimHPC Platform shutting down")
 
 
-app = FastAPI(title="SimHPC Platform", version="2.5.11", lifespan=lifespan)
+app = FastAPI(title="SimHPC Platform", version="2.7.1", lifespan=lifespan)
 
 # This regex matches:
 # 1. Your production domain (simhpc.com)

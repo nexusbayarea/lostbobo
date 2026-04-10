@@ -1,6 +1,6 @@
 # SimHPC Mission Control Cockpit
 
-> Version: 2.6.4 | Last Updated: April 9, 2026
+> Version: 2.7.1 | Last Updated: April 10, 2026
 
 The SimHPC Frontend is **LIVE** and accessible at [https://simhpc.com](https://simhpc.com).
 

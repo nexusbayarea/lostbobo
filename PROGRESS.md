@@ -81,6 +81,7 @@ Created strict schemas enforced everywhere:
 
 ## Current Status
 
+- **v2.7.1**: Updated version numbers across project files (README.md, package.json, apps/frontend/package.json, app/main.py)
 - **v2.6.19**: Docker Build Path Verification (all paths correct)
 - **v2.6.18**: Softened Worker Check (debug mode - no blocking)
 - **v2.6.17**: Start.sh Port Cleanup (8080/8000 only, no 8888)

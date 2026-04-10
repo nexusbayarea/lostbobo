@@ -250,3 +250,6 @@ docker push simhpcworker/simhpc-unified:latest
 
 ### Status: ? DEPLOYED
 
+
+- **Fix**: Reverted frontend optimizations (lazy loading/manual chunks) due to React context resolution errors. Site restored to standard bundle strategy.
+

@@ -685,3 +685,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 > **Mercury AI**: See [ARCHITECTURE.md](./ARCHITECTURE.md#appendix-mercury-ai-usage-in-alpha) for usage guidelines and health tests.
+
+### Fixed
+- **Blank White Page**: Reverted manualChunks and lazy loading in the frontend to resolve a TypeError: Cannot read properties of undefined (reading 'createContext') caused by multiple React instances across chunks.
+

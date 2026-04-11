@@ -12,7 +12,7 @@ fuser -k 8000/tcp || true
 
 # Start API
 echo "[SimHPC] Starting API (8080)..."
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 &
+python3 -m uvicorn app.api.api:app --host 0.0.0.0 --port 8080 &
 API_PID=$!
 
 # Start worker

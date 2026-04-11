@@ -46,13 +46,10 @@ from app.api.routes import simulations as simulations_router  # noqa: E402
 from app.api.routes import certificates as certificates_router  # noqa: E402
 from app.api.routes import control as control_router  # noqa: E402
 from app.api.routes import admin as admin_router  # noqa: E402
-from app.api.routes import ws as ws_router  # noqa: E402
 
 # Import local services (API-only — no numpy/scipy/matplotlib)
-from app.core.auth_utils import verify_user  # noqa: E402
-from app.core.job_queue import enqueue_job  # noqa: E402
-from app.core.guards import init_guards  # noqa: E402
-from app.utils import flush_usage_to_supabase, manual_flush_execution  # noqa: E402
+from auth_utils import verify_user  # noqa: E402
+from job_queue import enqueue_job  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -122,11 +119,22 @@ def get_active_workers() -> List[dict]:
 
 
 async def check_compute_availability():
-    """Softened for deployment debugging - no longer blocks job submissions."""
+    """Ensure at least one worker is alive before enqueuing."""
     workers = get_active_workers()
     if not workers:
-        logger.warning("No active workers detected — continuing anyway (debug mode)")
-        return []
+        logger.error("No active workers found in registry")
+        # Fallback: check if we should trigger an autoscale event
+        r_client.lpush(
+            "runpod_events",
+            json.dumps(
+                {
+                    "ts": datetime.now().isoformat(),
+                    "event": "no_workers_available",
+                    "details": "Job submission failed due to empty registry",
+                }
+            ),
+        )
+        raise HTTPException(503, "no_active_pods")
     return workers
 
 
@@ -502,36 +510,92 @@ USAGE_WINDOW_DAYS = 7  # Rolling 7-day window for Free tier
 
 
 async def get_user_usage(user_id: str) -> dict:
-    """Get current usage stats for a user (Supabase Authority)."""
+    """Get current usage stats for a user."""
     try:
-        used = await get_weekly_usage(user_id)
+        # Check Redis for usage data
+        usage_key = f"usage:{user_id}"
+        usage_data = r_client.get(usage_key)
 
-        # Reset timestamp is now illustrative of the rolling window
-        # In a strict rolling window, the oldest run "expires" 7 days after it was created.
-        next_reset = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
+        if usage_data:
+            data = json.loads(usage_data)
+            reset_timestamp = datetime.fromisoformat(data.get("reset_timestamp", ""))
 
-        return {
-            "runs_used": used,
-            "reset_timestamp": next_reset.isoformat(),
-            "last_updated": datetime.now().isoformat(),
-        }
+            # Check if window has expired
+            if datetime.now() > reset_timestamp:
+                # Reset usage
+                new_reset = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
+                reset_data = {
+                    "runs_used": 0,
+                    "reset_timestamp": new_reset.isoformat(),
+                    "last_updated": datetime.now().isoformat(),
+                }
+                r_client.setex(
+                    usage_key, USAGE_WINDOW_DAYS * 86400, json.dumps(reset_data)
+                )
+                return reset_data
+
+            return data
+        else:
+            # Initialize new usage record
+            reset_timestamp = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
+            initial_data = {
+                "runs_used": 0,
+                "reset_timestamp": reset_timestamp.isoformat(),
+                "last_updated": datetime.now().isoformat(),
+            }
+            r_client.setex(
+                usage_key, USAGE_WINDOW_DAYS * 86400, json.dumps(initial_data)
+            )
+            return initial_data
+
     except Exception as e:
-        logger.error(f"Error getting user usage from Supabase: {e}")
+        logger.error(f"Error getting user usage: {e}")
+        # Return default usage data on error
+        reset_timestamp = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
         return {
             "runs_used": 0,
-            "reset_timestamp": (
-                datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
-            ).isoformat(),
+            "reset_timestamp": reset_timestamp.isoformat(),
             "last_updated": datetime.now().isoformat(),
         }
 
 
 async def increment_user_usage(user_id: str, runs: int = 1) -> bool:
-    """
-    Deprecated: Usage is now implicitly incremented by DB insert in create_simulation.
-    This remains as a no-op for backward compatibility.
-    """
-    return True
+    """Increment user usage count. Returns True if within limits."""
+    try:
+        usage_key = f"usage:{user_id}"
+        usage_data = r_client.get(usage_key)
+
+        if not usage_data:
+            # Initialize if not exists
+            reset_timestamp = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
+            data = {
+                "runs_used": runs,
+                "reset_timestamp": reset_timestamp.isoformat(),
+                "last_updated": datetime.now().isoformat(),
+            }
+            r_client.setex(usage_key, USAGE_WINDOW_DAYS * 86400, json.dumps(data))
+            return True
+
+        data = json.loads(usage_data)
+        reset_timestamp = datetime.fromisoformat(data.get("reset_timestamp", ""))
+
+        # Check if window has expired
+        if datetime.now() > reset_timestamp:
+            # Reset and start new window
+            reset_timestamp = datetime.now() + timedelta(days=USAGE_WINDOW_DAYS)
+            data["runs_used"] = runs
+            data["reset_timestamp"] = reset_timestamp.isoformat()
+        else:
+            # Increment within current window
+            data["runs_used"] = data.get("runs_used", 0) + runs
+
+        data["last_updated"] = datetime.now().isoformat()
+        r_client.setex(usage_key, USAGE_WINDOW_DAYS * 86400, json.dumps(data))
+        return True
+
+    except Exception as e:
+        logger.error(f"Error incrementing user usage: {e}")
+        return False
 
 
 async def check_concurrent_runs(user_id: str) -> bool:
@@ -877,8 +941,6 @@ class ConnectionManager:
 manager = ConnectionManager()
 telemetry_queue = asyncio.Queue()
 
-# --- Authority Alignment: Usage Buffer extracted to app.utils ---
-
 
 async def telemetry_worker():
     """Background worker to broadcast telemetry from queue to websockets."""
@@ -898,19 +960,6 @@ async def lifespan(app: FastAPI):
     logger.info("Starting SimHPC Unified Platform v2.5.4")
     logger.info(f"CORS Origins: {CORS_ORIGINS}")
 
-    # Initialize async HTTP client for external API calls
-    limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
-    timeout = httpx.Timeout(60.0, connect=10.0)
-    app.state.http_client = httpx.AsyncClient(
-        limits=limits, timeout=timeout, trust_env=True
-    )
-    logger.info("Async HTTP client initialized")
-
-    # Initialize runpod_service with the async client
-    from app.services import runpod_service
-
-    runpod_service.init_http_client(app.state.http_client)
-
     # Validate Redis connection at startup
     try:
         r_client.ping()
@@ -922,22 +971,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Cache check failed: {e}")
 
-    # Initialize unified guard layer
-    init_guards(r_client, supabase_client)
-    logger.info("Guard layer initialized")
-
     # Validate API key is configured
     if not API_KEY:
         logger.warning("SIMHPC_API_KEY not set - running in development mode")
 
     bg_worker = asyncio.create_task(telemetry_worker())
     recovery_task = asyncio.create_task(simulations_router.recovery_worker())
-    usage_flush_task = asyncio.create_task(
-        flush_usage_to_supabase(app.state.http_client)
-    )
-
-    # Set the HTTP client reference for the flush task
-    # usage_flush_task now takes http_client as an argument
 
     # Initialize Onboarding Service
     global onboarding_service
@@ -947,16 +986,12 @@ async def lifespan(app: FastAPI):
         logger.info("Onboarding service initialized")
 
     yield
-
-    # Cleanup
-    await app.state.http_client.aclose()
     bg_worker.cancel()
     recovery_task.cancel()
-    usage_flush_task.cancel()
     logger.info("SimHPC Platform shutting down")
 
 
-app = FastAPI(title="SimHPC Platform", version="2.7.1", lifespan=lifespan)
+app = FastAPI(title="SimHPC Platform", version="2.5.11", lifespan=lifespan)
 
 # This regex matches:
 # 1. Your production domain (simhpc.com)
@@ -984,7 +1019,6 @@ simulations_router.init_routes(
     get_job,
     set_job,
     update_job_field,
-    get_job_field,
     PLAN_LIMITS,
     UserPlan,
     record_simulation_start,
@@ -1004,7 +1038,6 @@ simulations_router.init_routes(
     get_idempotency_value_fn=get_idempotency_value,
     increment_active_runs_fn=increment_active_runs,
     decrement_active_runs_fn=decrement_active_runs,
-    http_client_ref=app.state.http_client,
 )
 
 certificates_router.init_routes(
@@ -1021,10 +1054,6 @@ app.include_router(admin_router.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(
     onboarding_router.router, prefix="/api/v1/onboarding", tags=["Onboarding"]
 )
-app.include_router(ws_router.router, tags=["WebSocket"])
-
-# Initialize ws_router with dependencies
-ws_router.init_ws(r_client, verify_auth)
 
 
 # --- USAGE & RATE LIMITING ENDPOINTS ---
@@ -1109,18 +1138,9 @@ async def get_system_status():
 
 
 @app.get("/health", tags=["System — Health"])
-@app.get("/api/v1/health", tags=["System — Health"])
-async def health_check():
-    """
-    Unified health check endpoint used by GitHub Actions and the proxy.
-    Returns 200 when the API is running.
-    """
-    return {
-        "status": "ok",
-        "timestamp": datetime.utcnow().isoformat(),
-        "service": "SimHPC API",
-        "version": "2.7.0",
-    }
+async def health():
+    """Simple health check for proxy resolution."""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
 
 @app.get("/api/v1/user/profile", tags=["User"])
@@ -1150,6 +1170,44 @@ async def get_user_profile(authorization: str = Header(None)):
         logger.warning(f"Failed to fetch user profile: {e}")
 
     return {"id": user_id, "tier": "free", "runs_used": 0, "plan": "free"}
+
+
+@app.get("/api/v1/health", tags=["System — Health"])
+async def health_check():
+    """
+    Unified Health Check for v2.5.4.
+    Verifies API, Redis, and Supabase connectivity.
+    """
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {"api": "online", "cache": "in_memory", "supabase": "offline"},
+        "cache_mode": "in_memory_fallback" if not redis_available else "redis",
+    }
+
+    # 1. Check Cache (Redis or fallback)
+    try:
+        if r_client.ping():
+            health_status["services"]["cache"] = "online"
+    except Exception as e:
+        health_status["status"] = "degraded"
+        logger.error(f"Health Check: Cache check failed: {e}")
+
+    # 2. Check Supabase
+    try:
+        if supabase_client:
+            supabase_client.table("worker_heartbeat").select(
+                "count", count="exact"
+            ).limit(1).execute()
+            health_status["services"]["supabase"] = "online"
+    except Exception as e:
+        health_status["status"] = "degraded"
+        logger.error(f"Health Check: Supabase unreachable: {e}")
+
+    if health_status["status"] == "degraded":
+        return JSONResponse(status_code=503, content=health_status)
+
+    return health_status
 
 
 # --- MERCURY AI: GUIDANCE ENGINE ---
@@ -1273,26 +1331,6 @@ async def verify_admin(x_admin_secret: str = Header(None)):
 
 
 admin_router.init_routes(r_client, verify_admin)
-
-
-# --- Vercel Cron: Force Flush ---
-@app.get("/api/v1/internal/force-flush", tags=["Internal"])
-async def force_flush(authorization: str = Header(None)):
-    """
-    Vercel Cron endpoint to force-flush usage buffer.
-    Schedule: * * * * * (every minute)
-    """
-    CRON_SECRET = os.getenv("CRON_SECRET", "")
-    if CRON_SECRET and authorization != f"Bearer {CRON_SECRET}":
-        raise HTTPException(status_code=403, detail="Unauthorized")
-
-    await manual_flush_execution_wrapper()
-    return {"status": "success", "message": "Buffer cleared to Supabase"}
-
-
-async def manual_flush_execution_wrapper():
-    """Manual flush for Vercel Cron."""
-    await manual_flush_execution(app.state.http_client)
 
 
 # --- ALPHA SERVICES (legacy — not yet extracted to route file) ---

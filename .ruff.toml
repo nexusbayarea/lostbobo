@@ -1,0 +1,13 @@
+[lint]
+exclude = [
+    "legacy_archive/**",
+    ".ruff_cache/**",
+    "node_modules/**",
+    ".venv/**",
+]
+
+[lint.per-file-ignores]
+"app/core/job_queue.py" = ["E722"]
+"app/api/routes/ws.py" = ["E402", "E722"]
+"app/services/runpod_service.py" = ["F841"]
+"scripts/*.py" = ["E722", "E402"]

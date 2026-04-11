@@ -91,7 +91,12 @@ def init_routes(
     http_client_ref=None,
 ):
     global supabase_client, r_client, verify_auth, enqueue_job, get_job, set_job
-    global update_job_field, get_job_field, PLAN_LIMITS, UserPlan, record_simulation_start
+    global \
+        update_job_field, \
+        get_job_field, \
+        PLAN_LIMITS, \
+        UserPlan, \
+        record_simulation_start
     global validate_simulation_request, check_plan_limits, check_idempotency
     global store_idempotency, check_concurrent_runs, increment_user_usage
     global get_user_usage, check_compute_availability_fn
@@ -519,7 +524,6 @@ async def create_simulation(
     """Create a new simulation and enqueue it to Redis."""
     user_id = user["user_id_internal"]
     plan = user.get("plan", UserPlan.FREE)
-    limits = PLAN_LIMITS[plan]
 
     # 0. Check worker availability (Full Infra Registry)
     await check_compute_availability_fn()

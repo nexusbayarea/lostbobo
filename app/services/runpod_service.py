@@ -145,7 +145,7 @@ def terminate_pod(pod_id: str) -> dict:
       podTerminate(input: {{ podId: "{pod_id}" }})
     }}
     """
-    res = _gql(query)
+    _ = _gql(query)
     logger.info(f"API: Direct Pod TERMINATE sent for {pod_id}")
     return {"pod_id": pod_id, "status": "TERMINATED"}
 

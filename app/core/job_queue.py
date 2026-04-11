@@ -84,6 +84,11 @@ def enqueue_job(job_input: any, user_context: dict = None) -> dict:
     else:
         job_obj["tier"] = "free"
 
+    # Add creation timestamp for autoscaler age tracking
+    if "created_at" not in job_obj:
+        import time
+        job_obj["created_at"] = time.time()
+
     # === IDEMPOTENCY CHECK ===
     # Use provided idempotency key or generate from user_id + job content
     idem_key = job_obj.get("idempotency_key")

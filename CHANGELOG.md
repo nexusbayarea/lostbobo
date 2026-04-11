@@ -5,6 +5,20 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.5] - 2026-04-10
+
+### Added
+- **Production Autoscaler v2.7.5**: Implemented a queue-aware elastic scaling engine for RunPod GPU workers using a non-linear pressure function (sqrt of backlog + age).
+- **Worker Heartbeat Registry**: Established a central `sim:workers` hash in Redis for real-time tracking of active vs. stale workers.
+- **Job Age Tracking**: Added `created_at` timestamps to enqueued jobs to enable SLA-sensitive scaling.
+
+### Changed
+- **Scaling Logic**: Replaced single-pod logic with dynamic multi-pod spawning based on Redis queue depth and oldest job age.
+- **Dependency Update**: Added `requests` to the unified dependency manifest for RunPod API integration.
+
+### Fixed
+- **Stale Worker Cleanup**: Implemented automatic pruning of workers from the active registry after 60 seconds of inactivity.
+
 ## [2.7.4] - 2026-04-10
 
 ### Changed

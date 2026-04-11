@@ -623,3 +623,7 @@ ode_modules and .git while preserving the docker/ configuration tree.
 - **Port Finalization**: Completed project-wide port migration to **8080** for all API and Worker services.
 - **Runtime Reliability**: Eliminated ABI and dependency drift by deriving all service images from the common CUDA baseline.
 
+- **Scaling Hardening**: Migrated to a production-grade queue-aware autoscaler with a sqrt-based pressure function (backlog + age).
+- **Worker Lifecycle**: Implemented central heartbeat registry in Redis (sim:workers) with automatic stale worker pruning after 60s.
+- **Observability**: Added real-time autoscaler status snapshots to Redis for dashboard integration.
+

@@ -103,10 +103,14 @@ def heartbeat_loop():
     while True:
         try:
             # Update metadata last_seen
+            now_ts = str(time.time())
             redis_client.hset(
-                f"worker:metadata:{WORKER_ID}", "last_seen", str(time.time())
+                f"worker:metadata:{WORKER_ID}", "last_seen", now_ts
             )
-            # Set a TTL-based heartbeat key for pruning
+            # Update the central worker registry for autoscaler
+            redis_client.hset("sim:workers", WORKER_ID, now_ts)
+            
+            # Set a TTL-based heartbeat key for quick dashboard check
             redis_client.setex(f"worker:heartbeat:{WORKER_ID}", 30, "alive")
             time.sleep(10)
         except Exception as e:

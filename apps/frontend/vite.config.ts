@@ -19,46 +19,31 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
-          // 1. Core React + Router (MUST be in same chunk to avoid context issues)
-          if (
-            id.includes("react") || 
-            id.includes("react-dom") || 
-            id.includes("react-router") ||
-            id.includes("scheduler") ||
-            id.includes("prop-types")
-          ) {
-            return "vendor-core";
-          }
-
-          // 2. Supabase
+          // 1. Supabase (separate as it's heavily used and relatively independent)
           if (id.includes("@supabase")) {
             return "vendor-supabase";
           }
 
-          // 3. State management
-          if (id.includes("zustand") || id.includes("jotai") || id.includes("recoil")) {        
+          // 2. State management libraries (can be separate)
+          if (
+            id.includes("zustand") || 
+            id.includes("jotai") || 
+            id.includes("recoil") ||
+            id.includes("redux")
+          ) {
             return "vendor-state";
           }
 
-          // 4. UI / Charts / Heavy visuals
-          if (
-            id.includes("recharts") ||
-            id.includes("chart.js") ||
-            id.includes("framer-motion") ||
-            id.includes("lucide-react") ||
-            id.includes("sonner") ||
-            id.includes("@radix-ui")
-          ) {
-            return "vendor-ui";
-          }
-
-          // 5. Everything else from node_modules
+          // 3. Everything else from node_modules goes into a single vendor chunk
+          // This avoids circular dependencies between React and UI libraries
           if (id.includes("node_modules")) {
             return "vendor";
           }
         },
       },
     },
-
   },
+
+  // Optional: Better sourcemaps for debugging production issues
+  sourcemap: process.env.NODE_ENV === "development",
 });

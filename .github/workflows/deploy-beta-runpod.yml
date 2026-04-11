@@ -43,11 +43,12 @@ jobs:
           RESPONSE=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
+            -H "x-apollo-operation-name: podReset" \
             -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$RUNPOD_ID\\\" }) { id } }\"}")
           
           echo "API Response: $RESPONSE"
 
-          if echo "$RESPONSE" | grep -q "\"errors\"" || [[ -z "$RESPONSE" ]]; then
+          if echo "$RESPONSE" | grep -qE '"errors"|"error"' || [[ -z "$RESPONSE" ]]; then
             echo "podReset failed. Triggering fallback cycle (Stop -> Resume)..."
             
             # 2. FALLBACK STAGE 1: STOP

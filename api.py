@@ -1138,9 +1138,14 @@ async def get_system_status():
 
 
 @app.get("/health", tags=["System — Health"])
-async def health():
-    """Simple health check for proxy resolution."""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+@app.get("/api/v1/health", tags=["System — Health"])
+async def health_check():
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "SimHPC API",
+        "version": "2.7.0-beta",
+    }
 
 
 @app.get("/api/v1/user/profile", tags=["User"])
@@ -1170,44 +1175,6 @@ async def get_user_profile(authorization: str = Header(None)):
         logger.warning(f"Failed to fetch user profile: {e}")
 
     return {"id": user_id, "tier": "free", "runs_used": 0, "plan": "free"}
-
-
-@app.get("/api/v1/health", tags=["System — Health"])
-async def health_check():
-    """
-    Unified Health Check for v2.5.4.
-    Verifies API, Redis, and Supabase connectivity.
-    """
-    health_status = {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "services": {"api": "online", "cache": "in_memory", "supabase": "offline"},
-        "cache_mode": "in_memory_fallback" if not redis_available else "redis",
-    }
-
-    # 1. Check Cache (Redis or fallback)
-    try:
-        if r_client.ping():
-            health_status["services"]["cache"] = "online"
-    except Exception as e:
-        health_status["status"] = "degraded"
-        logger.error(f"Health Check: Cache check failed: {e}")
-
-    # 2. Check Supabase
-    try:
-        if supabase_client:
-            supabase_client.table("worker_heartbeat").select(
-                "count", count="exact"
-            ).limit(1).execute()
-            health_status["services"]["supabase"] = "online"
-    except Exception as e:
-        health_status["status"] = "degraded"
-        logger.error(f"Health Check: Supabase unreachable: {e}")
-
-    if health_status["status"] == "degraded":
-        return JSONResponse(status_code=503, content=health_status)
-
-    return health_status
 
 
 # --- MERCURY AI: GUIDANCE ENGINE ---

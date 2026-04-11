@@ -1,6 +1,4 @@
-# SimHPC Unified Dockerfile - Beta Foundation (Stable & Simple)
-# Uses python:3.11-slim + direct uvicorn start
-
+# SimHPC Unified Dockerfile - Beta Foundation (Clean & Reliable)
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -13,16 +11,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR $APP_HOME
 
-# Install system tools
+# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# Install Python dependencies
+# Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -33,16 +28,12 @@ COPY app/ ./app/
 # Create cache directories
 RUN mkdir -p /workspace/huggingface /workspace/vllm_cache
 
-# Permissions
 RUN chmod +x start.sh
 
-# Expose primary port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Use tini as init and start directly
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["./start.sh"]

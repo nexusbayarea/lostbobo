@@ -1,11 +1,9 @@
 fastapi
-uvicorn
-gunicorn
+uvicorn[standard]
 python-dotenv
 redis
-requests
-fpdf
-supabase
 pydantic
 httpx
-python-jose
+supabase
+python-jose[cryptography]
+psycopg2-binary

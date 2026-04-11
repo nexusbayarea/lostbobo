@@ -1,16 +1,16 @@
 ---
 name: docker-lean
 description: Minimal, reproducible Docker builds for SimHPC GPU workloads (A40 optimized).
-version: 2.7.1
+version: 2.8.0
 license: MIT
 compatibility: opencode
 ---
 
-# Docker Lean Skill Set (v2.7.1)
+# Docker Lean Skill Set (v2.8.0)
 
 Essential skills for keeping images small and your system clean.
 
-## Version: 2.7.1
+## Version: 2.8.0
 
 ## 🔐 SECURITY RULES (MANDATORY - NO EXCEPTIONS)
 
@@ -35,9 +35,68 @@ RUN infisical secrets export --env=production --outputFormat=dotenv > /app/.env
 *.key
 *.pem
 *.secret
+legacy_archive/
 ```
 
-## SimHPC Image Topology (v2.7 Structure)
+## SimHPC Image Topology (v2.7+)
+
+**ONLY build and deploy:**
+```
+simhpcworker/simhpc-unified:latest
+```
+
+**Do NOT build individually:**
+```
+simhpcworker/simhpc-worker       ❌
+simhpcworker/simhpc-api          ❌
+simhpcworker/simhpc-autoscaler   ❌
+```
+
+| Service | Dockerfile | Path | Entry |
+| :--- | :--- | :--- | :--- |
+| simhpc-unified | `docker/images/Dockerfile.unified` | `app/` | `app.api.api:app` |
+
+## Dockerfile.unified Structure
+
+```dockerfile
+WORKDIR /app
+COPY app/ ./app/
+COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/scripts/start.sh /start.sh
+```
+
+### Key paths:
+- API: `/app/app/api/api.py` → uvicorn `app.api.api:app`
+- Worker: `/app/app/services/worker/worker.py`
+- Autoscaler: `/app/app/services/worker/autoscaler.py`
+
+## 502 Troubleshooting Guide
+
+A **502 from RunPod proxy** means:
+```
+Proxy → Container → ❌ no response / crashed / wrong port
+```
+
+### Most common causes:
+
+1. **App not binding to 0.0.0.0:8080**
+2. **start.sh failing silently**
+3. **Process crashes on startup**
+4. **Port mismatch**
+
+### Debug steps:
+
+1. Check RunPod logs for:
+   - `ModuleNotFoundError`
+   - `ImportError`
+   - `Address already in use`
+   - `File not found`
+
+2. If logs empty → container never started correctly
+
+3. Verify port 8080 is correct in supervisord.conf
+
+## Base Image Strategy (GPU-Optimized)
 
 | Service           | Dockerfile              | Context |
 | ----------------- | ---------------------- | ------- |

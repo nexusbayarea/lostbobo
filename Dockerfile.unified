@@ -1,4 +1,4 @@
-# SimHPC Unified Dockerfile - Beta Foundation (Clean & Reliable)
+# SimHPC Unified Dockerfile - Beta Foundation (GHCR Optimized)
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR $APP_HOME
 
-# System dependencies
+# Minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     tini \
@@ -26,9 +26,8 @@ COPY api.py worker.py start.sh ./
 COPY app/ ./app/
 
 # Create cache directories
-RUN mkdir -p /workspace/huggingface /workspace/vllm_cache
-
-RUN chmod +x start.sh
+RUN mkdir -p /workspace/huggingface /workspace/vllm_cache && \
+    chmod +x start.sh
 
 EXPOSE 8080
 

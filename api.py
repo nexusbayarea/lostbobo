@@ -2,13 +2,10 @@
 SimHPC API - Unified Platform (Beta Foundation v2.8.0)
 """
 
-import logging
+from fastapi import FastAPI, HTTPException, Header
 import os
 from pathlib import Path
-from typing import List, Optional, Any
-
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routers

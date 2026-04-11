@@ -394,3 +394,29 @@ Achieve immediate 200 OK health check response from RunPod deployment by minimiz
 ### Status: ✅ IMPLEMENTED (April 11, 2026)
 - Critical blockers resolved
 - Ready for router inclusion and Supabase integration
+
+---
+
+## v2.7.6: GitHub Actions YAML Fix (April 11, 2026)
+
+### Issues Fixed
+- **YAML syntax error**: Multi-line `tags:` block causing parsing failure on line 34
+- **Removed health check**: As requested to simplify deployment flow
+
+### Key Changes in .github/workflows/deploy.yml
+1. Simplified to single tag (`:latest`) to avoid YAML indentation issues
+2. Removed multi-line tags block that was causing GitHub Actions to fail
+3. Kept Ruff lint as non-blocking step
+4. Preserved podStop → podUpdate → podResume sequence for safe updates
+5. Maintained 90-second wait for container startup
+
+### Compliance Notes
+- Uses GitHub Container Registry (GHCR) for image storage
+- Follows SYSTEM.md port standard (8080)
+- Maintains Infisical compatibility for secret injection
+- Ready for router inclusion and Supabase integration after API fixes
+
+### Status: ✅ IMPLEMENTED (April 11, 2026)
+- GitHub Actions workflow should now pass
+- Triggers fresh deployment to RunPod on push to main
+- Awaits manual health check verification after deployment

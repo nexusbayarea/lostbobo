@@ -1,14 +1,8 @@
 [lint]
 exclude = [
-    "legacy_archive/**",
     ".ruff_cache/**",
     "node_modules/**",
     ".venv/**",
-]
-
-[format]
-exclude = [
-    "legacy_archive/**",
 ]
 
 [lint.per-file-ignores]

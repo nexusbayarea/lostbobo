@@ -35,7 +35,6 @@ RUN infisical secrets export --env=production --outputFormat=dotenv > /app/.env
 *.key
 *.pem
 *.secret
-legacy_archive/
 ```
 
 ## SimHPC Image Topology (v2.7+)

@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE_NAME: simhpcworker/simhpc-unified
+  IMAGE_NAME: ghcr.io/nexusbayarea/simhpc-unified
 
 jobs:
   deploy:
@@ -44,18 +44,19 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     # ─────────────────────────────────────────────
-    # 5. Docker Login
-    # ─────────────────────────────────────────────
-    - name: Login to Docker Hub
+    # 5. Docker Login (GHCR)
+    # ───────────────────────────────────────────────────────────
+    - name: Login to GHCR
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_LOGIN }}
-        password: ${{ secrets.DOCKER_PW_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    # ─────────────────────────────────────────────
-    # 6. Build + Push (CORRECT PATH)
-    # ─────────────────────────────────────────────
-    - name: Build & Push Unified Image
+    # ───────────────────────────────────────────────────────────
+    # 6. Build + Push to GHCR
+    # ───────────────────────────────────────────────────────────
+    - name: Build & Push Unified Image to GHCR
       run: |
         set -e
 
@@ -64,8 +65,8 @@ jobs:
         docker buildx build \
           --platform linux/amd64 \
           -f docker/images/Dockerfile.unified \
-          -t $IMAGE_NAME:latest \
-          -t $IMAGE_NAME:${{ github.run_id }} \
+          -t ghcr.io/nexusbayarea/simhpc-unified:latest \
+          -t ghcr.io/nexusbayarea/simhpc-unified:${{ github.run_id }} \
           --push \
           .
 

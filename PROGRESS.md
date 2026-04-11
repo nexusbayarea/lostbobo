@@ -462,3 +462,150 @@ Achieve immediate 200 OK health check response from RunPod deployment by minimiz
 - Enforced schema contract via generated `shared/openapi-types.ts`.
 - Updated `progress.md` to document this change.
 
+
+---
+
+## v2.7.9: Docker Build Reconciliation & Supervisord Migration (April 11, 2026)
+
+### Issues Fixed
+- **Docker build failure (Root Cause)**: BuildKit failed due to missing start.sh which was correctly removed but still referenced in the Dockerfile.
+- **Path Drift**: Discrepancies between build context and Dockerfile COPY paths.
+- **Duplicate Dockerfiles**: Multiple Dockerfile.unified instances (root, docker/, docker/images/) causing confusion.
+
+### Key Changes
+1. **Dockerfile.unified Migration**:
+   - Removed all references to start.sh (COPY, chmod, CMD).
+   - Added supervisor to system dependencies installation.
+   - Set CMD ["/usr/bin/supervisord"] as the primary entry point.
+   - Standardized on docker/Dockerfile.unified.
+2. **Path Standardization**:
+   - Pointed .github/workflows/deploy-beta-runpod.yml to the correct docker/Dockerfile.unified path.
+   - Verified .github/workflows/deploy.yml already uses the correct standardized path.
+3. **Cleanup**:
+   - Deleted redundant Dockerfile.unified from the root directory.
+   - Deleted redundant docker/images/Dockerfile.unified.
+4. **Configuration Check**:
+   - Verified docker/supervisord.conf is correctly mapped to /etc/supervisor/conf.d/supervisord.conf.
+   - Confirmed supervisord.conf correctly launches pi, worker, and utoscaler.
+
+### Status: ✅ IMPLEMENTED (April 11, 2026)
+- Build layer now perfectly aligned with runtime (no start.sh dependencies).
+- CI/CD pipelines standardized on a single "truth" path for Docker.
+- Ready for full cluster deployment.
+
+---
+
+## v2.7.10: Critical CI/CD Repair & GraphQL Optimization (April 11, 2026)
+
+### Issues Fixed
+- **YAML Syntax Violation (L34)**: Resolved back-to-back 
+ame entries causing structural failures in GitHub Actions.
+- **GraphQL API Misalignment**: Removed invalid status fields and fixed fragile inline JSON escaping in RunPod deployment scripts.
+- **Path Divergence**: Re-aligned the build step with the standardized docker/Dockerfile.unified path.
+
+### Key Changes
+1. **Structural YAML Fix**: Separated "Generate OpenAPI Types" and "Build & Push" into distinct, valid GitHub Actions steps.
+2. **GraphQL Variable Injection**: Migrated from manual string escaping to a robust "variables": { ... } pattern for podStop, podUpdate, and podResume operations.
+3. **Resilient Deploy Script**: Added set -e and status logging to the deployment runner for better observability during failures.
+4. **Platform Cleanup**: Removed invalid status field from GraphQL queries to match current RunPod API schema.
+
+### Status: ✅ STABILIZED (April 11, 2026)
+- CI/CD pipeline now syntactically valid and API-compliant.
+- Build context correctly points to the standardized v2.7 architecture.
+- Full "Push-to-Deploy" flow restored.
+
+---
+
+## v2.7.11: Centralized Process Management & Image Optimization (April 11, 2026)
+
+### Issues Fixed
+- **Stale Build Logic**: Migrated from legacy start.sh bash dependency to a centralized, industry-standard supervisord process manager.
+- **Path Divergence**: Re-standardized repository structure to use docker/images/ for Dockerfiles and docker/supervisor/ for process configuration.
+
+### Key Changes
+1. **Centralized Process Control**:
+   - Created docker/supervisor/simhpc.conf to manage pi, worker, and utoscaler as distinct, auto-restarting processes.
+   - Verified log aggregation to /dev/stdout and /dev/stderr for container-native logging.
+2. **Standardized Dockerfile**:
+   - Updated docker/images/Dockerfile.unified:
+     - Explicitly installs supervisor.
+     - Maps configuration to /etc/supervisor/conf.d/simhpc.conf.
+     - Sets entrypoint command to supervisord with explicit config path.
+3. **CI/CD Alignment**:
+   - Updated all GitHub Action workflows (deploy.yml, deploy-beta-runpod.yml) to point to the new ./docker/images/Dockerfile.unified sink.
+4. **Resilience**:
+   - supervisord now handles automatic process restarts, eliminating silent failure modes common in basic shell scripts.
+
+### Status: ✅ FULLY NORMALIZED (April 11, 2026)
+- Runtime logic completely decoupled from build logic.
+- Container now supports multi-process lifecycle management.
+- Ready for high-availability production workloads.
+
+---
+
+## v2.7.12: Final State Normalization & Code Hygiene (April 11, 2026)
+
+### Issues Fixed
+- **Code Hygiene**: Removed unused JSONResponse from pp/main.py and restored the canonical 42KB logic file from the git index.
+- **CI/CD Optimization**: Integrated Ruff Auto-Fix and uff format into the deployment pipeline for automated code quality.
+- **Supervisor Consistency**: Synchronized simhpc.conf and Dockerfile.unified to use the standardized commands and config paths.
+
+### Key Changes
+1. **App Logic Recovery**: Restored pp/main.py from the git index to ensure the 42KB core logic is active, and pruned the unused JSONResponse import.
+2. **Supervisor Finalization**:
+   - Updated docker/supervisor/simhpc.conf to use python3 app/services/worker/worker.py format as requested.
+   - Verified auto-restart and log redirect settings for all three core programs (pi, worker, utoscaler).
+3. **Build Layer Hardening**:
+   - Confirmed docker/images/Dockerfile.unified uses the correct CMD and COPY paths for the centralized supervisor architecture.
+4. **Auto-Linting**: deploy.yml now performs non-blocking auto-fixes and formatting before image construction.
+
+### Status: ✅ FINALIZED (April 11, 2026)
+- Checklist Complete: GitHub Actions (OK), Docker (OK), RunPod (Ready for Template Update).
+- Repository is now in the "Final Truth" state for v2.7.0.
+
+---
+
+## v2.7.13: Supervisor Normalization & "Truth" Alignment (April 11, 2026)
+
+### Key Changes
+1. **Config Consolidation**: Merged simhpc.conf logic into supervisord.conf.
+2. **Standardization**:
+   - Primary config path: docker/supervisor/supervisord.conf.
+   - Docker image path: /etc/supervisor/conf.d/supervisord.conf.
+3. **Propagated Changes**:
+   - Updated Dockerfile.unified to point to the consolidated supervisord.conf as the single source of truth for process management.
+   - Maintained clean program definitions for pi, worker, and utoscaler.
+
+### Status: ✅ MERGED & ALIGNED (April 11, 2026)
+- The "Truth" is now unified under supervisord.conf.
+- All build and runtime logic synchronized.
+
+---
+
+## v2.7.14: Build Layer Sanity & Context Guardrails (April 11, 2026)
+
+### Key Changes
+1. **Context Validation Script**: Created scripts/check_docker_context.py to verify the presence of essential files and flag .dockerignore overrides before building.
+2. **CI/CD Guardrail**:
+   - Integrated Validate Docker Context step into deploy.yml.
+   - The pipeline now fails early if essential files (requirements, api shims, supervisor configs) are missing.
+3. **Hygiene Reinforcement**: Confirmed .dockerignore correctly excludes 
+ode_modules and .git while preserving the docker/ configuration tree.
+
+### Status: ✅ PROTECTED (April 11, 2026)
+- The "Missing File" class of bugs is now detectable before image construction.
+- Automated context checks enforced in the deployment runner.
+
+---
+
+## v2.7.2: Process Management & Port Alignment (April 2026)
+
+### Actions Taken
+- **Process Supervision**: Migrated from start.sh to supervisord for independent process lifecycle management (API, Worker, Autoscaler).
+- **Port Standardization**: Aligned API orchestrator to port **8888** to match RunPod's routing expectations.
+- **Docker Hardening**: Integrated psmisc and user into Dockerfile.unified to prevent port binding conflicts on boot.
+- **Config Optimization**: Fixed INI syntax errors and established non-rotating log streams to /dev/stdout.
+- **Compliance**: Re-implemented frontend chunk splitting and lazy loading according to AI_DIRECTIVES.md while maintaining stable React core chunking to avoid context errors.
+
+### Status: ? DEPLOYED & STABILIZED
+

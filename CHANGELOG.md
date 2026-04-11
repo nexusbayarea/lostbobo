@@ -5,6 +5,17 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.2] - 2026-04-10
+
+### Changed
+- **Architectural Upgrade**: Transitioned from `start.sh` to `supervisord` for process management in the Unified Pod, enabling independent restarts for API, Worker, and Autoscaler.
+- **Port Alignment**: Standardized API orchestrator on port **8888** to match RunPod's internal routing and avoid Jupyter conflicts.
+- **Log Management**: Implemented non-rotating `/dev/stdout` and `/dev/stderr` streaming for all sub-processes.
+
+### Fixed
+- **Port Conflicts**: Added `fuser -k 8888/tcp` to the container command to prevent "Address already in use" errors from default RunPod services.
+- **Pathing Resolution**: Fixed working directory issues in `supervisord.conf` ensuring correct module resolution for the backend.
+
 ## [2.7.1] - 2026-04-10
 
 ### Added

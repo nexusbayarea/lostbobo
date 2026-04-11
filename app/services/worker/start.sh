@@ -1,10 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "🚀 [SimHPC] Starting API directly on port 8080 (debug mode)"
+echo "🚀 [SimHPC] Starting API directly (debug mode) - $(date)"
 
-# Clear port just in case
+# Clear port
 fuser -k 8080/tcp || true
 
-# Start API directly — this is the most reliable way to see errors
-exec python3 -m uvicorn app.api.api:app --host 0.0.0.0 --port 8080 --log-level info
+echo "Starting uvicorn on 0.0.0.0:8080..."
+
+# Start API directly - this is the most reliable way to see errors
+exec python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --log-level info

@@ -1,13 +1,17 @@
-name: Deploy Autoscaler
+name: Deploy Worker to Docker Hub
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'services/worker/**'
+      - '.github/workflows/deploy-worker.yml'
+      - 'Dockerfile.worker'
   workflow_dispatch:
 
 jobs:
-  deploy-autoscaler:
+  deploy-worker:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,12 +27,12 @@ jobs:
           username: ${{ secrets.DOCKER_LOGIN }}
           password: ${{ secrets.DOCKER_PW_TOKEN }}
 
-      - name: Build and push autoscaler image
+      - name: Build and push worker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.autoscaler
+          file: ./Dockerfile.worker
           push: true
           tags: |
-            simhpcworker/simhpc-autoscaler:latest
-            simhpcworker/simhpc-autoscaler:v${{ github.run_number }}
+            simhpcworker/simhpc-worker:latest
+            simhpcworker/simhpc-worker:v${{ github.run_number }}

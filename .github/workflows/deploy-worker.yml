@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'services/worker/**'
-      - '.github/workflows/deploy-worker.yml'
-      - 'Dockerfile.worker'
   workflow_dispatch:
 
 jobs:

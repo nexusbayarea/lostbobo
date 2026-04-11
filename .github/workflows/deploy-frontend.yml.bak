@@ -3,6 +3,9 @@ name: Deploy Frontend v2.7
 on:
   push:
     branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'app/api/routes/**'
 
 jobs:
   deploy-frontend:

@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'services/worker/runpod_api.py'
+      - 'services/worker/autoscaler.py'
+      - '.github/workflows/deploy-autoscaler.yml'
+      - 'Dockerfile.autoscaler'
+      - 'services/worker/requirements-autoscaler.txt'
   workflow_dispatch:
 
 jobs:

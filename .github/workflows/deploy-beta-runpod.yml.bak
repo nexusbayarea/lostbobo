@@ -1,23 +1,37 @@
-name: Auto-Deploy to RunPod (Post-Image-Push)
+name: Deploy Beta to RunPod
 
 on:
-  workflow_run:
-    workflows: ["Deploy SimHPC"]
-    types: [completed]
-    branches: [main]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  push:
+    branches: [ "main" ]
 
 jobs:
-  auto-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Reset RunPod to pull latest image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_LOGIN }}
+          password: ${{ secrets.DOCKER_PW_TOKEN }}
+
+      - name: Build and push worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/images/Dockerfile.unified
+          push: true
+          tags: |
+            simhpcworker/simhpc-unified:latest
+            simhpcworker/simhpc-unified:${{ github.run_id }}
+
+      - name: Reset RunPod Pod (resilient)
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
@@ -29,11 +43,12 @@ jobs:
           RESPONSE=$(curl -s -X POST "https://api.runpod.io/graphql" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $RUNPOD_API_KEY" \
+            -H "x-apollo-operation-name: podReset" \
             -d "{\"query\": \"mutation { podReset(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}")
           
           echo "API Response: $RESPONSE"
 
-          if echo "$RESPONSE" | grep -q "\"errors\"" || [[ -z "$RESPONSE" ]]; then
+          if echo "$RESPONSE" | grep -qE '"errors"|"error"' || [[ -z "$RESPONSE" ]]; then
             echo "podReset failed. Triggering fallback cycle (Stop -> Resume)..."
             
             # 2. FALLBACK STAGE 1: STOP
@@ -63,24 +78,3 @@ jobs:
           else
             echo "Pod successfully reset on the first try"
           fi
-
-      - name: Wait for pod
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-          RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
-        run: |
-          attempt=0
-          while [ $attempt -lt 20 ]; do
-            attempt=$((attempt + 1))
-            status_response=$(curl -s -X POST "https://api.runpod.io/graphql" \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $RUNPOD_API_KEY" \
-              -d "{\"query\": \"query { pod(input: { podId: \\\"$RUNPOD_ID\\\" }) { id desiredStatus } }\"}")
-            current_status=$(echo "$status_response" | grep -o "\"desiredStatus\":\"[^\"]*\"" | head -1 | cut -d'"' -f4)
-            if [ "$current_status" = "RUNNING" ]; then
-              echo "Pod RUNNING"
-              exit 0
-            fi
-            sleep 5
-          done
-          exit 1

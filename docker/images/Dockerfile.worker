@@ -1,42 +1,37 @@
-# Use NVIDIA CUDA base
+# SimHPC Worker Dockerfile - v2.7.2 (uv + NVIDIA CUDA)
 FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
 
-# Prevent interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    APP_HOME=/app \
+    PYTHONPATH=/app
 
-# Set working directory
-WORKDIR /app
+WORKDIR $APP_HOME
 
-# Install system dependencies and security updates
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+# Install system dependencies and uv
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     python3-pip \
     python3-dev \
-    curl \
+    tini \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 
-# FIX: Remediate CVE-2024-6345, CVE-2022-40897, and CVE-2025-47273
-# Force upgrade setuptools and wheel to patched versions (78.1.1+ and 0.38.1+)
-RUN pip3 install --no-cache-dir --upgrade pip setuptools>=78.1.1 wheel>=0.38.1
+ENV PATH="/root/.local/bin/:$PATH"
 
-# Copy requirements
-COPY app/services/worker/requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Install Python dependencies using uv (core + worker + gpu extras)
+COPY pyproject.toml uv.lock ./
+RUN uv pip install --system --no-cache .[worker,gpu]
 
-# Copy source and orchestrator
-COPY app/services/worker/worker.py .
-COPY app/services/worker/start.sh .
+# Copy application code
+COPY app/ ./app/
 
-# FIX: Remediate "No default non-root user found"
-# Create a dedicated user for SimHPC
-RUN useradd -m simuser && \
-    chown -R simuser:simuser /app && \
-    chmod +x start.sh worker.py
-
-# Switch to non-root user for execution
+# Setup Non-Root User
+RUN useradd -m simuser && chown -R simuser:simuser /app
 USER simuser
 
-# Expose API port (8080 primary, 8000 backup)
-EXPOSE 8080 8000
+EXPOSE 8080
 
-# Launch both API and Worker via the orchestrator
-CMD ["./start.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["python3", "app/services/worker/worker.py"]

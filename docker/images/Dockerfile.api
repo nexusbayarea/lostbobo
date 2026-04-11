@@ -1,42 +1,36 @@
-# --- STAGE 1: Build ---
-FROM python:3.11-slim AS builder
-WORKDIR /build
-
-# Security Patch: Force upgrade packaging tools before installing requirements
-RUN pip install --no-cache-dir --upgrade pip setuptools>=78.1.1 wheel>=0.38.1
-
-COPY app/api/requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
-
-# --- STAGE 2: Runtime ---
+# SimHPC API Dockerfile - v2.7.2 (uv)
 FROM python:3.11-slim
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-WORKDIR /app
 
-# Copy fixed packages
-COPY --from=builder /install /usr/local
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    APP_HOME=/app \
+    PYTHONPATH=/app
 
-# Copy your API code
-COPY app/api/api.py .
-COPY app/core/auth_utils.py .
-COPY app/core/demo_access.py .
-COPY app/core/job_queue.py .
+WORKDIR $APP_HOME
+
+# Install system dependencies and uv
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    tini \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin/:$PATH"
+
+# Install Python dependencies using uv
+COPY pyproject.toml uv.lock ./
+RUN uv pip install --system --no-cache .
+
+# Copy application code
+COPY run_api.py ./
 COPY app/ ./app/
 
-# Ensure non-root ownership
-RUN adduser --disabled-password --gecos '' simuser && \
-    chown -R simuser:simuser /app
+# Setup Non-Root User
+RUN useradd -m simuser && chown -R simuser:simuser /app
 USER simuser
 
-EXPOSE 8080 8000
+EXPOSE 8888
 
-# Updated Healthcheck to match your v2.6 route
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')" || exit 1
-
-CMD ["gunicorn", "api:app", \
-     "-k", "uvicorn.workers.UvicornWorker", \
-     "--workers", "2", \
-     "--bind", "0.0.0.0:8080", \
-     "--timeout", "120"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8888"]

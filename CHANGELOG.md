@@ -5,6 +5,17 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.3] - 2026-04-10
+
+### Changed
+- **Dependency Unification**: Migrated from multiple `requirements.txt` files to a single `pyproject.toml` (PEP 621) as the source of truth for all services.
+- **Modern Tooling**: Adopted `uv` for 10x faster and deterministic dependency resolution and installation.
+- **Locking Protocol**: Implemented `uv.lock` for 100% reproducible builds across API, Worker, and Autoscaler.
+- **Docker Optimization**: Updated all Dockerfiles (`unified`, `api`, `worker`, `autoscaler`) to use `uv` and multi-stage build patterns where appropriate.
+
+### Fixed
+- **Dependency Drift**: Eliminated hidden version mismatches between development, API, and GPU worker environments.
+
 ## [2.7.2] - 2026-04-10
 
 ### Changed

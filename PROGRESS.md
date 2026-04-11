@@ -613,3 +613,7 @@ ode_modules and .git while preserving the docker/ configuration tree.
 - **Health Gating**: Added wait_for_api to worker and system_ready to autoscaler to prevent premature startup.
 - **API Hardening**: Enhanced /health endpoint with active Redis connectivity verification.
 
+- **Dependency Unification**: Collapsed 5 equirements.txt files into a single PEP 621 pyproject.toml.
+- **Tooling Upgrade**: Switched to uv for dependency management, achieving faster builds and deterministic locking via uv.lock.
+- **Container Standard**: Updated all Dockerfiles to utilize uv pip install for consistent environments across API and GPU workers.
+

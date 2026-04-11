@@ -1,39 +1,36 @@
-# STAGE 1: Builder
-FROM python:3.11-slim AS builder
-WORKDIR /build
-
-RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-# Security Patch
-RUN pip install --no-cache-dir --upgrade pip setuptools>=78.1.1 wheel>=0.38.1
-
-COPY app/services/worker/requirements-autoscaler.txt ./requirements.txt
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# STAGE 2: Production v2.6
+# SimHPC Autoscaler Dockerfile - v2.7.2 (uv + Infisical)
 FROM python:3.11-slim
-WORKDIR /app
 
-# Install Infisical
-RUN apt-get update && apt-get install -y curl bash && \
-    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash && \
-    apt-get install -y infisical && \
-    rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    APP_HOME=/app \
+    PYTHONPATH=/app
 
-# Copy packages and code
-COPY --from=builder /root/.local /home/simuser/.local
-COPY app/services/worker/runpod_api.py .
-COPY app/services/worker/autoscaler.py .
-COPY app/core/job_queue.py .
+WORKDIR $APP_HOME
+
+# Install system dependencies, Infisical, and uv
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    bash \
+    ca-certificates \
+    && curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash \
+    && apt-get install -y infisical \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin/:$PATH"
+
+# Install Python dependencies using uv
+COPY pyproject.toml uv.lock ./
+RUN uv pip install --system --no-cache .
+
+# Copy application code
 COPY app/ ./app/
 
 # Setup Non-Root User
 RUN useradd -m simuser && chown -R simuser:simuser /app
 USER simuser
 
-ENV PATH=/home/simuser/.local/bin:$PATH
-ENV PYTHONUNBUFFERED=1
-
 # Use Infisical to inject secrets into the autoscaler process
-CMD ["infisical", "run", "--", "python3", "autoscaler.py"]
+CMD ["infisical", "run", "--", "python3", "app/services/worker/autoscaler.py"]

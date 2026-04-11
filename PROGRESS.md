@@ -290,3 +290,36 @@ docker push simhpcworker/simhpc-unified:latest
 - Changes committed locally
 - Next steps: Rebuild Docker image, push to registry, run podReset on pod ID: ikzejthq1q7yt9
 
+
+
+## v2.7.3: Unified Docker Simplification (April 10, 2026)
+
+### Changes Made
+- **Dockerfile.unified**: Simplified to use python:3.11-slim with direct uvicorn start
+  - Removed complex multi-stage build with NVIDIA CUDA base
+  - Eliminated supervisor complexity in favor of direct process management
+  - Added health check endpoint verification
+  - Used tini as init process for proper signal handling
+
+- **start.sh**: Simplified startup script
+  - Direct uvicorn invocation with 2 workers
+  - Port cleanup before start
+  - Proper logging and error handling
+
+- **requirements.txt**: Created unified requirements file
+  - Combined dependencies from worker and API services
+  - Includes: fastapi, uvicorn, gunicorn, python-dotenv, redis, requests, fpdf, supabase, pydantic, httpx, python-jose
+
+- **File Structure**: Positioned key files for Docker build
+  - Copied api.py and worker.py to root directory
+  - Placed requirements.txt in root directory
+  - Updated Dockerfile to copy from root
+
+### Goal
+Achieve responsive health check endpoint (200 OK) from RunPod deployment by removing complexity and ensuring direct binding to 0.0.0.0:8080
+
+### Next Steps
+- Commit changes to git
+- Push to trigger GitHub Actions build
+- Test deployed endpoint after build completes
+- Monitor health check responses

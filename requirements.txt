@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+gunicorn
+python-dotenv
+redis
+requests
+fpdf
+supabase
+pydantic
+httpx
+python-jose

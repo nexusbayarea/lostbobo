@@ -631,3 +631,8 @@ ode_modules and .git while preserving the docker/ configuration tree.
 - **Pod Lifecycle Persistence**: Established sim:pods Redis registry for deterministic and orderly pod termination.
 - **Execution Hardening**: Added multi-layer idempotency (sim:processed set + executed keys) to guarantee exactly-once job processing.
 
+- **Frontend Standard v2.7**: Synchronized frontend deployment flow with production hardening standards.
+- **Monorepo Unification**: Migrated frontend to root /frontend for logical separation and deployment synchronization.
+- **Scope Security**: Implemented scripts/guard_frontend.sh to enforce AI restricted scope.
+- **CI/CD Hardening**: Added deploy-frontend.yml with Port 8080 health validation and uv-based linting.
+

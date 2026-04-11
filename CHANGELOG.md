@@ -5,6 +5,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.7] - 2026-04-11
+
+### Changed
+- **Frontend Standard v2.7**: Synchronized the frontend deployment flow with production hardening standards, including Port 8080 unification and `uv` dependency management.
+- **Repository Structure**: Migrated `apps/frontend` to the root as `frontend/` for a cleaner, high-performance monorepo layout.
+- **Scope Hardening**: Implemented `scripts/guard_frontend.sh` to prevent unauthorized AI modifications to infrastructure and orchestration layers.
+- **CI/CD Optimization**: Added `deploy-frontend.yml` with automated scope checking, fast linting via `uv`, and cross-plane health validation.
+
 ## [2.7.6] - 2026-04-10
 
 ### Added

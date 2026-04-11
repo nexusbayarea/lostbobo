@@ -65,7 +65,7 @@ jobs:
           --platform linux/amd64 \
           -f docker/images/Dockerfile.unified \
           -t $IMAGE_NAME:latest \
-          -t $IMAGE_NAME:${{ github.sha }} \
+          -t $IMAGE_NAME:${{ github.run_id }} \
           --push \
           .
 

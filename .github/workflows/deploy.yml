@@ -1,163 +1,19 @@
-name: Deploy Orchestrator
+name: Deploy
 
 on:
-  push:
-    branches: [main]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  workflow_run:
+    workflows: ["Worker Build"]
+    types:
+      - completed
 
 jobs:
-  gate:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    outputs:
-      api_result: ${{ steps.api.outputs.conclusion }}
-      worker_result: ${{ steps.worker.outputs.conclusion }}
+
     steps:
-      - id: api
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const targetSha = context.sha;
-            const { data: runs } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'api-ci.yml',
-              sha: targetSha,
-              per_page: 5
-            });
-            
-            const run = runs.workflow_runs.find(r => r.head_sha === targetSha && r.conclusion !== null);
-            
-            if (!run) {
-              core.setFailed(`No completed API CI run found for SHA ${targetSha}`);
-            } else if (run.conclusion !== 'success') {
-              core.setFailed(`API CI failed for SHA ${targetSha}: ${run.conclusion}`);
-            }
-            
-            return run.conclusion;
-
-      - id: worker
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const targetSha = context.sha;
-            const { data: runs } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'worker-ci.yml',
-              sha: targetSha,
-              per_page: 5
-            });
-            
-            const run = runs.workflow_runs.find(r => r.head_sha === targetSha && r.conclusion !== null);
-            
-            if (!run) {
-              core.setFailed(`No completed Worker CI run found for SHA ${targetSha}`);
-            } else if (run.conclusion !== 'success') {
-              core.setFailed(`Worker CI failed for SHA ${targetSha}: ${run.conclusion}`);
-            }
-            
-            return run.conclusion;
-
-  build:
-    needs: gate
-    runs-on: ubuntu-latest
-    outputs:
-      api_image: ${{ steps.meta-api.outputs.tags }}
-      worker_image: ${{ steps.meta-worker.outputs.tags }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-
-      - name: Build API image
-        id: build-api
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/images/Dockerfile.api
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build Worker image
-        id: build-worker
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/images/Dockerfile.worker
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        env:
-          TARGETARCH: amd64
-
-  publish-worker-version:
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-    steps:
-      - name: Insert pending worker version
+      - name: Deploy
         run: |
-          curl -X POST "$SUPABASE_URL/rest/v1/worker_versions" \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker:${{ github.sha }}",
-              "status": "pending"
-            }'
-
-  deploy-api:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy API
-        run: |
-          echo "Deploying API to production..."
-          # Add your API deploy command here
-        env:
-          API_IMAGE: ${{ needs.build.outputs.api_image }}
-
-  deploy-worker:
-    needs: [build, publish-worker-version]
-    runs-on: ubuntu-latest
-    env:
-      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-      RUNPOD_TEMPLATE_ID: ${{ secrets.RUNPOD_TEMPLATE_ID }}
-      WORKER_IMAGE: ${{ needs.build.outputs.worker_image }}
-    steps:
-      - name: Deploy Worker to RunPod
-        run: |
-          echo "Deploying Worker to RunPod..."
-          curl -X POST "https://api.runpod.io/graphql" \
-            -H "Authorization: Bearer $RUNPOD_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "query": "mutation { deployPod(templateId: \"'$RUNPOD_TEMPLATE_ID'\", image: \"'$WORKER_IMAGE'\") { id } }"
-            }'
+          echo "Deploying SHA ${{ github.event.workflow_run.head_sha }}"
+          # Add your deploy command here

@@ -1,24 +1,30 @@
 #!/bin/bash
-# SimHPC Local Build Authority (v3.0.0)
-# This script is the ONLY authorized way to build production images.
+# scripts/build.sh
+# Local Build Authority (LBA) - Single Source of Truth for image creation
 
-IMAGE_NAME="simhpcworker/simhpc-unified"
-TAG=$(git rev-parse --short HEAD)
+set -e
 
-echo "🛠️  Starting Local Build Authority (LBA)..."
-echo "📦 Image: $IMAGE_NAME"
-echo "🏷️  Tag:   $TAG"
+IMAGE_NAME="ghcr.io/nexusbayarea/simhpc-unified"
+GIT_SHA=$(git rev-parse --short HEAD)
+
+echo "🏗️ Building SimHPC Local Authority Image: $GIT_SHA"
+
+# Validate build context
+echo "🔍 Validating build context..."
+if [ ! -f "./docker/images/Dockerfile.unified" ]; then
+    echo "❌ Dockerfile.unified not found!"
+    exit 1
+fi
 
 # Ensure we are in the root directory
 cd "$(dirname "$0")/.." || exit
 
-# 1. Build the unified image
-docker build -f docker/images/Dockerfile.unified -t "$IMAGE_NAME:$TAG" .
+# Build locally with SHA tag
+docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:$GIT_SHA -f ./docker/images/Dockerfile.unified .
 
-# 2. Tag as latest for convenience
-docker tag "$IMAGE_NAME:$TAG" "$IMAGE_NAME:latest"
+# Push to Registry
+echo "🚀 Pushing to GHCR..."
+docker push $IMAGE_NAME:latest
+docker push $IMAGE_NAME:$GIT_SHA
 
-echo "✅ Build Complete: $IMAGE_NAME:$TAG"
-echo "🚀 To deploy, push and run deployment script:"
-echo "   docker push $IMAGE_NAME:$TAG"
-echo "   python scripts/deploy_to_runpod.py --tag $TAG"
+echo "✅ Local Build Complete: $IMAGE_NAME:$GIT_SHA"

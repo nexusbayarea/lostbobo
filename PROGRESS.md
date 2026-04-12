@@ -1475,7 +1475,7 @@ Added validation steps to every workflow:
 
 ### Fix
 - Created skills/docker/DOCKER_SKILL.md for Local Build Authority.
-- `scripts/build.sh`: Local build + SHA tagging.
+- Updated `scripts/build.sh`: Local build + SHA tagging.
 - GHCR registry: `ghcr.io/nexusbayarea/simhpc-unified`.
 - CI validation: No Docker builds allowed.
 

@@ -848,6 +848,39 @@ Standardized all workflows to use canonical uv bootstrap:
 
 ---
 
+## v2.8.3: Unified Container Strategy (April 11, 2026)
+
+### Changes Made
+
+1. **supervisord.conf updated**:
+   - `directory=/app` (consistent with Dockerfile WORKDIR)
+   - Worker: `python3 -m app.services.worker.worker`
+   - Autoscaler: `python3 -m app.services.worker.autoscaler`
+   - Proper logfile + pidfile
+
+2. **Dockerfile.unified updated**:
+   - Multi-stage build from nvidia/cuda base
+   - All deps in one layer
+   - WORKDIR /app
+   - COPY supervisor config to /etc/supervisor/conf.d/simhpc.conf
+   - Port 8080
+
+3. **Strategy**:
+   - GitHub = single source of truth
+   - Atomic build (no pre-existing base image)
+   - Unified container runs API + Worker + Autoscaler
+
+### Files Changed
+- `docker/supervisor/simhpc.conf`
+- `docker/images/Dockerfile.unified`
+
+### Status: ✅ READY FOR DEPLOY (April 11, 2026)
+- Single source of truth
+- Unified container strategy
+- No more "works on my machine" issues
+
+---
+
 ## v2.7.20: Idempotent Job System Implementation (April 11, 2026)
 
 ### Problem

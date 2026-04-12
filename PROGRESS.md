@@ -625,6 +625,46 @@ ode ode_modules and .git while preserving the docker/ configuration tree.
 
 ---
 
+## v2.7.19: UV Lockfile & PEP 668 Compliance (April 11, 2026)
+
+### Problem
+- PEP 668 enforcement blocks `--system` installs on modern GitHub runners
+- "externally managed interpreter" errors
+- Dependency drift between CI, RunPod, and local environments
+
+### Solution
+Updated `.github/workflows/_uv-setup.yml` to use proper uv pattern:
+
+```yaml
+- name: Create venv
+  run: uv venv
+
+- name: Sync dependencies
+  run: uv sync
+
+- name: Verify lockfile
+  run: uv lock --check
+```
+
+### Key Changes
+1. Replaced `uv pip install --system ruff` with `uv sync`
+2. Uses `uv.lock` for deterministic builds
+3. Added `uv lock --check` to verify lockfile is up to date
+4. All jobs now use `uv run` to execute within the venv
+
+### Why This Matters
+- PEP 668 compliant (no system installs)
+- Exact same dependency graph everywhere
+- No "it worked before" bugs from version drift
+- Reproducible builds across CI + RunPod + local
+
+### Status: ✅ COMPLIANT (April 11, 2026)
+- uv.lock already exists in repo
+- CI uses uv sync pattern
+- All jobs use uv run for execution
+
+---
+
 ## v2.7.17: Single Orchestrator CI System (April 11, 2026)
 
 ### Problem

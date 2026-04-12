@@ -1,0 +1,81 @@
+name: simhpc-orchestrator
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: simhpc-main
+  cancel-in-progress: false
+
+jobs:
+  uv_setup:
+    uses: ./.github/workflows/_uv-setup.yml
+
+  lint:
+    needs: uv_setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate environment
+        run: |
+          uv --version
+          python --version
+
+      - name: Lint
+        run: uv run ruff check .
+
+  worker:
+    needs: uv_setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate environment
+        run: |
+          uv --version
+          python --version
+
+      - name: Deploy guard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "SERVICE=worker"
+          echo "COMMIT_SHA=${{ github.sha }}"
+          echo "Deploying worker"
+
+  frontend:
+    needs: uv_setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate environment
+        run: |
+          uv --version
+          python --version
+
+      - name: Deploy guard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "SERVICE=frontend"
+          echo "COMMIT_SHA=${{ github.sha }}"
+          echo "Deploying frontend"
+
+  autoscaler:
+    needs: uv_setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate environment
+        run: |
+          uv --version
+          python --version
+
+      - name: Deploy guard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "SERVICE=autoscaler"
+          echo "COMMIT_SHA=${{ github.sha }}"
+          echo "Syncing autoscaler"

@@ -659,6 +659,32 @@ ode ode_modules and .git while preserving the docker/ configuration tree.
 
 ---
 
+## v2.7.22: Python Package Discovery Fix (April 11, 2026)
+
+### Issue Fixed
+
+- **Error**: `Multiple top-level packages discovered in a flat-layout: ['app', 'apps', 'docker', 'skills', 'packages', 'frontend', 'supabase']`
+- **Cause**: uv sync tried to treat monorepo as installable Python package
+- **Fix**: Disabled setuptools auto-discovery by setting empty packages list
+
+### Key Changes
+
+```toml
+[tool.setuptools]
+packages = []
+
+[tool.setuptools.packages.find]
+where = []
+```
+
+This stops setuptools from scanning the repo root as a Python package, which is correct since this is a monorepo/platform, not a pip library.
+
+### Status: ✅ FIXED (April 11, 2026)
+- uv sync now works without package scan errors
+- Ready for full CI pipeline
+
+---
+
 ## v2.7.20: Idempotent Job System Implementation (April 11, 2026)
 
 ### Problem

@@ -881,6 +881,54 @@ Standardized all workflows to use canonical uv bootstrap:
 
 ---
 
+## v2.8.5: Disable Fragmented Workflows (April 11, 2026)
+
+### Issue
+- Multiple workflows failing (deploy.yml, deploy-worker, deploy-autoscaler, etc.)
+- Fragmented builds causing "clog"
+
+### Fix
+- Disabled ALL old workflows except orchestrator.yml:
+  - deploy.yml → disabled/
+  - deploy-worker.yml → disabled/
+  - deploy-autoscaler.yml → disabled/
+  - deploy-frontend.yml → disabled/
+  - deploy-supabase.yml → disabled/
+  - lint.yml → disabled/
+  - deploy-beta-runpod.yml → disabled/
+
+### Active Workflow
+- `orchestrator.yml` - Unified self-healing pipeline (GHCR only)
+
+### Status: ✅ CLEANED (April 11, 2026)
+- Single pipeline running
+- No more fragmented builds
+
+### Changes Made
+
+1. **Synced local with remote**:
+   - `git fetch origin main` → `git reset --hard origin/main` applied
+
+2. **Created root supervisord.conf**:
+   - Unified config for API, Worker, Autoscaler
+   - directory=/app
+   - Port 8080
+   - Auto-restart enabled
+
+3. **Dockerfile.unified** (existing):
+   - Already copies `docker/supervisor/simhpc.conf` to `/etc/supervisor/conf.d/simhpc.conf`
+   - Unified container strategy in place
+
+### Files
+- `supervisord.conf` (root - backup)
+- `docker/supervisor/simhpc.conf` (primary - copied into container)
+
+### Status: ✅ SYNCED (April 11, 2026)
+- Local matches remote
+- Ready for self-healing build
+
+---
+
 ## v2.7.20: Idempotent Job System Implementation (April 11, 2026)
 
 ### Problem

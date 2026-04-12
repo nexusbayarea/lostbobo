@@ -628,6 +628,59 @@ ode ode_modules and .git while preserving the docker/ configuration tree.
 ## v2.7.17: Single Orchestrator CI System (April 11, 2026)
 
 ### Problem
+- Multiple independent CI pipelines
+- Path-filtered execution causing silent skipping
+- Inconsistent environment installs
+- CI drift and overlapping deployments
+
+### Solution: Orchestrator Pattern
+Created `.github/workflows/orchestrator.yml` with global concurrency lock.
+
+### Status: ✅ ORCHESTRATION IMPLEMENTED (April 11, 2026)
+
+---
+
+## v2.7.18: Supabase Workflow Fix (April 11, 2026)
+
+### Problem
+- Empty GitHub secrets (SB_ACCESS_TOKEN, SB_PROJECT_ID, SB_DB_PASSWORD)
+- Using `supabase login` in CI (not needed, triggers misleading error)
+
+### Solution
+1. Removed `supabase login --token` command
+2. Using `SUPABASE_ACCESS_TOKEN` env var instead (auto-detected by CLI)
+3. Added validation step to fail fast on missing secrets
+
+### Key Changes
+```yaml
+- name: Validate Supabase env
+  run: |
+    if [ -z "$SB_ACCESS_TOKEN" ]; then
+      echo "Missing SB_ACCESS_TOKEN"
+      exit 1
+    fi
+```
+
+```yaml
+- name: Deploy to Production
+  env:
+    SUPABASE_ACCESS_TOKEN: ${{ secrets.SB_ACCESS_TOKEN }}
+  run: |
+    supabase link --project-ref "$SB_PROJECT_ID"
+    supabase db push --password "$SB_DB_PASSWORD"
+    supabase functions deploy --project-ref "$SB_PROJECT_ID"
+```
+
+### Status: ✅ FIXED (April 11, 2026)
+- Secrets now validated before any CLI operation
+- Uses env var instead of login command
+- Fails fast on missing configuration
+
+---
+
+## v2.7.17: Single Orchestrator CI System (April 11, 2026)
+
+### Problem
 - Multiple independent CI pipelines (deploy-worker, deploy-frontend, deploy-autoscaler)
 - Path-filtered execution causing silent skipping
 - Inconsistent environment installs

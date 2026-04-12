@@ -1478,6 +1478,7 @@ Added validation steps to every workflow:
 - Updated `scripts/build.sh`: Local build + SHA tagging.
 - GHCR registry: `ghcr.io/nexusbayarea/simhpc-unified`.
 - CI validation: No Docker builds allowed.
+- Renamed frontend SKILL.md to FRONTEND_SKILL.md
 
 ### Files Created
 - `skills/docker/DOCKER_SKILL.md`

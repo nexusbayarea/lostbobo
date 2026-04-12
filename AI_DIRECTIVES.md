@@ -1,6 +1,6 @@
 # 🤖 AI Directives for SimHPC Development
 
-> **Version**: 3.0.0 (April 11, 2026)
+> **Version**: 3.1.0 (April 12, 2026)
 > **Priority**: CRITICAL / MANDATORY
 > **Status**: ENFORCED (Local Build Authority)
 
@@ -160,6 +160,31 @@ To maintain stability and prevent "Mercury" crashes, the following operational m
 
 - **Mandatory Updates**: For long-running or multi-step tasks, update `progress.md` after every significant architectural change or milestone.
 - **Sync Habit**: "Summarize history → Update progress.md → Clear/Summarize history".
+
+---
+
+## 🌐 9. Environment Normalization Layer (ENL)
+
+To ensure platform portability and prevent CI/CD breakage due to variable naming drift, SimHPC enforces a strict **Environment Normalization Layer**.
+
+### Architectural Constraints
+
+- **Infra Isolation**: The infrastructure provides a generic secret bundle prefixed with `SB_*` (e.g., `SB_URL`, `SB_TOKEN`).
+- **Normalized Schema**: The application logic **MUST NOT** reference `SB_*` variables directly. It must use internal canonical names defined in `app/core/config.py`.
+- **Mapping Authority**: `app/core/env.py` is the only file authorized to map infrastructure variables to internal schema.
+
+### Internal Contract
+
+| Internal Key | Source (Infra) | Purpose |
+| :--- | :--- | :--- |
+| `APP_URL` | `SB_URL` | Core Service URL (e.g. Supabase REST) |
+| `DATA_URL` | `SB_DATA_URL` | Data persistence endpoints |
+| `API_TOKEN` | `SB_TOKEN` | High-privilege service access token |
+| `JWT_SECRET` | `SB_JWT_SECRET`| Token signing and verification |
+| `SECRET_KEY` | `SB_SECRET_KEY` | Internal application encryption key |
+
+> [!CAUTION]
+> **NEVER** use `os.getenv("SB_*")` outside of `app/core/env.py`. All components must consume configuration through the `app.core.config.settings` object.
 
 ---
 

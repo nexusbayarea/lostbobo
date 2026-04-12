@@ -14,22 +14,21 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 # --- Supabase Client ---
 try:
     from supabase import Client, create_client
 
-    SB_URL = os.getenv("SB_URL")
-    SB_SERVICE_KEY = os.getenv("SB_SERVICE_KEY")
-
     supabase_client: Optional[Client] = None
-    if SB_URL and SB_SERVICE_KEY:
-        supabase_client = create_client(SB_URL, SB_SERVICE_KEY)
+    if settings.APP_URL and settings.API_TOKEN:
+        supabase_client = create_client(settings.APP_URL, settings.API_TOKEN)
         logger.info("Supabase client initialized for demo access")
     else:
         logger.warning(
-            "Supabase credentials not configured — demo_access table unavailable"
+            "Infrastructure secrets (SB_*) not correctly normalized — demo_access table unavailable"
         )
 except ImportError:
     supabase_client = None
@@ -37,11 +36,9 @@ except ImportError:
 
 # --- Redis Fallback ---
 import json  # noqa: E402
-
 import redis  # noqa: E402
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-r_client = redis.from_url(REDIS_URL, decode_responses=True)
+r_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 # --- Config ---
 DEMO_DEFAULT_LIMIT = int(os.getenv("DEMO_USAGE_LIMIT", "5"))

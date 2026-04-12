@@ -30,6 +30,7 @@ import httpx  # noqa: E402
 import redis  # noqa: E402
 
 # Import local services (API-only — no numpy/scipy/matplotlib)
+from app.core.config import settings  # noqa: E402
 from auth_utils import verify_user  # noqa: E402
 from fastapi import (  # noqa: E402
     Depends,
@@ -81,16 +82,13 @@ CORS_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()]
 try:
     from supabase import Client, create_client
 
-    SB_URL = os.getenv("SB_URL")
-    SB_SERVICE_KEY = os.getenv("SB_SERVICE_KEY")
-
     supabase_client: Optional[Client] = None
-    if SB_URL and SB_SERVICE_KEY:
-        supabase_client = create_client(SB_URL, SB_SERVICE_KEY)
+    if settings.APP_URL and settings.API_TOKEN:
+        supabase_client = create_client(settings.APP_URL, settings.API_TOKEN)
         logger.info("Supabase client initialized for control commands")
     else:
         logger.warning(
-            "Supabase credentials not configured — control commands restricted"
+            "Infrastructure secrets (SB_*) not correctly normalized — control commands restricted"
         )
 except ImportError:
     supabase_client = None

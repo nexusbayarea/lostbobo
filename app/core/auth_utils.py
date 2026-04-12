@@ -1,25 +1,16 @@
 import logging
-import os
 
 from fastapi import Header, HTTPException
 from jose import JWTError, jwt
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-# Mandatory Secret - The system will fail fast if not configured
-SB_JWT_SECRET = os.getenv("SB_JWT_SECRET")
-if not SB_JWT_SECRET:
-    raise RuntimeError(
-        "CRITICAL SECURITY: SB_JWT_SECRET is missing. "
-        "JWT verification is disabled until this secret is set."
-    )
-
-SB_AUDIENCE = os.getenv("SB_AUDIENCE", "authenticated")
 
 
 def verify_user(authorization: str = Header(None)):
     """
     Verifies Supabase JWT with 30s leeway and audience validation.
+    Uses normalized application settings.
     """
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization Header")
@@ -32,9 +23,9 @@ def verify_user(authorization: str = Header(None)):
     try:
         payload = jwt.decode(
             token,
-            SB_JWT_SECRET,
+            settings.JWT_SECRET,
             algorithms=["HS256"],
-            audience=SB_AUDIENCE,
+            audience=settings.JWT_AUDIENCE,
             options={
                 "verify_exp": True,
                 "verify_aud": True,

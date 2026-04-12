@@ -261,3 +261,31 @@ We have resolved a critical CI false-failure pattern by correctly transitioning 
 * **Workflow Logic**: `uv run pytest` confirmed to be the only command allowed for test execution.
 * **Plugin Check**: Explicitly confirmed that `asyncio` is active during CI runs to support asynchronous API and Worker tests.
 * **Status**: Continuous Integration state is now synchronized with the actual project health.
+
+---
+
+## 🏎️ v4.3.0: Environment Normalization & Infra Decoupling (April 2026) — CURRENT
+
+We have implemented a definitive **Environment Normalization Layer (ENL)** to decouple application logic from infrastructure-specific naming conventions, resolving persistent "Missing Secret" crashes in CI/CD.
+
+### 🌐 1. The Normalization Layer (`app/core/env.py`)
+
+* **Shift**: Pivoted from domain-specific names (`SUPABASE_URL`) to a generic infrastructure-agnostic schema (`APP_URL`, `API_TOKEN`).
+* **Contract**: Defined a canonical mapping between high-level infra secrets (`SB_*`) and internal application variables.
+* **Strictness**: Enforced a "Single Point of Mapping" policy. Manual `os.getenv` calls for infra secrets are now strictly prohibited throughout the codebase.
+
+### ⚙️ 2. Validated Configuration Schema
+
+* **Validation**: Refactored `app/core/config.py` to use Pydantic `BaseSettings` against the normalized schema.
+* **Portability**: The application is now provider-agnostic. Switching from Supabase to a custom backend only requires updating the environment mapping, not the application logic.
+
+### 🛡️ 3. CI/CD Determinism (SB_* Injection)
+
+* **Refactor**: Updated [.github/workflows/ci-validation.yml](file:///c:/Users/arche/SimHPC/.github/workflows/ci-validation.yml) to provide secrets using the `SB_*` infra convention.
+* **Stability**: Eliminated import-time crashes during structural checks by ensuring all required normalized variables are injected into the CI environment.
+
+### ✅ Verification (v4.3.0)
+
+* **Grep Audit**: Manual `SUPABASE_` and direct `SB_` usages in `app/main.py` and `app/utils.py` identified and remediated.
+* **CI Pass**: `API Structural Check` verified to succeed with injected infra variables.
+* **Code Integrity**: All secondary services (Worker, Config Loader) verified to use the central `settings` authority.

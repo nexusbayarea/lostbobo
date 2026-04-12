@@ -3,6 +3,7 @@ import logging
 import os
 
 import httpx
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,10 @@ def add_usage_event(
     logger.debug(f"Added usage event for user {user_id}: {feature_type}")
 
 async def flush_usage_to_supabase(http_client: httpx.AsyncClient = None):
-    """Background task: Flushes the usage buffer every 10 seconds to avoid clogging."""
+    """
+    Background task: Flushes the usage buffer every 10 seconds to avoid clogging.
+    Uses normalized application settings for connectivity.
+    """
     global USAGE_BUFFER
     
     # We use a trick to allow the lifespan to set the client if not provided
@@ -53,11 +57,11 @@ async def flush_usage_to_supabase(http_client: httpx.AsyncClient = None):
             # Use provided client or create temporary one
             if client:
                 response = await client.post(
-                    f"{os.getenv('SUPABASE_URL')}/rest/v1/usage_logs",
+                    f"{settings.APP_URL}/rest/v1/usage_logs",
                     json=batch_to_send,
                     headers={
-                        "apikey": os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
-                        "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_ROLE_KEY')}",
+                        "apikey": settings.API_TOKEN,
+                        "Authorization": f"Bearer {settings.API_TOKEN}",
                         "Content-Type": "application/json",
                         "Prefer": "return=minimal",
                     },
@@ -67,11 +71,11 @@ async def flush_usage_to_supabase(http_client: httpx.AsyncClient = None):
             else:
                 async with httpx.AsyncClient() as temp_client:
                     response = await temp_client.post(
-                        f"{os.getenv('SUPABASE_URL')}/rest/v1/usage_logs",
+                        f"{settings.APP_URL}/rest/v1/usage_logs",
                         json=batch_to_send,
                         headers={
-                            "apikey": os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
-                            "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_ROLE_KEY')}",
+                            "apikey": settings.API_TOKEN,
+                            "Authorization": f"Bearer {settings.API_TOKEN}",
                             "Content-Type": "application/json",
                             "Prefer": "return=minimal",
                         },
@@ -94,20 +98,17 @@ async def manual_flush_execution(http_client: httpx.AsyncClient):
     if not batch:
         return
 
-    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        logger.warning("SUPABASE credentials not set, skipping flush")
+    if not settings.APP_URL or not settings.API_TOKEN:
+        logger.warning("Normalized infrastructure credentials not set, skipping flush")
         return
 
     try:
         response = await http_client.post(
-            f"{SUPABASE_URL}/rest/v1/usage_logs",
+            f"{settings.APP_URL}/rest/v1/usage_logs",
             json=batch,
             headers={
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "apikey": settings.API_TOKEN,
+                "Authorization": f"Bearer {settings.API_TOKEN}",
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal",
             },

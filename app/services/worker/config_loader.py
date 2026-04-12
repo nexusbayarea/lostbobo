@@ -4,15 +4,12 @@ import os
 
 from supabase import Client, create_client
 
-SUPABASE_URL = os.getenv("SB_URL") or os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SB_SERVICE_ROLE_KEY") or os.getenv(
-    "SUPABASE_SERVICE_ROLE_KEY"
-)
+from app.core.config import settings
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+if not settings.APP_URL or not settings.API_TOKEN:
+    raise ValueError("Normalized Infrastructure secrets (APP_URL/API_TOKEN) are required")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(settings.APP_URL, settings.API_TOKEN)
 
 
 def hash_config(config: dict) -> str:

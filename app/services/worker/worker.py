@@ -25,6 +25,7 @@ from app.models.event import JobEvent
 
 # Import canonical schemas
 from app.models.job import Job, JobProgress, JobResult
+from app.core.config import settings
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -70,15 +71,12 @@ def publish_event(event_type: str, data: dict):
 
 
 # --- SUPABASE CONFIG ---
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 supabase = None
-
 try:
     from supabase import create_client
 
-    if SUPABASE_URL and SUPABASE_SERVICE_KEY:
-        supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    if settings.APP_URL and settings.API_TOKEN:
+        supabase = create_client(settings.APP_URL, settings.API_TOKEN)
         logger.info("Supabase client initialized")
 except ImportError:
     logger.warning("Supabase client unavailable")

@@ -1,7 +1,10 @@
-# SimHPC Worker - v2.7.4 (Unified Base)
-FROM simhpcworker/simhpc-base:latest
+# SimHPC Worker - v2.7.4
+FROM python:3.11-slim
 
 WORKDIR /app
+
+# Install uv for dependency management
+RUN pip install uv
 
 # Install worker and gpu extras
 RUN uv pip install --system --no-cache .[worker,gpu]

@@ -1,7 +1,9 @@
-# SimHPC Autoscaler - v2.7.4 (Unified Base)
-FROM simhpcworker/simhpc-base:latest
+# SimHPC Autoscaler - v2.7.4
+FROM python:3.11-slim
 
 WORKDIR /app
+
+RUN pip install uv
 
 # Install Infisical
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash && \

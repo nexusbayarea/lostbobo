@@ -726,6 +726,40 @@ Standardized all workflows to use canonical uv bootstrap:
 
 ---
 
+## v2.7.24: TOML Config Fix & Docker Base Image (April 11, 2026)
+
+### Issues Fixed
+
+| Issue | Fix |
+|-------|-----|
+| TOML conflict | Removed `[tool.setuptools.packages.find]` section (conflicted with `packages = []`) |
+| Missing base image | Changed Dockerfiles from `simhpc-base:latest` → `python:3.11-slim` |
+
+### Key Changes
+
+1. **pyproject.toml**:
+   - Fixed TOML structure by removing conflicting `packages.find` section
+   - Kept clean `[tool.setuptools]` with empty packages list
+
+2. **Dockerfiles updated**:
+   - `Dockerfile.worker`: Added `RUN pip install uv` before uv usage
+   - `Dockerfile.api`: Added `RUN pip install uv` before uv usage
+   - `Dockerfile.autoscaler`: Added `RUN pip install uv` before uv usage
+   - All now use `python:3.11-slim` as base
+
+### Files Changed
+- `pyproject.toml`
+- `docker/images/Dockerfile.worker`
+- `docker/images/Dockerfile.api`
+- `docker/images/Dockerfile.autoscaler`
+
+### Status: ✅ READY FOR CI (April 11, 2026)
+- TOML now valid
+- Dockerfiles self-contained
+- Ready for deployment
+
+---
+
 ## v2.7.20: Idempotent Job System Implementation (April 11, 2026)
 
 ### Problem

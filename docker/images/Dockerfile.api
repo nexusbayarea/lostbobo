@@ -1,7 +1,9 @@
-# SimHPC API - v2.7.4 (Unified Base)
-FROM simhpcworker/simhpc-base:latest
+# SimHPC API - v2.7.4
+FROM python:3.11-slim
 
 WORKDIR /app
+
+RUN pip install uv
 
 # Copy application code
 COPY run_api.py ./

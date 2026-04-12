@@ -1439,6 +1439,23 @@ Added validation steps to every workflow:
 
 ---
 
+## v3.0.0: Local Build Authority (LBA) & CI Consolidation (April 2026)
+
+### Key Changes
+1. **Ghost Workflow Purge**: Deleted 13 legacy `.yml` and `.bak` files to end re-entrancy loops.
+2. **Decoupled Architecture**: Transitioned to "Local Build Authority."
+   - **Local**: `scripts/build.sh` (Builds/Tags/Pushes)
+   - **CI**: `.github/workflows/orchestrator.yml` (Lint only)
+3. **Port Enforcement**: Re-confirmed **Port 8080** as the absolute production standard.
+4. **Environment Safety**: Implemented `uvx` for all CI-side Python execution.
+
+### Files Updated
+- `SYSTEM.md` → v3.0.0 with Local Build Authority Protocol
+
+### Status: ✅ GREEN (All systems synchronized)
+
+---
+
 ## v2.7.15: Frontend Skills Review & GitHub Push Applied (April 11, 2026)
 
 - Reviewed `skills/frontend/SKILL.md` and ensured compliance with OpenCode standards.

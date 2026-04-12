@@ -109,29 +109,30 @@ We have successfully evolved the SimHPC platform into an **adaptive distributed 
 * Added proper optional chaining (`?.`) to prevent null reference errors
 
 **Ruff Lint Fixes:**
-1. **Duplicate Function Definition (F811)**: 
-   - Fixed `get_supabase_client` redefinition in app/core/deps.py
-   - Changed to proper dependency wrapper pattern
+
+1. **Duplicate Function Definition (F811)**:
+   * Fixed `get_supabase_client` redefinition in app/core/deps.py
+   * Changed to proper dependency wrapper pattern
 
 2. **Missing Imports (F821)**:
-   - Added `import threading` in worker.py
-   - Added `from typing import Optional` in app/core/queue.py
+   * Added `import threading` in worker.py
+   * Added `from typing import Optional` in app/core/queue.py
 
 3. **Import Order Violations (E402)**:
-   - Moved all imports to top of file in worker.py
-   - Consolidated FastAPI and uvicorn imports
+   * Moved all imports to top of file in worker.py
+   * Consolidated FastAPI and uvicorn imports
 
 4. **Unused Variables/Imports (F841/F401)**:
-   - Removed unused `sys` import in worker/runtime/runner.py
-   - Removed unused `typing.Optional` import in worker/runtime/runner.py
-   - Removed unused `renew_lease`, `update_job_status`, `settings` imports in worker/runtime/runner.py
-   - Removed unused `increment_attempt_count` import in worker/runtime/execute.py
-   - Removed unused `os` import in app/core/config.py
-   - Removed unused `typing.List` imports in autoscaler files
-   - Removed unused `redis_client` and `settings` imports in autoscaler/predictor.py
+   * Removed unused `sys` import in worker/runtime/runner.py
+   * Removed unused `typing.Optional` import in worker/runtime/runner.py
+   * Removed unused `renew_lease`, `update_job_status`, `settings` imports in worker/runtime/runner.py
+   * Removed unused `increment_attempt_count` import in worker/runtime/execute.py
+   * Removed unused `os` import in app/core/config.py
+   * Removed unused `typing.List` imports in autoscaler files
+   * Removed unused `redis_client` and `settings` imports in autoscaler/predictor.py
 
 5. **Unused Variable (F841)**:
-   - Removed unused `lease_id` variable in worker/runtime/runner.py
+   * Removed unused `lease_id` variable in worker/runtime/runner.py
 
 ### ✅ Verification (v3.0.1)
 
@@ -149,12 +150,12 @@ We have successfully evolved the SimHPC platform into an **adaptive distributed 
 
 ## v3.1.0: Deterministic CI Gating Implementation (April 2026)
 
-### 🔧 Issues Fixed
+### 🔧 Issues Fixed (v3.1.0)
 
 **GitHub Actions Workflow Fix:**
-- Replaced non-deterministic `listRunsForRef` with workflow_id-based querying
-- Added commit SHA binding to eliminate race conditions
-- Removed branch-based guessing in favor of exact SHA matching
+* Replaced non-deterministic `listRunsForRef` with workflow_id-based querying
+* Added commit SHA binding to eliminate race conditions
+* Removed branch-based guessing in favor of exact SHA matching
 
 ### ✅ Verification (v3.1.0)
 
@@ -209,18 +210,22 @@ We have pivoted to a **Stateless Reasoning** architecture to ensure platform sta
 We have finalized the repository's structural stability and ensured consistent cross-platform behavior through rigorous Git hygiene.
 
 ### 🧹 1. Git Index Hygiene
-*   **Reconciliation**: Successfully reconciled the Git index with the physical disk state. Cleared "ghost" workflow deletions and staged the new consolidated [ci-validation.yml](file:///c:/Users/arche/SimHPC/.github/workflows/ci-validation.yml).
-*   **Artifact Integrity**: Staged newly created frontend configuration files (`frontend/components.json`, etc.) to stabilize the build context.
+
+* **Reconciliation**: Successfully reconciled the Git index with the physical disk state. Cleared "ghost" workflow deletions and staged the new consolidated [ci-validation.yml](file:///c:/Users/arche/SimHPC/.github/workflows/ci-validation.yml).
+* **Artifact Integrity**: Staged newly created frontend configuration files (`frontend/components.json`, etc.) to stabilize the build context.
 
 ### ❄️ 2. Line Ending Standardization (LF)
-*   **Enforcement**: Created [.gitattributes](file:///c:/Users/arche/SimHPC/.gitattributes) to enforce `LF` (Unix-style) line endings for all critical YML, Python, and Shell scripts.
-*   **Drift Prevention**: Configured `core.autocrlf false` to prevent cross-platform newline drift that frequently breaks Docker builds and CI checksums.
+
+* **Enforcement**: Created [.gitattributes](file:///c:/Users/arche/SimHPC/.gitattributes) to enforce `LF` (Unix-style) line endings for all critical YML, Python, and Shell scripts.
+* **Drift Prevention**: Configured `core.autocrlf false` to prevent cross-platform newline drift that frequently breaks Docker builds and CI checksums.
 
 ### 📝 3. Documentation Audit & Compliance
-*   **Markdown Audit**: Resolved 100+ markdown linting errors (MD004, MD022, MD032, etc.) across [progress.md](file:///c:/Users/arche/SimHPC/progress.md) and [AI_DIRECTIVES.md](file:///c:/Users/arche/SimHPC/AI_DIRECTIVES.md).
-*   **Standardization**: Unified list styles, fixed heading spacing, and removed trailing punctuation to ensure professional rendering and machine-readability.
+
+* **Markdown Audit**: Resolved 100+ markdown linting errors (MD004, MD022, MD032, etc.) across [progress.md](file:///c:/Users/arche/SimHPC/progress.md) and [AI_DIRECTIVES.md](file:///c:/Users/arche/SimHPC/AI_DIRECTIVES.md).
+* **Standardization**: Unified list styles, fixed heading spacing, and removed trailing punctuation to ensure professional rendering and machine-readability.
 
 ### ✅ Verification (v4.1.0)
-*   **Git Status**: Clean; working tree synchronized with origin.
-*   **Line Endings**: Verified `LF` enforcement across the `.github/` and `scripts/` directories.
-*   **Documentation**: Zero linting warnings in the IDE for core project documents.
+
+* **Git Status**: Clean; working tree synchronized with origin.
+* **Line Endings**: Verified `LF` enforcement across the `.github/` and `scripts/` directories.
+* **Documentation**: Zero linting warnings in the IDE for core project documents.

@@ -104,12 +104,10 @@ def heartbeat_loop():
         try:
             # Update metadata last_seen
             now_ts = str(time.time())
-            redis_client.hset(
-                f"worker:metadata:{WORKER_ID}", "last_seen", now_ts
-            )
+            redis_client.hset(f"worker:metadata:{WORKER_ID}", "last_seen", now_ts)
             # Update the central worker registry for autoscaler
             redis_client.hset("sim:workers", WORKER_ID, now_ts)
-            
+
             # Set a TTL-based heartbeat key for quick dashboard check
             redis_client.setex(f"worker:heartbeat:{WORKER_ID}", 30, "alive")
             time.sleep(10)
@@ -140,12 +138,21 @@ def update_simulation(job_id: str, data: dict):
 
 
 def process_job(job):
-    job_id = job.get("id")
-    user_id = job.get("user_id")
-    tier = job.get("tier", "free")
+    job_id = job.id
+    user_id = job.user_id
+    tier = job.tier if hasattr(job, "tier") else "free"
 
     # === EXECUTION IDEMPOTENCY GUARD ===
-    # Prevent duplicate execution if already executed
+    idempotency_key = job.generate_key()
+
+    # Check by idempotency key (primary check)
+    if redis_client.get(f"idempotency:{idempotency_key}:executed"):
+        logger.warning(
+            f"Job {job_id} already executed (key={idempotency_key[:8]}...), skipping"
+        )
+        return
+
+    # Also check legacy job ID-based check
     if redis_client.sismember("sim:processed", job_id):
         logger.warning(f"Job {job_id} already in sim:processed, skipping")
         return
@@ -156,6 +163,9 @@ def process_job(job):
 
     # Mark job as executing (with TTL for crash recovery)
     redis_client.setex(f"job:{job_id}:executing", 3600, "1")
+
+    # Mark idempotency key as in-progress
+    redis_client.setex(f"idempotency:{idempotency_key}:executing", 3600, "1")
 
     # Mark worker as busy
     redis_client.hset(f"worker:metadata:{WORKER_ID}", "status", "busy")
@@ -217,7 +227,10 @@ def process_job(job):
             # Multi-layer idempotency: set and key
             redis_client.sadd("sim:processed", job_id)
             redis_client.setex(f"job:{job_id}:executed", 86400, "1")  # 24h TTL
+            # Mark idempotency key as executed
+            redis_client.setex(f"idempotency:{idempotency_key}:executed", 86400, "1")
             redis_client.delete(f"job:{job_id}:executing")
+            redis_client.delete(f"idempotency:{idempotency_key}:executing")
         # Mark worker as idle
         redis_client.hset(f"worker:metadata:{WORKER_ID}", "status", "idle")
         # Decrement active jobs counter (O(1))
@@ -238,7 +251,10 @@ def wait_for_api():
         try:
             with httpx.Client() as client:
                 response = client.get(health_url, timeout=2.0)
-                if response.status_code == 200 and response.json().get("status") == "ok":
+                if (
+                    response.status_code == 200
+                    and response.json().get("status") == "ok"
+                ):
                     logger.info("✅ API is healthy")
                     return True
         except Exception:

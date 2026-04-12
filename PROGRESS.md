@@ -1456,6 +1456,21 @@ Added validation steps to every workflow:
 
 ---
 
+## v3.0.1: Backend Skill (April 11, 2026)
+
+### Fix
+- Created skills/backend/BACKEND_SKILL.md for Local Build Authority enforcement.
+- Port 8080 locked as gold standard.
+- CI workflows: uvx isolation, no Docker builds.
+- Self-healing lint fixes included.
+
+### Files Created
+- `skills/backend/BACKEND_SKILL.md`
+
+### Status: ✅ READY (April 11, 2026)
+
+---
+
 ## v2.7.15: Frontend Skills Review & GitHub Push Applied (April 11, 2026)
 
 - Reviewed `skills/frontend/SKILL.md` and ensured compliance with OpenCode standards.

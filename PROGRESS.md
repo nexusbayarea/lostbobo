@@ -625,6 +625,50 @@ ode ode_modules and .git while preserving the docker/ configuration tree.
 
 ---
 
+## v2.7.17: Single Orchestrator CI System (April 11, 2026)
+
+### Problem
+- Multiple independent CI pipelines (deploy-worker, deploy-frontend, deploy-autoscaler)
+- Path-filtered execution causing silent skipping
+- Inconsistent environment installs
+- CI drift and overlapping deployments
+
+### Solution: Orchestrator Pattern
+
+Created `.github/workflows/orchestrator.yml` as single entry point for all deployments:
+
+```yaml
+concurrency:
+  group: simhpc-main
+  cancel-in-progress: false
+```
+
+### Key Features
+- **Global concurrency lock** - Prevents overlapping deployments
+- **Reusable UV setup** - `.github/workflows/_uv-setup.yml` for consistent environment
+- **Job identity tagging** - SERVICE and COMMIT_SHA context per job
+- **Fail-fast validation** - Environment checks before each job
+- **Stateless jobs** - Each job includes full environment setup
+- **Deploy safety gates** - Branch validation before execution
+
+### Architecture
+| Job | Purpose |
+|-----|---------|
+| uv_setup | Reusable environment setup |
+| lint | Code quality gate |
+| worker | Worker deployment |
+| frontend | Frontend deployment |
+| autoscaler | Autoscaler sync |
+
+### Status: ✅ ORCHESTRATION IMPLEMENTED (April 11, 2026)
+- Single controlled pipeline
+- One deployment at a time
+- Deterministic job execution
+- No cross-job contamination
+- RunPod-safe execution model
+
+---
+
 ## v2.7.16: Unified UV Bootstrap CI Architecture (April 11, 2026)
 
 ### Problem

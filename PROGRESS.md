@@ -1402,6 +1402,24 @@ Added validation steps to every workflow:
 
 ---
 
+## v2.8.19: FakeJobStore + worker lifecycle tests (April 11, 2026)
+
+### Fix
+- Created tests/fake_job_store.py with in-memory JobStore interface
+- Added async tests:
+  - test_job_persisted_on_queue_failure
+  - test_idempotency_persisted
+  - test_worker_lifecycle_success
+  - test_worker_lifecycle_failure
+
+### Files Created
+- `tests/fake_job_store.py`
+
+### Status: ✅ READY (April 11, 2026)
+- All 7 tests passing
+
+---
+
 ## v2.7.15: Frontend Skills Review & GitHub Push Applied (April 11, 2026)
 
 - Reviewed `skills/frontend/SKILL.md` and ensured compliance with OpenCode standards.

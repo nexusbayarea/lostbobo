@@ -268,6 +268,7 @@ We have resolved a critical CI false-failure pattern by correctly transitioning 
 
 * **Workflow Logic**: `uv run pytest` confirmed to be the only command allowed for test execution.
 * **Plugin Check**: Explicitly confirmed that `asyncio` is active during CI runs to support asynchronous API and Worker tests.
+* **Import Order**: Verified all E402 violations resolved in app/api/api.py, app/core/db.py, and autoscaler/main.py.
 * **Status**: Continuous Integration state is now synchronized with the actual project health.
 
 ---

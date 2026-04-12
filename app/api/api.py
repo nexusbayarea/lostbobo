@@ -8,6 +8,7 @@ Improvements (March 2026):
 - Structured metadata in responses
 """
 
+# Standard library imports
 import asyncio
 import json
 import logging
@@ -20,39 +21,37 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Third-party imports
 from dotenv import load_dotenv
-
-# Load environment variables from the root .env file before other imports
-env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(env_path)
-
-import httpx  # noqa: E402
-import redis  # noqa: E402
-
-# Import local services (API-only — no numpy/scipy/matplotlib)
-from app.core.config import get_settings
-
-settings = get_settings()  # noqa: E402
-from auth_utils import verify_user  # noqa: E402
-from fastapi import (  # noqa: E402
+from fastapi import (
     Depends,
     FastAPI,
     Header,
     HTTPException,
     WebSocket,
 )
-from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from job_queue import enqueue_job  # noqa: E402
-from pydantic import BaseModel, Field, validator  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware
+import httpx
+from pydantic import BaseModel, Field, validator
+import redis
 
-from app.api.routes import admin as admin_router  # noqa: E402
-from app.api.routes import certificates as certificates_router  # noqa: E402
-from app.api.routes import control as control_router  # noqa: E402
-from app.api.routes import onboarding as onboarding_router  # noqa: E402
-from app.api.routes import simulations as simulations_router  # noqa: E402
+# Local imports
+from app.api.routes import admin as admin_router
+from app.api.routes import certificates as certificates_router
+from app.api.routes import control as control_router
+from app.api.routes import onboarding as onboarding_router
+from app.api.routes import simulations as simulations_router
+from app.core.config import get_settings
+from app.services.onboarding_service import OnboardingService
+from auth_utils import verify_user
+from job_queue import enqueue_job
 
-# --- ONBOARDING IMPORTS ---
-from app.services.onboarding_service import OnboardingService  # noqa: E402
+# Load environment variables from the root .env file before other imports
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
+
+# Runtime execution after imports
+settings = get_settings()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

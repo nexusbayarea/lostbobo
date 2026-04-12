@@ -6,9 +6,9 @@ import logging
 import time
 
 from app.core.config import get_settings
+from app.core.queue import redis_client
 
 settings = get_settings()
-from app.core.queue import redis_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

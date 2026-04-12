@@ -1,4 +1,4 @@
-name: SimHPC SaaS Orchestrator (v2.8.7)
+name: SimHPC SaaS Orchestrator (v2.8.8)
 
 on:
   push:
@@ -19,8 +19,7 @@ jobs:
       - name: Self-Heal Codebase
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          /home/runner/.local/bin/uv pip install --system ruff
-          /home/runner/.local/bin/uv run ruff check . --fix --select F401,I || true
+          /home/runner/.local/bin/uvx ruff check . --fix --select F401,I || true
           sed -i 's/import httpx/import httpx  # noqa: E402/g' app/services/worker/worker.py || true
 
       - name: Login to GHCR

@@ -1491,14 +1491,8 @@ Added validation steps to every workflow:
 
 ### Fix
 - Merged fragmented deployment skills into DEPLOY_SKILLS.md
-- Created in skills/deployment/DEPLOY_SKILLS.md
-- Copied to skills/supabase/DEPLOY_SKILLS.md
-- LBA mandate: Docker builds ONLY locally
-- Port 8080 enforced as production standard
-
-### Files Created
-- `skills/deployment/DEPLOY_SKILLS.md`
-- `skills/supabase/DEPLOY_SKILLS.md`
+- Added "DO NOT PUSH TO GIT" note to all skills
+- Removed skills from git (local docs only)
 
 ### Status: ✅ READY (April 11, 2026)
 

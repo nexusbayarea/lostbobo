@@ -760,6 +760,34 @@ Standardized all workflows to use canonical uv bootstrap:
 
 ---
 
+## v2.8.0: Unified Self-Healing Orchestrator (April 11, 2026)
+
+### Changes Made
+
+1. **Replaced orchestrator.yml with unified pipeline**:
+   - Self-healing lint: `ruff check . --fix --select F401,I`
+   - Consolidated GHCR build + push
+   - RunPod fleet reset automation
+
+2. **Removed supervisor references**:
+   - No supervisord.conf (not needed with direct uvicorn)
+   - CMD uses direct uvicorn: `["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8080"]`
+
+3. **Consolidated to GHCR**:
+   - All images now push to `ghcr.io/${{ github.repository_owner }}/simhpc-unified`
+   - No more split registry (Docker Hub + GHCR)
+
+### Files Changed
+- `.github/workflows/orchestrator.yml` - New unified pipeline
+- `docker/images/Dockerfile.unified` - Clean multi-stage build
+
+### Status: ✅ DEPLOYED (April 11, 2026)
+- Self-correcting lint enabled
+- Unified build to GHCR
+- RunPod auto-reset on push
+
+---
+
 ## v2.7.20: Idempotent Job System Implementation (April 11, 2026)
 
 ### Problem

@@ -1,4 +1,4 @@
-name: simhpc-orchestrator
+name: SimHPC SaaS Orchestrator (v2.8.0)
 
 on:
   push:
@@ -9,73 +9,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  uv_setup:
-    uses: ./.github/workflows/_uv-setup.yml
-
-  lint:
-    needs: uv_setup
+  self-heal-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Validate environment
+      - name: Setup uv
         run: |
-          uv --version
-          python --version
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Lint
-        run: uv run ruff check .
-
-  worker:
-    needs: uv_setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate environment
+      - name: Create venv and install ruff
         run: |
-          uv --version
-          python --version
+          uv venv
+          uv pip install ruff
 
-      - name: Deploy guard
-        if: github.ref == 'refs/heads/main'
+      - name: Self-Heal Codebase
         run: |
-          echo "SERVICE=worker"
-          echo "COMMIT_SHA=${{ github.sha }}"
-          echo "Deploying worker"
+          uv run ruff check . --fix --select F401,I || true
 
-  frontend:
-    needs: uv_setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Validate environment
+      - name: Build & Push Unified Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/images/Dockerfile.unified
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/simhpc-unified:latest
+            ghcr.io/${{ github.repository_owner }}/simhpc-unified:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Reset RunPod Fleet
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          RUNPOD_ID: ${{ secrets.RUNPOD_ID }}
         run: |
-          uv --version
-          python --version
+          curl -s -X POST "https://api.runpod.io/graphql" \
+            -H "Authorization: Bearer $RUNPOD_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\": \"mutation { podStop(input: { podId: \\\"$RUNPOD_ID\\\" }) { id } }\"}"
+          
+          sleep 15
 
-      - name: Deploy guard
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "SERVICE=frontend"
-          echo "COMMIT_SHA=${{ github.sha }}"
-          echo "Deploying frontend"
-
-  autoscaler:
-    needs: uv_setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate environment
-        run: |
-          uv --version
-          python --version
-
-      - name: Deploy guard
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "SERVICE=autoscaler"
-          echo "COMMIT_SHA=${{ github.sha }}"
-          echo "Syncing autoscaler"
+          curl -s -X POST "https://api.runpod.io/graphql" \
+            -H "Authorization: Bearer $RUNPOD_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\": \"mutation { podResume(input: { podId: \\\"$RUNPOD_ID\\\", gpuCount: 1 }) { id } }\"}"

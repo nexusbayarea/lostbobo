@@ -904,6 +904,24 @@ Standardized all workflows to use canonical uv bootstrap:
 - Single pipeline running
 - No more fragmented builds
 
+---
+
+## v2.8.6: Add Docker Buildx for GHA Cache (April 11, 2026)
+
+### Issue
+- Docker build fails: default driver cannot export cache to GitHub Actions (`type=gha`)
+
+### Fix
+- Added `docker/setup-buildx-action@v3` with `driver: docker-container`
+- Enables proper cache export to GHA
+
+### Files Changed
+- `.github/workflows/orchestrator.yml`
+
+### Status: ✅ READY (April 11, 2026)
+- Buildx now enabled
+- Cache will save to GHA
+
 ### Changes Made
 
 1. **Synced local with remote**:

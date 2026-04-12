@@ -153,6 +153,7 @@ We have successfully evolved the SimHPC platform into an **adaptive distributed 
 ### 🔧 Issues Fixed (v3.1.0)
 
 **GitHub Actions Workflow Fix:**
+
 * Replaced non-deterministic `listRunsForRef` with workflow_id-based querying
 * Added commit SHA binding to eliminate race conditions
 * Removed branch-based guessing in favor of exact SHA matching

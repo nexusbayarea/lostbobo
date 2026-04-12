@@ -1,0 +1,40 @@
+name: Worker CI
+
+on:
+  push:
+    paths:
+      - "app/services/worker/**"
+      - "pyproject.toml"
+      - "uv.lock"
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache uv environment (worker)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-worker-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-worker-
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install worker deps
+        run: uv pip install -e .[worker]
+
+      - name: Test
+        run: uv run pytest -q

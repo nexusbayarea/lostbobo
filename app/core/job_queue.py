@@ -59,18 +59,54 @@ def generate_idempotency_key(user_id: str, payload: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def enqueue_job(job_input: any, user_context: dict = None) -> dict:
-    """
-    Push a job to queue with idempotency check.
+def generate_job_fingerprint(user_id: str, job_obj: dict) -> str:
+    """Generate a fingerprint of the job's input parameters for coalescing."""
+    # Use user_id + input_params for fingerprinting to prevent cross-user coalescing (security)
+    # If cross-user coalescing is desired, remove user_id from this.
+    data = {
+        "user_id": user_id,
+        "input_params": job_obj.get("input_params", {}),
+        "scenario_name": job_obj.get("scenario_name"),
+    }
+    raw = json.dumps(data, sort_keys=True)
+    return hashlib.sha256(raw.encode()).hexdigest()
 
-    Returns:
-        {"status": "queued", "job_id": "..."}
-        {"status": "duplicate", "job_id": "existing_id"}
-        {"status": "retrying", "job_id": "..."}
+
+def try_push_to_worker(job_obj: dict) -> bool:
+    """Attempt to push job directly to an idle worker for sub-second latency."""
+    r = get_redis()
+    # Get all registered workers
+    worker_ids = r.smembers("workers:active")
+    
+    for wid in worker_ids:
+        metadata = r.hgetall(f"worker:metadata:{wid}")
+        if metadata.get("status") == "idle":
+            url = metadata.get("url")
+            if not url:
+                continue
+            
+            try:
+                import requests
+                resp = requests.post(f"{url}/execute", json=job_obj, timeout=0.5)
+                if resp.status_code == 200:
+                    publish_event("job_pushed", {"job_id": job_obj["id"], "worker_id": wid})
+                    return True
+            except Exception as e:
+                print(f"[queue] push to worker {wid} failed: {e}")
+                
+    return False
+
+
+def enqueue_job(
+    job_input: any, user_context: dict = None, async_signal: bool = True
+) -> dict:
+    """
+    Push a job to queue with idempotency check and coalescing.
     """
     # Handle string input (just job ID)
     if isinstance(job_input, str):
         job_id = job_input
+        # We need the full object for coalescing, but if only ID provided, we skip coalescing here
         job_obj = {"id": job_id}
     else:
         job_id = job_input.get("id") or str(uuid.uuid4())
@@ -78,11 +114,33 @@ def enqueue_job(job_input: any, user_context: dict = None) -> dict:
         job_obj = job_input
 
     # Add user context if provided
+    user_id = user_context.get("user_id") if user_context else job_obj.get("user_id")
     if user_context:
-        job_obj["user_id"] = user_context.get("user_id")
+        job_obj["user_id"] = user_id
         job_obj["tier"] = user_context.get("tier", "free")
+        job_obj["priority"] = user_context.get("priority", 0)
     else:
-        job_obj["tier"] = "free"
+        job_obj["tier"] = job_obj.get("tier", "free")
+        job_obj["priority"] = job_obj.get("priority", 0)
+
+    # === JOB COALESCING ===
+    fingerprint = generate_job_fingerprint(user_id, job_obj)
+    job_obj["fingerprint"] = fingerprint
+    
+    r = get_redis()
+    coalesce_key = f"coalesce:{fingerprint}"
+    
+    # Check if a matching job is already queued/running
+    existing_job_id = r.get(coalesce_key)
+    if existing_job_id:
+        # Check if job is still active
+        active_status = r.get(f"job:{existing_job_id}:status")
+        if active_status in ["queued", "running"]:
+            return {
+                "status": "coalesced",
+                "job_id": existing_job_id,
+                "message": "Duplicate compute detected. Coalescing with active job.",
+            }
 
     # Add creation timestamp for autoscaler age tracking
     if "created_at" not in job_obj:
@@ -92,13 +150,12 @@ def enqueue_job(job_input: any, user_context: dict = None) -> dict:
     # === IDEMPOTENCY CHECK ===
     # Use provided idempotency key or generate from user_id + job content
     idem_key = job_obj.get("idempotency_key")
-    if not idem_key and user_context and user_context.get("user_id"):
-        idem_key = generate_idempotency_key(user_context.get("user_id"), job_obj)
+    if not idem_key and user_id:
+        idem_key = generate_idempotency_key(user_id, job_obj)
     if not idem_key:
         idem_key = job_id
 
     lock_key = f"idem:{idem_key}"
-    r = get_redis()
 
     # SETNX = only set if not exists, with TTL
     was_set = r.set(lock_key, job_id, nx=True, ex=IDEMPOTENCY_TTL)
@@ -111,6 +168,14 @@ def enqueue_job(job_input: any, user_context: dict = None) -> dict:
             "job_id": existing_id,
             "message": "Job already queued",
         }
+
+    # Mark as the canonical job for this fingerprint
+    r.setex(coalesce_key, 3600, job_id)
+    r.setex(f"job:{job_id}:status", 3600, "queued")
+    
+    # Track for autoscaler predictive scaling
+    r.lpush("autoscaler:job_timestamps", time.time())
+    r.ltrim("autoscaler:job_timestamps", 0, 500) # Keep last 500 jobs max
 
     # === CHECK RETRY STATUS ===
     # If job was previously in DLQ, reset retries
@@ -132,13 +197,47 @@ def enqueue_job(job_input: any, user_context: dict = None) -> dict:
         except:
             pass
 
+    # === PUSH DISPATCH (Sub-Second Mode) ===
+    # For high priority jobs, try to push directly to an idle worker first
+    priority = job_obj.get("priority", 0)
+    if priority >= 10:
+        if try_push_to_worker(job_obj):
+            r.setex(f"job:{job_id}:status", 3600, "running")
+            return {"status": "pushed", "job_id": job_id}
+
     # === ENQUEUE ===
     payload = json.dumps(job_obj)
-    r.lpush(QUEUE_NAME, payload)
+    
+    # Determine queue based on priority
+    priority = job_obj.get("priority", 0)
+    target_queue = QUEUE_NAME
+    if priority >= 10:
+        target_queue = f"{QUEUE_NAME}:high"
+    elif priority >= 5:
+        target_queue = f"{QUEUE_NAME}:med"
+
+    r.lpush(target_queue, payload)
 
     # Also move to processing queue for crash recovery
     r.lpush(PROCESSING_QUEUE, payload)
-    r.lrem(QUEUE_NAME, 1, payload)
+    r.lrem(target_queue, 1, payload)
+
+    # === ASYNC SIGNAL (optimization) ===
+    # Fire-and-forget Realtime trigger to workers (removes polling delay)
+    def _async_signal():
+        import threading
+
+        try:
+            # Supabase Realtime channel notification
+            # Workers subscribe to this channel for instant job pickup
+            get_redis().publish("job:new", json.dumps({"job_id": job_id}))
+        except Exception as e:
+            print(f"[queue] signal error: {e}")
+
+    if async_signal:
+        threading.Thread(target=_async_signal, daemon=True).start()
+    else:
+        _async_signal()
 
     # Emit event for WebSocket + autoscaler
     publish_event(

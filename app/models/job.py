@@ -41,6 +41,10 @@ class Job(BaseModel):
     scenario_name: Optional[str] = None
 
     idempotency_key: Optional[str] = None
+    fingerprint: Optional[str] = None
+    priority: int = 0
+    tier: str = "free"
+    workflow_id: Optional[str] = None
 
     result: Optional[JobResult] = None
     error: Optional[str] = None

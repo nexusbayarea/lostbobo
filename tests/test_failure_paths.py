@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
 from tests.fake_job_store import FakeJobStore
 
 
@@ -43,7 +42,6 @@ class FailingQueue:
 
 class SlowQueue:
     async def enqueue(self, *args, **kwargs):
-        import asyncio
 
         await asyncio.sleep(5)
         return "ok"

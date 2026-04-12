@@ -621,11 +621,28 @@ async def create_simulation(
         "progress": 0,
         "created_at": int(time.time()),
         "updated_at": int(time.time()),
+        "tier": "pro" if plan != UserPlan.FREE else "free",
+        "priority": 10 if plan != UserPlan.FREE else 0
     }
 
     # Patch logic: Set job detail key and push ID to queue
     r_client.set(f"job:{sim_id}", json.dumps(job_data))
-    enqueue_job(sim_id)
+    
+    # Pass user_context for priority/tier extraction in enqueue_job
+    user_context = {
+        "user_id": user_id,
+        "tier": job_data["tier"],
+        "priority": job_data["priority"]
+    }
+    
+    enqueue_result = enqueue_job(job_data, user_context=user_context)
+
+    if enqueue_result.get("status") == "coalesced":
+        return {
+            "job_id": enqueue_result["job_id"],
+            "status": "coalesced",
+            "message": "Duplicate compute detected. Your simulation results will be linked to an existing active run."
+        }
 
     # Increment active jobs counter (O(1))
     increment_active_runs_fn(user_id)

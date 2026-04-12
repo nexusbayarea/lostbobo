@@ -800,7 +800,7 @@ Standardized all workflows to use canonical uv bootstrap:
 2. **Updated Dockerfile.unified**:
    - Added supervisor + psmisc installation
    - WORKDIR changed from /app to /workspace
-   - Port changed from 8080 to 8888
+   - Port changed from 8888 to 8080
    - Added `fuser -k 8888/tcp` before supervisor start
    - CMD now runs supervisord
 

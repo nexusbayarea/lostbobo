@@ -22,7 +22,7 @@ RUN /root/.cargo/bin/uv pip install --system -r pyproject.toml || \
 COPY . .
 
 # Expose port (API)
-EXPOSE 8888
+EXPOSE 8080
 
-# Kill any existing process on port 8888, then start supervisor
-CMD fuser -k 8888/tcp || true && /usr/bin/supervisord -c /etc/supervisor/conf.d/simhpc.conf
+# Kill any existing process on port 8080, then start supervisor
+CMD fuser -k 8080/tcp || true && /usr/bin/supervisord -c /etc/supervisor/conf.d/simhpc.conf

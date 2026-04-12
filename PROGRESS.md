@@ -1420,6 +1420,25 @@ Added validation steps to every workflow:
 
 ---
 
+## v2.8.20: JobStore interface + DI layer (April 11, 2026)
+
+### Fix
+- Created app/core/job_store_interface.py (JobStoreInterface)
+- Created app/core/fake_job_store.py (FakeJobStore)
+- Created app/core/supabase_job_store.py (SupabaseJobStore)
+- Created app/api/deps.py (dependency injection)
+- Follows correct flow: insert job → enqueue → return
+
+### Files Created
+- `app/core/job_store_interface.py`
+- `app/core/fake_job_store.py`
+- `app/core/supabase_job_store.py`
+- `app/api/deps.py`
+
+### Status: ✅ READY (April 11, 2026)
+
+---
+
 ## v2.7.15: Frontend Skills Review & GitHub Push Applied (April 11, 2026)
 
 - Reviewed `skills/frontend/SKILL.md` and ensured compliance with OpenCode standards.

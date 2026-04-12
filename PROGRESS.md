@@ -1471,6 +1471,21 @@ Added validation steps to every workflow:
 
 ---
 
+## v3.0.2: Docker Skill (April 11, 2026)
+
+### Fix
+- Created skills/docker/DOCKER_SKILL.md for Local Build Authority.
+- `scripts/build.sh`: Local build + SHA tagging.
+- GHCR registry: `ghcr.io/nexusbayarea/simhpc-unified`.
+- CI validation: No Docker builds allowed.
+
+### Files Created
+- `skills/docker/DOCKER_SKILL.md`
+
+### Status: ✅ READY (April 11, 2026)
+
+---
+
 ## v2.7.15: Frontend Skills Review & GitHub Push Applied (April 11, 2026)
 
 - Reviewed `skills/frontend/SKILL.md` and ensured compliance with OpenCode standards.

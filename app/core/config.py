@@ -1,6 +1,3 @@
-from app.core.bootstrap import bootstrap
-
-bootstrap()
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

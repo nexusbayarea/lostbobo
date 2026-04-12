@@ -10,7 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - run: |
-          uv venv
-          uv pip install -e .[dev]
-      - run: uv run pytest
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -e .[dev]
+      - run: |
+          source .venv/bin/activate
+          pytest

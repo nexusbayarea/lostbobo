@@ -1,7 +1,7 @@
 {
   "name": "simhpc-frontend",
   "private": true,
-  "version": "2.7.1",
+  "version": "3.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

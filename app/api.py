@@ -951,7 +951,7 @@ async def telemetry_worker():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting SimHPC Unified Platform v2.5.4")
+    logger.info("Starting SimHPC Unified Platform v3.5.0")
     logger.info(f"CORS Origins: {CORS_ORIGINS}")
 
     # Validate Redis connection at startup
@@ -984,7 +984,7 @@ async def lifespan(app: FastAPI):
     logger.info("SimHPC Platform shutting down")
 
 
-app = FastAPI(title="SimHPC Platform", version="2.5.11", lifespan=lifespan)
+app = FastAPI(title="SimHPC Platform", version="3.5.0", lifespan=lifespan)
 
 # This regex matches:
 # 1. Your production domain (simhpc.com)
@@ -1176,7 +1176,7 @@ async def get_user_profile(authorization: str = Header(None)):
 @app.get("/api/v1/health", tags=["System — Health"])
 async def health_check():
     """
-    Unified Health Check for v2.5.4.
+    Unified Health Check for v3.5.0.
     Verifies API, Redis, and Supabase connectivity.
     """
     health_status = {
@@ -1362,4 +1362,5 @@ if __name__ == "__main__":
 
     port = int(os.getenv("PORT", "8080"))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 

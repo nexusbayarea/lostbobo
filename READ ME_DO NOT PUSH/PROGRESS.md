@@ -2,20 +2,20 @@ DO NOT PUSH!!!!
 
 ---
 
-## v10.5.0: Boot DAG System & Pipeline Hardening (April 2026)
+## v3.5.0: Boot DAG System & Pipeline Hardening (April 2026)
 
-### Architectural Initialization (v10.4.0 - v10.5.0)
-- **App Boot DAG System (v10.5.0)**: Fully implemented a deterministic boot pipeline in `app/core/boot/`.
+### Architectural Initialization (v3.4.0 - v3.5.0)
+- **App Boot DAG System (v3.5.0)**: Fully implemented a deterministic boot pipeline in `app/core/boot/`.
   - Stages: `env`, `validate`, `normalize`, `config`.
   - Unified DAG entrypoint in `app/core/runtime/dag.py` for API, Worker, and CI modes.
   - Eliminated import-time side effects by shifting initialization to an explicit `run_boot_dag()` call.
   - Updated `app/main.py` and `app/core/config.py` to use the new boot context.
-- **Unified Entrypoint Consolidation (v10.5.0)**: Merged `./api.py` with `./app/api/api.py` to create a single, feature-rich FastAPI entrypoint using the Boot DAG.
-- **CI/CD Pipeline Hardening (v10.5.0)**: Fixed `IMAGE_REF` resolution in `ci-kernel.yml`.
+- **Unified Entrypoint Consolidation (v3.5.0)**: Merged `./api.py` with `./app/api/api.py` to create a single, feature-rich FastAPI entrypoint using the Boot DAG.
+- **CI/CD Pipeline Hardening (v3.5.0)**: Fixed `IMAGE_REF` resolution in `ci-kernel.yml`.
   - Resolved "Context access might be invalid: IMAGE_REF" warnings by shifting to shell-variable access in `run` blocks.
   - Added digest validation to ensure `IMAGE_REF` is never empty.
   - Standardized digest-only pull and run strategy for GHCR artifacts.
-- **App Boot DAG (v10.4.0)**: Shifted module loading into a rigid runtime application DAG structure starting in `app/main.py`.
+- **App Boot DAG (v3.4.0)**: Shifted module loading into a rigid runtime application DAG structure starting in `app/main.py`.
 - Evaluated side-effect boundaries and built `app/core/runtime/ci.py` and `app/core/runtime/boot.py` to enable declarative boot testing with `RUNTIME_MODE=ci`.
 - **Docker Alignments**: Generated `docker-compose.yml` to mirror exact deployment requirements in `Dockerfile.api` vs `Dockerfile.worker` passing required specific secrets via strict environment variables structure in CI/CD pipeline.
 

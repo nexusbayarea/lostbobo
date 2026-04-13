@@ -2,6 +2,70 @@ DO NOT PUSH!!!!
 
 ---
 
+## v11.1.0: Layered Architecture Reorganization (April 2026)
+
+### The Problem
+`scripts/` folder was acting as CLI + CI + deployment + runtime control + infra adapters + hotfixes - multiple systems in one directory.
+
+### Target Structure
+```
+simhpc/
+├── app/                # API (runtime)
+├── worker/             # execution (runtime)
+├── ci/                 # CI/DAG/intelligence (build-time)
+├── infra/              # deployment + external systems (RunPod, Supabase)
+├── scripts/            # thin CLI wrappers ONLY
+├── docker/             # container definitions
+```
+
+### What Was Moved
+
+| File | Destination | Reason |
+|------|-------------|--------|
+| `restart_pod.py` | `infra/runpod/` | RunPod control-plane integration |
+| `restart_runpod_pod.py` | DELETED | Duplicate of restart_pod.py |
+| `deploy_runpod.py` | `infra/runpod/` | RunPod deployment |
+| `deploy_to_runpod.py` | DELETED | Duplicate of deploy_runpod.py |
+| `deploy_unified.py` | `infra/deploy/` | Unified deployment |
+| `deploy_unified_manual.py` | DELETED | Duplicate |
+| `deploy_worker.py` | `infra/deploy/` | Worker deployment |
+| `sb-sync.sh` | `infra/supabase/` | Supabase sync |
+| `detect_changes.py` | `ci/` | CI logic (already existed) |
+| `dependency_drift_detector.py` | `ci/` | CI logic (already existed) |
+| `check_docker_context.py` | `ci/` | CI logic (already existed) |
+| `guard_files.sh` | `ci/policies/` | Policy node |
+| `guard_frontend.sh` | `ci/policies/` | Policy node |
+| `supervisord.conf` | `docker/` | Container runtime config |
+| `sync-pod.sh` | `scripts/dev/` | Local dev utility |
+| `generate_openapi_types.sh` | `scripts/dev/` | Local dev utility |
+| `deploy_full.sh` | DELETED | Duplicate |
+| `saas_fix.sh` | DELETED | Duplicate |
+
+### Final scripts/ Structure
+```
+scripts/
+├── simhpc.sh           # main CLI
+├── deploy_all.sh       # thin wrapper → infra/
+├── build.sh            # local dev convenience
+└── dev/
+    ├── sync-pod.sh
+    └── generate_openapi_types.sh
+```
+
+### Key Rules Enforced
+1. **scripts/ must NOT contain logic** - thin wrappers only
+2. **CI never calls scripts** - calls `python ci/kernel.py` directly
+3. **infra owns external systems** - RunPod, Supabase, Docker registry
+4. **no duplication tolerated** - duplicates collapsed
+
+### Why This Fixes Current Problems
+- Deterministic CI (no circular dependencies)
+- Stable deployment pipeline
+- Clean evolution path to gamma
+- Single responsibility per layer
+
+---
+
 ## v11.0.0: Gamma-Stable CI Stack (April 2026)
 
 ### Architecture Lock

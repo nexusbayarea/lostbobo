@@ -133,3 +133,4 @@ Upgrade makes sense if:
 ---
 
 > **Mercury AI**: See [ARCHITECTURE.md](./ARCHITECTURE.md#appendix-mercury-ai-usage-in-alpha) for usage guidelines and health tests.
+

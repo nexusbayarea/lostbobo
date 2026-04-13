@@ -50,3 +50,4 @@ STRIPE_WEBHOOK_SECRET: whsec_your-webhook-secret
 # ═══════════════════════════════════════════════════════════
 LOG_LEVEL: INFO
 DEBUG: false
+

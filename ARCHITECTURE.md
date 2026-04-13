@@ -641,3 +641,4 @@ A left-sidebar component for real-time visibility into the distributed alpha inf
 #### Frontend State (Supabase Realtime)
 
 The O-D-I-A-V loop is synchronized via Supabase Realtime channels. The `controlRoomStore.ts` listens for `SOLVER_EVENT` and `AUDIT_ALERT` payloads to hydrate the `CommandConsole` and `SimulationTimeline` without page refreshes.
+

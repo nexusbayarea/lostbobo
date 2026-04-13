@@ -23,13 +23,16 @@ jobs:
           key: dag-${{ github.sha }}
           restore-keys: dag-
 
-      - name: Enforce no-tag policy
+      - name: Enforce immutable image tags
         run: |
-          if grep -rq ":latest\|:stable" .github/workflows/; then
-            echo "ERROR: mutable tags forbidden in workflows"
+          set -e
+          VIOLATIONS=$(grep -rh ":latest\|:stable" .github/workflows/ || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "ERROR: mutable tags (:latest, :stable) forbidden"
+            echo "$VIOLATIONS"
             exit 1
           fi
-          echo "No mutable tags detected"
+          echo "OK: immutable tagging enforced"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -97,3 +100,4 @@ jobs:
             -e SB_TOKEN=test \
             $IMAGE_REF \
             python ci/kernel.py
+

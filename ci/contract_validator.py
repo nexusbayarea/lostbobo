@@ -89,3 +89,4 @@ def validate_contract():
 
 if __name__ == "__main__":
     validate_contract()
+

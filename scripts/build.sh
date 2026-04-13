@@ -28,3 +28,4 @@ docker push $IMAGE_NAME:latest
 docker push $IMAGE_NAME:$GIT_SHA
 
 echo "✅ Local Build Complete: $IMAGE_NAME:$GIT_SHA"
+

@@ -9,3 +9,4 @@ COPY . .
 ENV SERVICE_ROLE=api
 
 CMD ["python", "-m", "app.main"]
+

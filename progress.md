@@ -376,23 +376,40 @@ else:
 
 ---
 
-## Cached CI Action (v4.5.0) — Implemented
+## Incremental CI (v4.6.0) — Implemented
 
-Reusable GitHub Action for 30-60% CI speedup.
+Deterministic change detection with fail-safe fallback.
 
 ### Created
 
-`.github/actions/setup-python-env/action.yml`:
+`scripts/detect_changes.py`:
 
-```yaml
-- uses: ./.github/actions/setup-python-env
+```python
+# Outputs: app,worker,api,autoscaler,tests,scripts,frontend,docker,ci,dependency
+
+if not files:
+    # Fallback to full graph
+    print(all_modules)
 ```
 
-### Benefits
+### Implementation
 
-* uv cache reused across jobs
-* no repeated dependency resolution
-* unified install pattern
+Updated `ci-validation.yml` with conditional job execution:
+
+```yaml
+- name: Detect Changes
+  id: changes
+  run: python scripts/detect_changes.py
+
+- name: Testing
+  if: contains(steps.changes.outputs.changed, 'tests')
+```
+
+### Graph Enforcement
+
+* Uses DAG edges only - no manual gating
+* Failed detection → full graph (fail-safe)
+* Module mapping from file paths
 
 ---
 

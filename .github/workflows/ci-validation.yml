@@ -1,4 +1,4 @@
-name: CI Validation (v3.3.0)
+name: CI Validation (v3.4.0)
 
 on:
   push:
@@ -18,12 +18,20 @@ jobs:
       - name: Setup Python + uv (cached)
         uses: ./.github/actions/setup-python-env
 
-      - name: Linting (Ruff)
+      - name: Detect Changes
+        id: changes
         run: |
-          /home/runner/.local/bin/uvx ruff check . --fix --select F401,I || true
+          CHANGED=$(python scripts/detect_changes.py ${{ github.base_commit }} ${{ github.sha }})
+          echo "Changed modules: $CHANGED"
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Linting (Ruff) - Deterministic
+        run: |
+          /home/runner/.local/bin/uvx ruff check . --fix
           /home/runner/.local/bin/uvx ruff check .
 
       - name: Testing (Pytest)
+        if: contains(steps.changes.outputs.changed, 'tests') || contains(steps.changes.outputs.changed, 'app') || contains(steps.changes.outputs.changed, 'dependency')
         env:
           SB_URL: http://test-backbone
           SB_DATA_URL: http://test-data
@@ -35,6 +43,7 @@ jobs:
           /home/runner/.local/bin/uv run pytest
 
       - name: API Structural Check
+        if: contains(steps.changes.outputs.changed, 'api') || contains(steps.changes.outputs.changed, 'app') || contains(steps.changes.outputs.changed, 'dependency')
         env:
           SB_URL: http://test-backbone
           SB_DATA_URL: http://test-data
@@ -46,6 +55,7 @@ jobs:
           /home/runner/.local/bin/uv run python -c "from app.api.main import app; print('API imports OK')"
 
       - name: Structure Check
+        if: contains(steps.changes.outputs.changed, 'docker') || contains(steps.changes.outputs.changed, 'ci')
         run: |
           test -f ./docker/images/Dockerfile.unified
           echo "Repository structure valid"

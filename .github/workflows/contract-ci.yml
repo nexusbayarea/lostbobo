@@ -1,0 +1,68 @@
+name: Contract CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image (immutable)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/images/Dockerfile.base
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/simhpc-base:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Compute DAG
+        id: dag
+        run: |
+          python ci/dag_compiler.py > dag.json
+
+      - name: Build manifest (SINGLE TRUTH)
+        run: |
+          cat <<EOF > build-manifest.json
+          {
+            "git": {
+              "sha": "${{ github.sha }}"
+            },
+            "image": {
+              "registry": "ghcr.io",
+              "name": "${{ github.repository_owner }}/simhpc-base",
+              "digest": "${{ steps.build.outputs.digest }}"
+            },
+            "dag": $(cat dag.json),
+            "runtime": {
+              "service_role": "unified"
+            },
+            "cache": {
+              "enabled": true
+            }
+          }
+          EOF
+
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-manifest
+          path: build-manifest.json

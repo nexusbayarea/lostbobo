@@ -467,6 +467,42 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## Single Contract CI (v6.0.0) — Implemented
+
+Single manifest = CI truth + DAG + runtime spec.
+
+### Created
+
+`.github/workflows/contract-ci.yml` - builds image + emits single manifest
+`ci/dag_compiler.py` - computes execution DAG
+
+### Manifest Structure
+
+```json
+{
+  "git": { "sha": "..." },
+  "image": { "registry": "...", "digest": "sha256:..." },
+  "dag": { "modules": [...], "execution_order": [...] },
+  "runtime": { "service_role": "unified" },
+  "cache": { "enabled": true }
+}
+```
+
+### Architecture
+
+```text
+CI = manifest compiler
+RunPod = manifest executor
+```
+
+### Properties
+
+* Single source of truth
+* No tag drift
+* Deterministic execution
+
+---
+
 ## Build Manifest Pipeline (v5.3.0) — Implemented
 
 Single immutable deployment contract.

@@ -1,4 +1,4 @@
-name: DAG Container CI with Cache
+name: DAG Container CI
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: read
+  packages: write
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/simhpc-base
@@ -18,12 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.image.outputs.image }}
+      sha: ${{ github.sha }}
 
     steps:
       - id: image
         run: |
           IMAGE=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
 
   detect:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
       - id: detect
         run: |
           MODULES=$(python ci/detect_changes.py)
-          if [ -z "$MODULES" ]; then
+          if [ -z "$MODULES" ] || [ "$MODULES" = "" ]; then
             echo "modules=core,api,worker,autoscaler,tests" >> $GITHUB_OUTPUT
           else
             echo "modules=$MODULES" >> $GITHUB_OUTPUT
@@ -54,7 +57,11 @@ jobs:
       - id: plan
         run: |
           MATRIX=$(python ci/plan_jobs.py "${{ needs.detect.outputs.modules }}")
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          if [ -z "$MATRIX" ] || [ "$MATRIX" = "[]" ]; then
+            echo "matrix=[\"core\",\"api\",\"worker\"]" >> $GITHUB_OUTPUT
+          else
+            echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          fi
 
   execute:
     runs-on: ubuntu-latest
@@ -70,37 +77,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pull dependency image
-        run: docker pull ${{ needs.prepare.outputs.image }}:latest
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute module hash
-        id: hash
-        run: |
-          HASH=$(docker run --rm \
-            -v $PWD:/app \
-            -w /app \
-            ${{ needs.prepare.outputs.image }}:latest \
-            python ci/hash_module.py ${{ matrix.module }})
+      - name: Pull dependency image (stable tag)
+        run: docker pull ${{ needs.prepare.outputs.image }}:stable || docker pull ${{ needs.prepare.outputs.image }}:latest
 
-          echo "hash=$HASH" >> $GITHUB_OUTPUT
-
-      - name: Check cache
-        id: cache
-        run: |
-          SKIP=$(docker run --rm \
-            -v $PWD:/app \
-            -w /app \
-            ${{ needs.prepare.outputs.image }}:latest \
-            python ci/cache_check.py ${{ matrix.module }} ${{ steps.hash.outputs.hash }})
-
-          if [ "$SKIP" = "skip" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Execute module (if needed)
-        if: steps.cache.outputs.skip != 'true'
+      - name: Execute module in container
         run: |
           MODULE=${{ matrix.module }}
 
@@ -120,13 +107,18 @@ jobs:
             -e SB_PUB_KEY=test \
             -e SB_SECRET_KEY=test \
             -e SB_TOKEN=test \
+            ${{ needs.prepare.outputs.image }}:stable \
+            bash ci/jobs/$MODULE.sh || docker run --rm \
+            -v $PWD:/app \
+            -w /app \
+            -e SB_URL=http://test \
+            -e SB_DATA_URL=http://test \
+            -e SB_JWT_SECRET=test \
+            -e SB_PUB_KEY=test \
+            -e SB_SECRET_KEY=test \
+            -e SB_TOKEN=test \
             ${{ needs.prepare.outputs.image }}:latest \
             bash ci/jobs/$MODULE.sh
-
-      - name: Skip (cache hit)
-        if: steps.cache.outputs.skip == 'true'
-        run: |
-          echo "Skipping module ${{ matrix.module }} (cache hit)"
 
   structure:
     runs-on: ubuntu-latest

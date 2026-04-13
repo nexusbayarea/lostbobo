@@ -467,6 +467,24 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## CI Kernel (v7.0.1) — Fixed
+
+Fixed GHCR image path to single canonical lowercase.
+
+### Fixes Applied
+
+* Fixed image name: `ghcr.io/nexusbayarea/lostbobo-simhpc-base:stable`
+* Enforced lowercase only
+* Build + push + run in single job
+
+### GHCR Fixes
+
+* Login before any pull
+* Build pushes under exact lowercase name
+* Run uses exact same path
+
+---
+
 ## CI Kernel (v7.0.0) — Implemented
 
 Single entry CI kernel replaces all workflow sprawl.

@@ -467,6 +467,29 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## Contract Validator (v6.0.2) — Implemented
+
+Makes invalid states unrepresentable.
+
+### Created
+
+`ci/contract_validator.py` - preflight validation
+
+### Checks
+
+* Forbidden local actions (setup-python-env)
+* Invalid YAML syntax
+* Empty DAG modules
+* Latest tag forbidden (must use digest/stable)
+
+### Properties
+
+* Pipeline fails before execution if contract violated
+* No hidden dependency errors
+* Deterministic DAG execution
+
+---
+
 ## Single Contract CI (v6.0.1) — Implemented
 
 Fixed workflow syntax, buildx driver, GHCR auth, non-latest tags.

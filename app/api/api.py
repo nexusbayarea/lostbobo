@@ -45,7 +45,6 @@ from app.core.config import get_settings
 from app.services.onboarding_service import OnboardingService
 from app.core.auth_utils import verify_user
 from app.core.job_queue import enqueue_job
-import supabase
 from supabase.client import Client, create_client
 
 # Load environment variables from the root .env file before other imports
@@ -934,7 +933,7 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
-telemetry_queue = asyncio.Queue()
+telemetry_queue: asyncio.Queue[Dict[str, Any]] = asyncio.Queue()
 
 
 async def telemetry_worker():

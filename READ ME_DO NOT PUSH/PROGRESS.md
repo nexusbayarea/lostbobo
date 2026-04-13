@@ -20,7 +20,7 @@ build-manifest.json           → system state artifact
 | File | Change |
 |------|--------|
 | `.github/workflows/dag-ci.yml` | Full replacement — Gamma-stable deterministic DAG pipeline. Removed deprecated `.install: true` from setup-buildx-action, now relying natively on `BUILDX_BUILDER`. |
-| `docker/images/Dockerfile.base` | Stable base image: CUDA 12.1, uv, tini+supervisord, port 8080 only |
+| `docker/images/Dockerfile.base` | Stable base image: CUDA 12.1, uv, tini+supervisord, port 8080 only. Fixed `uv` editable install context by shifting `COPY . .` order. |
 | `docker/supervisord.conf` | Unified runtime: api + worker, all logs streamed to stdout/stderr |
 | `ci/dag_compiler.py` | Clean rewrite — incremental diff, first-push safe, structured JSON output |
 | `ci/kernel.py` | Clean rewrite — single bounded self-healing retry (ruff fix only), no unsafe mutations |

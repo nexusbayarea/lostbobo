@@ -11,11 +11,9 @@ RUN apt-get update && apt-get install -y \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml ./
+COPY . .
 
 RUN uv pip install --system --no-cache -e .
-
-COPY . .
 
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

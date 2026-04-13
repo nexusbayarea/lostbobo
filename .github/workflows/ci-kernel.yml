@@ -7,8 +7,10 @@ on:
 
 permissions:
   contents: read
-  packages: read
   packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/nexusbayarea/lostbobo-simhpc-base
 
 jobs:
   kernel:
@@ -16,6 +18,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate image naming
+        run: |
+          if echo "$IMAGE_NAME" | grep -q '[A-Z]'; then
+            echo "ERROR: uppercase detected in image name"
+            exit 1
+          fi
+          echo "Image name validated: $IMAGE_NAME"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -30,9 +40,7 @@ jobs:
           context: .
           file: docker/images/Dockerfile.base
           push: true
-          tags: ghcr.io/nexusbayarea/lostbobo-simhpc-base:stable
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.IMAGE_NAME }}:stable
 
       - name: Run CI Kernel
         run: |
@@ -45,5 +53,5 @@ jobs:
             -e SB_PUB_KEY=test \
             -e SB_SECRET_KEY=test \
             -e SB_TOKEN=test \
-            ghcr.io/nexusbayarea/lostbobo-simhpc-base:stable \
+            ${{ env.IMAGE_NAME }}:stable \
             python ci/kernel.py

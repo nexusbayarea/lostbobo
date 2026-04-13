@@ -467,6 +467,29 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## CI Kernel (v7.0.2) — Fixed
+
+Validated image naming with uppercase guard.
+
+### Fixes Applied
+
+* Add env.IMAGE_NAME constant (lowercase hardcoded)
+* Add uppercase validation preflight check
+* All workflows use same constant
+* No dynamic construction
+
+### GHCR Fix
+
+* Image: `ghcr.io/nexusbayarea/lostbobo-simhpc-base:stable`
+* Login + build + run in single job
+
+### Properties
+
+* Invalid uppercase now fails CI before any build
+* Single canonical name everywhere
+
+---
+
 ## CI Kernel (v7.0.1) — Fixed
 
 Fixed GHCR image path to single canonical lowercase.

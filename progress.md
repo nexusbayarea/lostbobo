@@ -467,6 +467,46 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## Container-Native CI (v5.0.0) — Implemented
+
+Zero-install CI - all jobs run inside dependency container.
+
+### Created
+
+`.github/workflows/ci-native.yml` - deterministic container-native CI
+
+### Properties
+
+* No dependency installation in CI
+* Identical runtime to production
+* Deterministic execution: code + dependency image only
+
+### Jobs
+
+```yaml
+lint:   docker run --rm ... ruff check
+tests:  docker run --rm ... pytest
+api-struct: docker run ... python import check
+structure: file existence check
+```
+
+### Removed Legacy
+
+* `.github/actions/setup-python-env` - no longer needed
+* `uv venv` - not in CI
+* `.venv` cache - not in CI
+
+### Gamma Properties
+
+```
+Dependency layer: immutable
+CI: container-executed
+Runtime: container-executed
+Deploy: digest-based (future)
+```
+
+---
+
 ## CI Container-Native Execution (v4.9.0) — Implemented
 
 Container-first model - all CI jobs run inside dependency container.

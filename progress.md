@@ -467,6 +467,41 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## CI Kernel (v7.0.0) — Implemented
+
+Single entry CI kernel replaces all workflow sprawl.
+
+### Created
+
+`.github/workflows/ci-kernel.yml` - single workflow launcher
+`ci/kernel.py` - single execution entry point
+
+### Architecture
+
+```text
+GitHub Actions = launcher only
+Container = execution environment
+Python kernel = CI brain
+```
+
+### Removed
+
+* dag-ci.yml
+* build-manifest.yml
+* ci-native.yml
+* dependency-layer.yml
+* ci-validation.yml
+
+### Properties
+
+* ONE workflow file
+* No local action dependencies
+* No matrix complexity
+* No empty DAG failure
+* Deterministic execution
+
+---
+
 ## Contract Validator (v6.0.2) — Implemented
 
 Makes invalid states unrepresentable.

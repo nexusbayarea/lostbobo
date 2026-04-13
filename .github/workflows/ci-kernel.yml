@@ -16,6 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug tag (verify static)
+        run: |
+          echo "=== DEBUG: verifying tag is lowercase ==="
+          TAG="ghcr.io/nexusbayarea/lostbobo-simhpc-base:stable"
+          echo "Tag to use: $TAG"
+          if echo "$TAG" | grep -qE '^[A-Z]'; then
+            echo "ERROR: uppercase in tag!"
+            exit 1
+          fi
+          echo "Tag verified OK"
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:

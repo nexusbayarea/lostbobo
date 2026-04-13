@@ -16,6 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Restore DAG cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: dag-${{ github.sha }}
+          restore-keys: dag-
+
       - name: Enforce no-tag policy
         run: |
           if grep -rq ":latest\|:stable" .github/workflows/; then
@@ -69,6 +76,12 @@ jobs:
         with:
           name: build-manifest
           path: build-manifest.json
+
+      - name: Save DAG cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: dag-${{ github.sha }}
 
       - name: Run CI Kernel (digest-only)
         run: |

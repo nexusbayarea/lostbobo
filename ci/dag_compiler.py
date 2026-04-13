@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""DAG Compiler - single source of truth for execution graph."""
+"""DAG Compiler - outputs jobs for execution engine."""
 
 import json
+import subprocess
 
 
 def load_module_graph():
@@ -17,8 +18,6 @@ def load_module_graph():
 
 
 def get_changed_files(base="origin/main", head="HEAD"):
-    import subprocess
-
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", f"{base}...{head}"],
@@ -89,29 +88,23 @@ def compute_dag(base="origin/main", head="HEAD"):
 
     order = topo_sort(graph)
 
-    execution_order = []
-    current_stage = []
-
+    jobs = []
     for module in order:
         if module not in modules:
             continue
 
         deps = graph.get(module, {}).get("deps", [])
-        has_pending_deps = any(d in current_stage for d in deps)
 
-        if has_pending_deps and current_stage:
-            execution_order.append(current_stage)
-            current_stage = []
+        jobs.append(
+            {
+                "name": module,
+                "inputs": graph.get(module, {}).get("paths", []),
+                "deps": deps,
+                "entry": f"ci/jobs/{module}.py",
+            }
+        )
 
-        current_stage.append(module)
-
-    if current_stage:
-        execution_order.append(current_stage)
-
-    return {
-        "modules": list(modules),
-        "execution_order": execution_order,
-    }
+    return {"jobs": jobs}
 
 
 def main():

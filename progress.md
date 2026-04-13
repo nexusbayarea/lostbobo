@@ -467,6 +467,40 @@ Fixed uv execution model - now creates and caches project-local venv.
 
 ---
 
+## Build Manifest Pipeline (v5.3.0) — Implemented
+
+Single immutable deployment contract.
+
+### Created
+
+`.github/workflows/build-manifest.yml` - builds image + emits manifest
+
+### Manifest Structure
+
+```json
+{
+  "image": { "registry": "...", "digest": "sha256:..." },
+  "runtime": { "service_role": "unified" },
+  "git": { "sha": "..." },
+  "ci": { "timestamp": "..." }
+}
+```
+
+### Architecture
+
+```text
+CI → manifest → RunPod consumes exact digest
+```
+
+### Properties
+
+* Immutable artifact identity (digest-based)
+* Single runtime contract
+* No tag drift
+* No latest ambiguity
+
+---
+
 ## DAG with Cache Graph (v5.2.0) — Implemented
 
 Content-addressed cache for module memoization.

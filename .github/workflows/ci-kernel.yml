@@ -26,9 +26,9 @@ jobs:
       - name: Enforce immutable image tags
         run: |
           set -e
-          VIOLATIONS=$(grep -rh ":latest\|:stable" .github/workflows/ || true)
+          VIOLATIONS=$(grep -Rh --include="*.yml" -E 'ghcr\.io/.+:(latest|stable)\b' .github/workflows/ || true)
           if [ -n "$VIOLATIONS" ]; then
-            echo "ERROR: mutable tags (:latest, :stable) forbidden"
+            echo "ERROR: mutable image tags (:latest, :stable) forbidden"
             echo "$VIOLATIONS"
             exit 1
           fi

@@ -6,9 +6,10 @@ Outputs changed modules as comma-separated list for CI skip logic.
 If detection fails, outputs ALL modules to ensure full graph runs.
 """
 
-import os
 import subprocess
 import sys
+
+ALL_MODULES = "app,worker,api,autoscaler,tests,scripts,frontend,docker,ci,dependency"
 
 
 def get_changed_files(base_sha: str = "HEAD~1", head: str = "HEAD") -> list[str]:
@@ -27,19 +28,8 @@ def get_changed_files(base_sha: str = "HEAD~1", head: str = "HEAD") -> list[str]
         return []
 
 
-def map_files_to_modules(files: list[str]) -> dict[str, list[str]]:
+def map_files_to_modules(files: list[str]) -> list[str]:
     """Map changed files to their containing modules."""
-    module_map = {
-        "app": ["app"],
-        "worker": ["worker"],
-        "api": ["api"],
-        "autoscaler": ["autoscaler"],
-        "tests": ["tests"],
-        "scripts": ["scripts"],
-        "frontend": ["frontend"],
-        "docker": ["docker"],
-    }
-
     modules = set()
     for f in files:
         if f.startswith("app/"):
@@ -60,9 +50,8 @@ def map_files_to_modules(files: list[str]) -> dict[str, list[str]]:
             modules.add("docker")
         elif f in ["pyproject.toml", "uv.lock", "requirements.lock"]:
             modules.add("dependency")
-        elif f.endswith(".yml") or f.endswith(".yaml"):
-            if ".github/" in f:
-                modules.add("ci")
+        elif (f.endswith(".yml") or f.endswith(".yaml")) and ".github/" in f:
+            modules.add("ci")
 
     return list(modules)
 
@@ -74,21 +63,13 @@ def main():
     files = get_changed_files(base, head)
 
     if not files:
-        # No changes detected - run full graph
-        all_modules = (
-            "app,worker,api,autoscaler,tests,scripts,frontend,docker,ci,dependency"
-        )
-        print(all_modules)
+        print(ALL_MODULES)
         sys.exit(0)
 
     modules = map_files_to_modules(files)
 
     if not modules:
-        # Fallback to full graph if mapping fails
-        all_modules = (
-            "app,worker,api,autoscaler,tests,scripts,frontend,docker,ci,dependency"
-        )
-        print(all_modules)
+        print(ALL_MODULES)
         sys.exit(0)
 
     print(",".join(sorted(modules)))

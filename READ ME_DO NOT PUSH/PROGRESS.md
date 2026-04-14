@@ -96,6 +96,71 @@ if __name__ == "__main__":
 
 ---
 
+## v13.1.0: Final Stabilization Pass (April 2026)
+
+### Consolidation
+Removed redundant CI files:
+- `ci/runner.py` ❌ (replaced by bootstrap)
+- `ci/workflow.yml` ❌ (replaced by bootstrap)
+
+### Final Execution Contract
+**Single entrypoint everywhere:**
+```bash
+python tools/bootstrap.py ci
+```
+Used in CI, Docker, local validation — no exceptions.
+
+### Bootstrap Pipeline (Final Order - DO NOT CHANGE)
+```
+1. compile_deps.py       # generate requirements
+2. fingerprint.py        # create environment fingerprint
+3. dependency_scan.py   # verify contract
+4. import_guard.py      # structural integrity
+5. dag_compiler.py      # DAG validation
+6. app.api.kernel --dry-run  # runtime contract
+7. worker_isolation.py  # worker safety
+8. pytest               # tests
+```
+
+### Dependency Freeze
+- `requirements.lock.txt` is authoritative
+- NEVER manually edit
+- ONLY regenerate via `python tools/deps/compile_deps.py`
+
+### CI File (Final Form)
+```yaml
+- name: Run System
+  run: python tools/bootstrap.py ci
+```
+
+### System State
+```
+Code
+ ↓
+Dependency Compiler
+ ↓
+Locked Environment
+ ↓
+Fingerprint Verification
+ ↓
+CI Gate (structure)
+ ↓
+Runtime Contract
+ ↓
+Tests
+```
+
+### What Not To Do Next
+- Add more CI layers
+- Add more validation scripts
+- Reorganize directories
+- Reintroduce ci/* logic
+
+### Rule Going Forward
+**"Freeze infra, build capability"** — Focus on runtime execution, not infrastructure.
+
+---
+
 ## v13.0.0: Reproducible Build System with Fingerprint Parity (April 2026)
 
 ### Problem

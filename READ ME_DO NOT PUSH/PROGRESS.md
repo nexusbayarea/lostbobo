@@ -96,6 +96,53 @@ if __name__ == "__main__":
 
 ---
 
+## v13.0.0: Reproducible Build System with Fingerprint Parity (April 2026)
+
+### Problem
+Dependency drift between CI, Docker, and worker environments causing "works in CI but not in worker" failures.
+
+### Solution
+Added environment fingerprint system for cryptographic parity across all execution layers.
+
+### New Components
+
+**1. `tools/deps/fingerprint.py`**:
+- Generates SHA256 fingerprint of requirements.lock.txt + requirements.txt
+- Creates build.fingerprint artifact
+
+**2. `tools/deps/verify_fingerprint.py`**:
+- Validates fingerprint matches across builds
+- Ensures CI == Docker == Worker parity
+
+**3. `tools/deps/compile_deps.py`**:
+- Scans codebase imports
+- Generates requirements.txt and requirements.lock.txt
+- Authoritative dependency artifact
+
+### Bootstrap Pipeline (Final Form)
+```python
+run("python tools/deps/compile_deps.py")  # generate deps
+run("python tools/deps/fingerprint.py")  # create fingerprint
+run("python tools/ci_gates/dependency_scan.py")  # verify contract
+run("python tools/ci_gates/import_guard.py")
+run("python tools/ci_gates/dag_compiler.py")
+run(f"python -m app.api.kernel --mode={mode} --dry-run")
+run("python tools/ci_gates/worker_isolation.py")
+if mode == "ci":
+    run("python -m pytest tests/ --tb=short -q")
+```
+
+### What This Solves Permanently
+- Missing module errors (redis, dotenv)
+- Version drift between CI/Docker/worker
+- Environment mismatch bugs
+- "it works locally" failures
+
+### Gemma-Ready Foundation
+Any node = identical execution environment — required for distributed inference.
+
+---
+
 ## v12.3.0: Dependency Scanner + Requirements Sync (April 2026)
 
 ### Problem

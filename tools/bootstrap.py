@@ -27,20 +27,24 @@ def run(cmd: str) -> None:
 def main(mode: str = "ci") -> None:
     print(f"\n=== SYSTEM BOOTSTRAP START ({mode}) ===")
 
-    # 0. Dependency contract preflight (fail fast before any execution)
+    # 0. Dependency compilation and fingerprint (authoritative environment)
+    run("python tools/deps/compile_deps.py")
+    run("python tools/deps/fingerprint.py")
+
+    # 1. Dependency contract preflight (fail fast before any execution)
     run("python tools/ci_gates/dependency_scan.py")
 
-    # 1. Structural integrity (no code runs if this fails)
+    # 2. Structural integrity (no code runs if this fails)
     run("python tools/ci_gates/import_guard.py")
     run("python tools/ci_gates/dag_compiler.py")
 
-    # 2. Runtime contract validation
+    # 3. Runtime contract validation
     run(f"python -m app.api.kernel --mode={mode} --dry-run")
 
-    # 3. Worker isolation safety
+    # 4. Worker isolation safety
     run("python tools/ci_gates/worker_isolation.py")
 
-    # 4. Tests only after structure is validated
+    # 5. Tests only after structure is validated
     if mode == "ci":
         run("python -m pytest tests/ --tb=short -q")
 

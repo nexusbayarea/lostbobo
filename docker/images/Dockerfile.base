@@ -4,6 +4,7 @@ WORKDIR /app
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     PATH="/root/.local/bin:$PATH"
 
 RUN apt-get update && apt-get install -y \
@@ -14,7 +15,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-RUN uv pip install --system --no-cache -e ".[dev]"
+RUN uv pip install --system --no-cache -e .
+RUN uv pip install --system --no-cache -r requirements-dev.txt
 
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

@@ -82,5 +82,7 @@ markers = [
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["app", "worker", "packages"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "worker*"]
+exclude = ["tests*"]

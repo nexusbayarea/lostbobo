@@ -96,6 +96,28 @@ if __name__ == "__main__":
 
 ---
 
+## v12.2.0: Runtime Dependency Contract Fix (April 2026)
+
+### Problem
+`ModuleNotFoundError: No module named 'dotenv'` — runtime dependency missing from requirements.txt.
+
+### Root Cause
+`python-dotenv` is used in `app/main.py` and `app/api.py` but was missing from `requirements.txt` (despite being in pyproject.toml).
+
+### Fix Applied
+Added `python-dotenv` to `requirements.txt`:
+```txt
+python-dotenv
+```
+
+### System Insight
+This is a new failure class: **"implicit runtime dependency leakage"** — code imports external libs but dependency contract doesn't declare them.
+
+### Hardening Rule
+All runtime dependencies must be declared in `requirements.txt`. CI should verify this.
+
+---
+
 ## v12.1.0: Golden CI Bootstrap (Single Source of Truth) (April 2026)
 
 ### Problem

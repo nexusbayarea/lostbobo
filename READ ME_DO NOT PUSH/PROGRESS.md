@@ -2,6 +2,26 @@ DO NOT PUSH!!!!
 
 ---
 
+## v11.1.0: Controlled Intelligence CI Layer (April 2026)
+
+### Learning CI System Addition
+Added a structured observation loop to the Gamma CI pipeline: **observe → learn → predict → assist**.
+
+| Component | Function |
+|-----------|----------|
+| `ci/learning/failure_store.py` | Minimal, persistent storage mapping error fingerprints to fix resolutions. |
+| `ci/learning/fingerprint.py` | Normalizes paths and numerical IDs from stack traces to isolate bounded error signatures. |
+| `ci/learning/fix_registry.py` | Constrained whitelist of executable fixes mapped to recognized failures (e.g., F841 warnings). |
+| `ci/learning/predictor.py`| Engine matching error traces against the fix registry before attempting repair. |
+| `ci/learning/executor.py` | Safe subprocess executor handling bounded auto-corrections. |
+
+### Upgraded Kernel Integration
+- Upgraded `ci/kernel.py` to route all execution through `run_with_learning()`.
+- Bounded Self-Healing Constraints ENFORCED: Max 1 attempt per module, whitelisted commands only, and strict records preserved without wild mutation.
+- Successfully expanded bounded auto-fix from hardcoded ruff calls to predicted rule sets mapped back to DAG module testing loops.
+
+---
+
 ## v11.2.0: Python Symlink Fix for Container Runtime (April 2026)
 
 ### Problem

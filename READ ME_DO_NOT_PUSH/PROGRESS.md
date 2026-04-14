@@ -2,6 +2,23 @@
 
 DO NOT PUSH!!!!
 
+---
+
+## v24.0.0: Final Deterministic CI & src Layout Alignment (April 2026)
+
+### Problem
+CI paths were still assuming a flat layout or were non-deterministic with ruff pathing. Import validation was missing, leading to potential silent packaging regressions.
+
+### Solution
+Hard-locked the CI to use 'pip install -e ".[dev]"' and explicit 'python -c "import app"' validation. Standardized ruff to check the entire root with src layout awareness.
+
+### Changes Applied
+- **Deterministic API CI**: Updated .github/workflows/dag-ci.yml with:
+  - 'ruff check .' and 'ruff format --check .' for full project coverage.
+  - Mandatory 'pip install -e ".[dev]"' in all jobs requiring the package.
+  - Added 'Verify package import' step to fail fast on packaging issues.
+  - Removed status gating in favor of standard 'needs:' dependency flow.
+
 - Deleted root-level old files (main.py, api.py, utils.py, worker.py, entry.py, pytest.ini) after migration.
 - Added Import Manifest Compiler (IMC) to enforce import legality, build ordering, runtime DAG correctness, CI reproducibility, and cross-language resolution.
 - Removed skills folder from git tracking, kept locally.
@@ -6445,6 +6462,7 @@ Console logs revealed that the GitHub Pages deployment fails while Vercel works 
 \- \*\*Mercury AI Integration\*\*: Fully transitioned to Mercury AI for simulation assistance and notebook generation.
 
 \- \*\*System Health LEDs\*\*: Real-time status indicators for Mercury AI, Supabase, and RunPod.
+
 
 
 

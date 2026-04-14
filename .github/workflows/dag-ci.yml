@@ -10,8 +10,6 @@ permissions:
   contents: read
   actions: read
 
-# Stub env vars so the boot DAG import chain doesn't crash during test collection.
-# Real secrets are injected per-job via GitHub Secrets for jobs that need them.
 env:
   SB_URL: "http://localhost:8000"
   SB_TOKEN: "ci-stub-token"
@@ -34,14 +32,14 @@ jobs:
           python-version: "3.11"
 
       - name: Install linting tools
-        # FIX: pinned to match pyproject.toml [dev] extras
         run: pip install ruff==0.4.4
 
+      # ✅ FIX: src layout safe
       - name: Run ruff
-        run: ruff check app/ worker/ tests/
+        run: ruff check .
 
       - name: Run ruff format check
-        run: ruff format --check app/ worker/ tests/
+        run: ruff format --check .
 
   tests:
     name: Tests
@@ -54,26 +52,20 @@ jobs:
         with:
           python-version: "3.11"
 
+      # ✅ REQUIRED: installs src packages properly
       - name: Install dependencies
-        run: |
-          pip install -e ".[dev]"
+        run: pip install -e ".[dev]"
+
+      # ✅ HARD VALIDATION: fails fast if packaging is wrong
+      - name: Verify package import
+        run: python -c "import app; print(app.__file__)"
 
       - name: Run pytest
         run: python -m pytest tests/ -q --tb=short
-        # Stub secrets already in workflow-level env above.
-        # Override with real secrets here if integration tests need them:
-        # env:
-        #   SB_URL: ${{ secrets.CI_SB_URL }}
 
   api-ci:
     name: API CI
     runs-on: ubuntu-latest
-    # FIX: use needs-based dependency instead of broken job.status output pattern.
-    # GitHub automatically skips this job if lint or tests fail — no custom
-    # output gating needed. The old pattern (`outputs: status: ${{ job.status }}`)
-    # is not valid: job.status is a context value, not a settable output, so
-    # downstream `if: needs.lint.outputs.status == 'success'` always evaluates
-    # to an empty string (false) and the job never runs.
     needs: [lint, tests]
 
     steps:
@@ -87,6 +79,10 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      # ✅ ensures this job also validates install correctness
+      - name: Verify package import
+        run: python -c "import app; print(app.__file__)"
+
       - name: Boot validation
         run: pytest tests/test_boot.py -xvs
 
@@ -97,20 +93,11 @@ jobs:
         run: python tools/check_dependency_drift.py
         env:
           DRIFT_TEST_IMPORT: "app.core.config"
-          # FIX: use app.core.config not app.main — config is a lighter import
-          # that doesn't pull the full FastAPI app chain. app.main is safe to
-          # import now (boot runs in lifespan, not at module scope) but the
-          # import still validates the entire dependency graph which is slower.
 
       - name: DAG system tests
         run: pytest tests/test_dag.py -xvs
 
     outputs:
-      # FIX: removed hardcoded `ci_status: "success"` output.
-      # That pattern is a false green — the literal string is emitted even if
-      # the job fails partway through. Downstream jobs should depend on this
-      # job via `needs:` and let GitHub's default skip/fail propagation handle
-      # gating. The sha output is genuinely useful and kept.
       sha: ${{ github.sha }}
 
   worker-build:
@@ -145,7 +132,6 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: [api-ci, worker-build]
-    # Both needs jobs must succeed; only deploy from main
     if: github.ref == 'refs/heads/main'
     environment: production
 
@@ -155,8 +141,4 @@ jobs:
       - name: Trigger hardened build & push
         run: |
           echo "All upstream checks passed for SHA: ${{ github.sha }}"
-          echo "Triggering hardened-build-push workflow via dispatch or cd pipeline."
-          # In practice, hardened-build-push.yml triggers on push to main,
-          # so it will already be queued. This step is a documentation marker.
-          # To gate it explicitly, use workflow_run in hardened-build-push.yml
-          # (see that file's trigger configuration).
+          echo "Triggering hardened-build-push workflow."

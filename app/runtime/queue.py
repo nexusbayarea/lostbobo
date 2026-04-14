@@ -1,34 +1,38 @@
 """
-Task Queue — Thread-safe in-memory queue for distributed-ready execution
+Task Queue — Redis-backed distributed queue for multi-process execution
 
-Provides backpressure and decoupled execution foundation.
+Provides shared queue across worker processes, enabling horizontal scaling.
 """
 
-from queue import Queue, Empty
+import json
 from typing import Any, Optional
+
+try:
+    import redis
+
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
 
 
 class TaskQueue:
-    def __init__(self):
-        self.q = Queue()
+    def __init__(self, url: str = "redis://localhost:6379/0", key: str = "task_queue"):
+        if not REDIS_AVAILABLE:
+            raise ImportError("redis not installed. Run: pip install redis")
+        self.r = redis.Redis.from_url(url, decode_responses=True)
+        self.key = key
 
     def push(self, task: Any) -> None:
-        self.q.put(task)
+        self.r.rpush(self.key, json.dumps(task))
 
-    def pop(self) -> Optional[Any]:
-        try:
-            return self.q.get(timeout=0.1)
-        except Empty:
-            return None
-
-    def task_done(self) -> None:
-        self.q.task_done()
-
-    def join(self) -> None:
-        self.q.join()
+    def pop(self) -> Optional[dict]:
+        item = self.r.lpop(self.key)
+        if item:
+            return json.loads(item)
+        return None
 
     def empty(self) -> bool:
-        return self.q.empty()
+        return self.r.llen(self.key) == 0
 
     def __len__(self) -> int:
-        return self.q.qsize()
+        return self.r.llen(self.key)

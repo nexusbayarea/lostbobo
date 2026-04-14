@@ -96,6 +96,70 @@ if __name__ == "__main__":
 
 ---
 
+## v17.0.0: Redis Queue + Multi-Process Workers (April 2026)
+
+### New Components
+
+**1. `app/runtime/queue.py`** — Redis-backed queue:
+```python
+class TaskQueue:
+    def __init__(self, url="redis://localhost:6379/0")
+    def push(task), def pop() -> Optional[dict]
+```
+
+**2. `app/runtime/state.py`** — Redis result store:
+```python
+class ResultStore:
+    def set(name, value), def get(name), def exists(name)
+```
+
+**3. `worker/worker.py`** — Independent worker process:
+```python
+def worker_loop(dag, context, queue_url):
+    # pulls from Redis queue
+    # checks deps in Redis store
+    # executes via dispatch
+    # stores results in Redis
+    # enqueues dependents
+```
+
+### System Flow
+```
+DAG → Redis queue → multiple worker processes → shared result store → dispatch → execution
+```
+
+### How to Run
+
+**Start Redis:**
+```bash
+docker run -p 6379:6379 redis
+```
+
+**Seed DAG (from kernel):**
+```python
+queue = TaskQueue()
+for name, node in dag.nodes.items():
+    if not node.deps:
+        queue.push({"name": name})
+```
+
+**Start workers (multiple terminals):**
+```bash
+python -m worker.worker
+python -m worker.worker
+python -m worker.worker
+```
+
+### Guarantees
+- **Horizontal scaling**: add workers → more throughput
+- **Fault tolerance**: worker dies → task stays in queue
+- **Isolation**: each worker is independent process
+
+### Gemma Bridge
+Replace dispatch with remote GPU/model endpoint without changing DAG/scheduler.
+
+---
+
 ## v16.0.0: Multi-Worker Parallel Scheduler (April 2026)
 
 ### New Components

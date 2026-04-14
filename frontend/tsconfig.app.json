@@ -13,6 +13,8 @@
         "./src/*"
       ]
     },
+    /* CI/LINUX import safety - prevents case sensitivity issues */
+    "forceConsistentCasingInFileNames": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

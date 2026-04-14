@@ -13,6 +13,11 @@ jobs:
           cd frontend
           npm install
 
+      - name: TypeScript typecheck (import safety gate)
+        run: |
+          cd frontend
+          npm run typecheck
+
       - name: Build frontend
         run: |
           cd frontend

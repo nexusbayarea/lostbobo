@@ -4,7 +4,7 @@ version = "2.7.2"
 description = "SimHPC Unified Platform - Simulation backend for API + GPU workers + autoscaler"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
     { name = "nexusbayarea", email = "nexusbayarea@gmail.com" }
 ]
@@ -72,7 +72,7 @@ ignore = ["E402"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --tb=short"
-pythonpath = ["."]
+pythonpath = ["src"]
 asyncio_mode = "auto"
 markers = [
     "asyncio: mark test as async",

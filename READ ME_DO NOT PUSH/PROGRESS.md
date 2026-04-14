@@ -96,6 +96,49 @@ if __name__ == "__main__":
 
 ---
 
+## v12.3.0: Dependency Scanner + Requirements Sync (April 2026)
+
+### Problem
+Missing runtime dependencies (redis, dotenv) discovered too late at runtime instead of at CI preflight.
+
+### Solution
+Added dependency preflight gate + synced requirements.txt with pyproject.toml.
+
+### Changes
+
+**1. Added `tools/ci_gates/dependency_scan.py`**:
+- Scans all Python imports in codebase
+- Compares against requirements.txt
+- Fails CI BEFORE runtime executes if deps missing
+- Stdlib excluded automatically
+
+**2. Synced `requirements.txt`** with `pyproject.toml`:
+- Added all runtime dependencies from pyproject.toml dependencies list
+
+**3. Updated bootstrap** to run dependency_scan FIRST:
+```python
+run("python tools/ci_gates/dependency_scan.py")
+```
+
+**4. Updated `ci/workflow.yml`** with dependency_scan step
+
+### System Flow Now
+```
+1. Dependency scan (NEW - fails fast)
+2. Import guard
+3. DAG compiler
+4. Runtime contract
+5. Worker isolation
+6. Tests
+```
+
+### What This Fixes Permanently
+- Missing dependency errors discovered at compile-time, not runtime
+- No more redis/dotenv-style runtime crashes
+- CI fails before any execution if contract broken
+
+---
+
 ## v12.2.0: Runtime Dependency Contract Fix (April 2026)
 
 ### Problem

@@ -7,10 +7,15 @@ steps:
   validate:
     type: parallel
     runs:
+      - dependency_scan
       - import_guard
       - dag_compile
       - runtime_contract
       - worker_isolation
+
+  dependency_scan:
+    type: command
+    run: python tools/ci_gates/dependency_scan.py
 
   import_guard:
     type: command
@@ -22,7 +27,7 @@ steps:
 
   runtime_contract:
     type: command
-    run: python tools/ci_gates/runtime_contract.py && python -m app.api.kernel --mode=ci --dry-run
+    run: python -m app.api.kernel --mode=ci --dry-run
 
   worker_isolation:
     type: command

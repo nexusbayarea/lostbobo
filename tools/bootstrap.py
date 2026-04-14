@@ -27,6 +27,9 @@ def run(cmd: str) -> None:
 def main(mode: str = "ci") -> None:
     print(f"\n=== SYSTEM BOOTSTRAP START ({mode}) ===")
 
+    # 0. Dependency contract preflight (fail fast before any execution)
+    run("python tools/ci_gates/dependency_scan.py")
+
     # 1. Structural integrity (no code runs if this fails)
     run("python tools/ci_gates/import_guard.py")
     run("python tools/ci_gates/dag_compiler.py")

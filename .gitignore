@@ -22,6 +22,7 @@ venv/
 ENV/
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
 
 # Node / Frontend
 node_modules/
@@ -47,5 +48,12 @@ data/
 logs/
 *.log
 
-# Legacy
+# Legacy / Internal
 legacy_archive/
+skills/
+*.md
+!README.md
+
+# Build artifacts
+simhpc.egg-info/
+.vercel

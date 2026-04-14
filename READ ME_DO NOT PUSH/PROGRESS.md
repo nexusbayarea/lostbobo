@@ -2,6 +2,21 @@ DO NOT PUSH!!!!
 
 ---
 
+## v4.0.0: Declarative CI DAG Shift (April 2026)
+
+### Radical Deprecation
+Removed the massive custom Python-based CI orchestration systems:
+- Deleted all scripts inside `ci/` except `workflow.yml` and a tiny runner file.
+- Deprecated imperative Python orchestration. Removed all recursive loop logic that acted as a secondary application runtime.
+
+### New Architecture
+The Action CI is now a pure YAML DAG executor mapping simple abstract terminal tasks.
+- `ci/workflow.yml` as the declarative graph state.
+- Single unified shell-executed `ci/runner.py` wrapper resolving execution barriers.
+- Integrated `tools/ci_gates/` paths restricting and blocking system pollution.
+
+---
+
 ## v3.5.1: CI-Ready Enforcement Bundle (April 2026)
 
 ### Hard-Locked Execution Pipelines

@@ -1,37 +1,26 @@
-name: CI
+name: Declarative CI
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
+  run:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv pip install --system -e .
-          uv pip install --system -r requirements-dev.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pyyaml
 
-      - name: Enforce import boundaries
+      - name: Run CI DAG
         run: |
-          python tools/import_guard.py
-
-      - name: Run tests
-        run: |
-          python -m pytest tests/ --tb=short -q
-
-      - name: Run DAG bootstrap sanity check
-        run: |
-          python -m app.api.kernel --mode=ci --dry-run
+          python ci/runner.py

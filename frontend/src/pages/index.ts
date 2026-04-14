@@ -7,7 +7,7 @@ export * from './SignUp';
 export * from './Terms';
 export * from './About';
 export * from './Docs';
-export * from './APIReference';
+export * from './ApiReference';
 export * from './CCPA';
 export * from './DPA';
 export * from './CookiePolicy';

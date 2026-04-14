@@ -1,0 +1,19 @@
+name: Backend Leak Guard
+
+on: [push, pull_request]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for backend leakage
+        run: |
+          BLOCKED=$(find . -type d \( -name "app" -o -name "worker" -o -name "ci" -o -name "autoscaler" -o -name "tools" -o -name "infra" -o -name "docker" -o -name "scripts" -o -name "runtime" -o -name "packages" \) 2>/dev/null)
+          if [ -n "$BLOCKED" ]; then
+            echo "❌ Backend code detected in PUBLIC repo:"
+            echo "$BLOCKED"
+            exit 1
+          fi
+          echo "✅ No backend leakage detected"

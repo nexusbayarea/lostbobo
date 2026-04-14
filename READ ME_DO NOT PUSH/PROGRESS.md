@@ -2,7 +2,7 @@ DO NOT PUSH!!!!
 
 ---
 
-## v11.3.0: CI-Ready Enforcement Bundle (April 2026)
+## v3.5.1: CI-Ready Enforcement Bundle (April 2026)
 
 ### Hard-Locked Execution Pipelines
 Injected the gamma-grade enforcement bundle containing strict checks preventing state drift:
@@ -20,7 +20,7 @@ This secures deterministic operations uniformly across Docker + Action contexts.
 
 ---
 
-## v11.1.0: Controlled Intelligence CI Layer (April 2026)
+## v3.5.1: Controlled Intelligence CI Layer (April 2026)
 
 ### Learning CI System Addition
 Added a structured observation loop to the Gamma CI pipeline: **observe → learn → predict → assist**.
@@ -40,7 +40,7 @@ Added a structured observation loop to the Gamma CI pipeline: **observe → lear
 
 ---
 
-## v11.3.0: PYTHONPATH Module Context Fix (April 2026)
+## v3.5.1: PYTHONPATH Module Context Fix (April 2026)
 
 ### Problem
 `ModuleNotFoundError: No module named 'ci'` — Python executing script path instead of module context.

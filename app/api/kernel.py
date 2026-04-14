@@ -41,10 +41,17 @@ def main():
         dag.add("task_b", task_b, deps=["task_a"])
 
         scheduler = Scheduler(dag)
-        result = scheduler.run(dispatch, context={"mode": "local"})
+        result = scheduler.run(dispatch, context={"mode": "local"}, workers=1)
 
-        print("\n=== DAG TEST RESULT (local) ===")
+        print("\n=== DAG TEST RESULT (workers=1) ===")
         for k, v in result.items():
+            print(f"{k}: {v}")
+
+        scheduler2 = Scheduler(dag)
+        result2 = scheduler2.run(dispatch, context={"mode": "local"}, workers=4)
+
+        print("\n=== DAG TEST RESULT (workers=4) ===")
+        for k, v in result2.items():
             print(f"{k}: {v}")
 
 

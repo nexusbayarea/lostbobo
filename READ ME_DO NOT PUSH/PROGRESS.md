@@ -96,6 +96,47 @@ if __name__ == "__main__":
 
 ---
 
+## v16.0.0: Multi-Worker Parallel Scheduler (April 2026)
+
+### New Components
+
+**1. `app/runtime/queue.py`** — Thread-safe queue (using stdlib Queue):
+```python
+class TaskQueue:
+    def push(task), def pop(), def task_done(), def join()
+```
+
+**2. `app/runtime/scheduler.py`** — Multi-worker execution:
+```python
+class Scheduler:
+    def run(dispatch, context, workers=4):
+        # spawns N worker threads
+        # each pulls from queue, executes, pushes dependents
+        # thread-safe with minimal locking
+```
+
+### Thread Safety
+- Lock protects: checking readiness, reading/writing results
+- Not locked: dispatch execution (no contention bottleneck)
+- Duplicate scheduling safe (results check prevents double execution)
+
+### Guarantees
+- DAG integrity under concurrency
+- Deterministic results (same inputs → same outputs)
+- Dependency safety: node only runs when deps satisfied
+
+### Validation
+```bash
+python -m app.api.kernel --mode=test
+# Runs with workers=1 then workers=4, both must match
+```
+
+### What This Unlocks
+- Parallel deterministic execution
+- Ready for: external queue (Redis), multi-process workers, horizontal scaling
+
+---
+
 ## v15.1.0: Dependency Scanner False Positive Fix (April 2026)
 
 ### Problem

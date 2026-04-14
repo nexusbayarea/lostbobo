@@ -1,17 +1,18 @@
 """
-Scheduler — Topological execution order + queue-driven execution
+Scheduler — Topological execution order + queue-driven execution + multi-worker support
 
 Provides:
 - topological_sort: deterministic ordering
-- Scheduler: queue-driven execution with backpressure
+- Scheduler: queue-driven execution with backpressure and parallelism
 """
 
-from typing import Any, Dict, List
+import threading
+from typing import Any, Dict
 
 from app.runtime.queue import TaskQueue
 
 
-def topological_sort(nodes: Dict[str, "Node"]) -> List[str]:
+def topological_sort(nodes: Dict[str, "Node"]) -> list:
     visited = set()
     order = []
 
@@ -37,6 +38,8 @@ class Scheduler:
         self.dag = dag
         self.queue = TaskQueue()
         self.results = {}
+        self.lock = threading.Lock()
+        self.active_workers = 0
 
     def seed(self) -> None:
         for name, node in self.dag.nodes.items():
@@ -47,33 +50,52 @@ class Scheduler:
         node = self.dag.nodes[node_name]
         return all(dep in self.results for dep in node.deps)
 
-    def run(self, dispatch: Any, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def worker(self, dispatch: Any, context: Dict[str, Any]) -> None:
+        while True:
+            name = self.queue.pop()
+            if name is None:
+                return
+
+            node = self.dag.nodes[name]
+
+            with self.lock:
+                if not self.ready(name):
+                    self.queue.push(name)
+                    self.queue.task_done()
+                    continue
+
+                inputs = {dep: self.results[dep] for dep in node.deps}
+
+            result = dispatch(node, inputs, context)
+
+            with self.lock:
+                if name in self.results:
+                    self.queue.task_done()
+                    continue
+
+                self.results[name] = result
+
+                for n, other in self.dag.nodes.items():
+                    if name in other.deps:
+                        self.queue.push(n)
+
+            self.queue.task_done()
+
+    def run(
+        self, dispatch: Any, context: Dict[str, Any] = None, workers: int = 1
+    ) -> Dict[str, Any]:
         context = context or {}
         self.seed()
 
-        cycles = 0
-        max_cycles = len(self.dag.nodes) * 2
+        threads = []
+        for _ in range(workers):
+            t = threading.Thread(target=self.worker, args=(dispatch, context))
+            t.start()
+            threads.append(t)
 
-        while not self.queue.empty():
-            if cycles > max_cycles:
-                raise RuntimeError("Scheduler deadlock detected")
-            cycles += 1
+        self.queue.join()
 
-            name = self.queue.pop()
-            node = self.dag.nodes[name]
-
-            if not self.ready(name):
-                self.queue.push(name)
-                continue
-
-            inputs = {dep: self.results[dep] for dep in node.deps}
-
-            result = dispatch(node, inputs, context)
-            self.results[name] = result
-
-            for n, other in self.dag.nodes.items():
-                if name in other.deps:
-                    if self.ready(n):
-                        self.queue.push(n)
+        for t in threads:
+            t.join()
 
         return self.results

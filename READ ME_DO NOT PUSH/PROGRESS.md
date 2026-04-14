@@ -2,6 +2,14 @@ DO NOT PUSH!!!!
 
 ---
 
+## v4.1.0: Strict Dependency Contract (April 2026)
+### Infrastructure Baseline
+Eliminated the configuration drift between CI definitions and app limits out in production runtimes.
+- Added explicit segregation between `requirements.txt` (App) and `requirements-dev.txt` (pytest, asyncio, ruff, mypy).
+- Engineered the `tools/ci_gates/runtime_contract.py` validation layer to formally check deployment configuration definitions upfront before executing unit test harnesses or app logic validations.
+
+---
+
 ## v4.0.0: Declarative CI DAG Shift (April 2026)
 
 ### Radical Deprecation

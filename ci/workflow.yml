@@ -22,7 +22,7 @@ steps:
 
   runtime_contract:
     type: command
-    run: python -m app.api.kernel --mode=ci --dry-run
+    run: python tools/ci_gates/runtime_contract.py && python -m app.api.kernel --mode=ci --dry-run
 
   worker_isolation:
     type: command

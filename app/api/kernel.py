@@ -1,59 +1,76 @@
-import argparse
-import sys
+"""
+API Entry Point — FastAPI server exposing execution contract
+
+This is the ONLY public interface to the execution engine.
+All requests go through strict schema validation.
+"""
+
+import time
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.contract import (
+    RunRequest,
+    RunResponse,
+    HealthResponse,
+    error_response,
+    API_VERSION,
+)
+from app.runtime.dag import DAG, Node
+from app.runtime.scheduler import Scheduler
+from app.runtime.dispatch import dispatch
+from worker import tasks as task_registry
+
+app = FastAPI(title="SimHPC Execution API", version=API_VERSION)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=True)
-    parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
+TASK_REGISTRY = {
+    "task_a": task_registry.task_a,
+    "task_b": task_registry.task_b,
+    "task_multiply": task_registry.task_multiply,
+    "task_sum": task_registry.task_sum,
+}
 
-    if args.mode not in {"ci", "worker", "dev", "test"}:
-        raise ValueError(f"Invalid mode: {args.mode}")
 
-    if args.dry_run:
-        print(f"[DRY RUN] mode={args.mode}")
-        return
+@app.get("/health", response_model=HealthResponse)
+def health():
+    return HealthResponse(status="ok", version=API_VERSION)
 
-    if args.mode == "ci":
-        from app.runtime.dag import run_ci_dag
 
-        run_ci_dag()
+@app.post("/run", response_model=RunResponse)
+def run(req: RunRequest):
+    start = time.time()
 
-    elif args.mode == "worker":
-        from app.runtime.dag import run_worker_dag
-
-        run_worker_dag()
-
-    elif args.mode == "dev":
-        from app.runtime.dag import run_dev_dag
-
-        run_dev_dag()
-
-    elif args.mode == "test":
-        from app.runtime.dag import DAG
-        from app.runtime.scheduler import Scheduler
-        from app.runtime.dispatch import dispatch
-        from worker.tasks import task_a, task_b
-
+    try:
         dag = DAG()
-        dag.add("task_a", task_a)
-        dag.add("task_b", task_b, deps=["task_a"])
+
+        for name, node_def in req.dag.items():
+            fn = TASK_REGISTRY.get(node_def.fn)
+            if not fn:
+                return error_response(f"Unknown task function: {node_def.fn}")
+            dag.add(name, fn, node_def.deps)
+
+        dag.validate()
 
         scheduler = Scheduler(dag)
-        result = scheduler.run(dispatch, context={"mode": "local"}, workers=1)
+        results = scheduler.run(dispatch, context=req.context, workers=1)
 
-        print("\n=== DAG TEST RESULT (workers=1) ===")
-        for k, v in result.items():
-            print(f"{k}: {v}")
+        return RunResponse(
+            results=results, execution_time_ms=(time.time() - start) * 1000, status="ok"
+        )
 
-        scheduler2 = Scheduler(dag)
-        result2 = scheduler2.run(dispatch, context={"mode": "local"}, workers=4)
-
-        print("\n=== DAG TEST RESULT (workers=4) ===")
-        for k, v in result2.items():
-            print(f"{k}: {v}")
+    except Exception as e:
+        return error_response(str(e))
 
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8080)

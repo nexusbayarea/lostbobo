@@ -96,6 +96,62 @@ if __name__ == "__main__":
 
 ---
 
+## v19.0.0: Frontend ↔ Backend Contract Layer (April 2026)
+
+### Problem
+Split repo needs strict boundary to prevent coupling reintroduction.
+
+### Solution
+Created API contract layer as ONLY interface between frontend and backend.
+
+### New Components
+
+**1. `app/api/contract.py`** — Strict schema boundary:
+```python
+class RunRequest(BaseModel):
+    dag: Dict[str, DAGNodeSchema]
+    context: Dict[str, Any]
+    mode: str  # local, subprocess, remote
+
+class RunResponse(BaseModel):
+    results: Dict[str, Any]
+    execution_time_ms: float
+    status: str
+    version: str
+```
+
+**2. `app/api/kernel.py`** — FastAPI entry point:
+```python
+@app.post("/run", response_model=RunResponse)
+def run(req: RunRequest):
+    # Validate → Build DAG → Execute → Return results
+```
+
+### Contract Rules
+- **Frontend ONLY:** sends DAG definitions, receives results
+- **Frontend NEVER:** imports backend logic, knows worker model
+- **Validation:** DAG size limit (1000), context size limit (10000)
+- **Error isolation:** No internal stack traces exposed
+
+### Versioning
+```python
+API_VERSION = "v1"
+```
+
+### Architecture After Contract
+```
+Public repo:
+  frontend + API client only
+
+Private repo:
+  DAG + scheduler + workers + Redis + CI
+
+Bridge:
+  strict FastAPI contract (v1)
+```
+
+---
+
 ## v18.0.0: Repository Security Hardening — Leak Prevention (April 2026)
 
 ### Problem

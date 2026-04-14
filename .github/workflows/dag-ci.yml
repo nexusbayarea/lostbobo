@@ -54,7 +54,7 @@ jobs:
       - name: Compile DAG
         id: dag
         run: |
-          python ci/dag_compiler.py > dag.json
+          python -m ci.dag_compiler > dag.json
 
           MATRIX=$(jq -c '.modules' dag.json)
           if [ "$MATRIX" = "null" ] || [ "$MATRIX" = "[]" ]; then
@@ -82,7 +82,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             ${{ env.IMAGE_BASE }}@${{ needs.build.outputs.digest }} \
-            python ci/kernel.py --module ${{ matrix.module }}
+            python -m ci.kernel --module ${{ matrix.module }}
 
   manifest:
     runs-on: ubuntu-latest
@@ -94,7 +94,7 @@ jobs:
 
       - name: Build manifest
         run: |
-          python ci/dag_compiler.py > dag.json
+          python -m ci.dag_compiler > dag.json
           cat <<EOF > build-manifest.json
           {
             "git": {"sha": "${{ github.sha }}", "ref": "${{ github.ref }}"},

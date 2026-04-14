@@ -4,6 +4,7 @@ CI Kernel — Gamma Stable (v11.1.0)
 Orchestrates module execution with a controlled learning layer.
 Observes failures -> fingerprints -> predicts fixes -> applies -> learns.
 """
+
 import subprocess
 import sys
 import logging
@@ -21,6 +22,7 @@ MODULE_TARGETS: dict[str, list[str]] = {
     "worker": ["worker/"],
     "ci": ["ci/"],
 }
+
 
 def run_with_learning(cmd):
     """Executes a command and applies learning-based self-healing if it fails."""
@@ -56,6 +58,7 @@ def run_with_learning(cmd):
     record(fp, None, False)
     return result.returncode
 
+
 def main() -> None:
     if "--module" not in sys.argv:
         log.error("Missing --module argument")
@@ -73,9 +76,9 @@ def main() -> None:
         sys.exit(1)
 
     cmd = ["python", "-m", "pytest", "--tb=short", "-q"] + targets
-    
+
     rc = run_with_learning(cmd)
-    
+
     if rc != 0:
         log.error("Tests still failing. Marking module as failed.")
 
@@ -83,4 +86,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if __package__ is None:
+        raise RuntimeError(
+            "Must run as module: python -m ci.kernel\n"
+            "Do not run as: python ci/kernel.py"
+        )
     main()

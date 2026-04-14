@@ -22,6 +22,50 @@ Added a structured observation loop to the Gamma CI pipeline: **observe → lear
 
 ---
 
+## v11.3.0: PYTHONPATH Module Context Fix (April 2026)
+
+### Problem
+`ModuleNotFoundError: No module named 'ci'` — Python executing script path instead of module context.
+
+### Root Cause
+Running `python ci/kernel.py` treats it as a script, not a package, so `ci.*` imports fail.
+
+### Fix Applied
+
+**1. CI Workflow** — Changed to `-m` module execution:
+```yaml
+# Before
+python ci/kernel.py --module ${{ matrix.module }}
+python ci/dag_compiler.py > dag.json
+
+# After
+python -m ci.kernel --module ${{ matrix.module }}
+python -m ci.dag_compiler > dag.json
+```
+
+**2. Guard Rails** — Added runtime enforcement in CI modules:
+```python
+if __name__ == "__main__":
+    if __package__ is None:
+        raise RuntimeError(
+            "Must run as module: python -m ci.kernel\n"
+            "Do not run as: python ci/kernel.py"
+        )
+```
+
+Files updated:
+| File | Change |
+|------|--------|
+| `.github/workflows/dag-ci.yml` | `python` → `python -m` for kernel + dag_compiler |
+| `ci/kernel.py` | Added package guard |
+| `ci/dag_compiler.py` | Added package guard |
+| `ci/policy.py` | Added package guard |
+
+### Rule Enforced
+"No file-path execution of internal modules" — all internal modules must run via `-m`.
+
+---
+
 ## v11.2.0: Python Symlink Fix for Container Runtime (April 2026)
 
 ### Problem

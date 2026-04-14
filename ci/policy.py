@@ -7,6 +7,7 @@ Fails the build if any mutable Docker tags (:latest, :stable) are found.
 Usage:
     python ci/policy.py
 """
+
 import sys
 import pathlib
 
@@ -35,5 +36,10 @@ def check_mutable_tags() -> bool:
 
 
 if __name__ == "__main__":
+    if __package__ is None:
+        raise RuntimeError(
+            "Must run as module: python -m ci.policy\n"
+            "Do not run as: python ci/policy.py"
+        )
     if not check_mutable_tags():
         sys.exit(1)

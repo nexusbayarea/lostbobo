@@ -112,6 +112,13 @@ DO NOT PUSH!!!!
 
 - **Lock Normalization**: Added `normalize_lock()` for stable ordering
 
+- **Zero-Drift Dependency Kernel**: (NEW)
+  - Created `tools/deps/lock.py` for deterministic lock generation
+  - Replaced old dependency validation with kernel-based validation
+  - Uses `uv pip compile` with `--no-header` for clean output
+  - `--write` flag to update lockfile when needed
+  - Normalizes and sorts dependencies for stable comparison
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

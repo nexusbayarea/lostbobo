@@ -15,44 +15,21 @@ def run_step(name: str, cmd: list[str]) -> None:
     print(f"[PASS] {name}")
 
 
-def normalize_lock(lines: str) -> set[str]:
-    """Ensure stable ordering + remove metadata noise."""
-    return {
-        line.strip()
-        for line in lines.splitlines()
-        if line.strip() and not line.startswith("#") and "==" in line
-    }
+def validate_dependency_kernel():
+    print("[KERNEL] Zero-drift dependency validation")
 
+    result = subprocess.run(
+        ["python", "tools/deps/lock.py"],
+        capture_output=True,
+        text=True,
+    )
 
-def validate_dependency_lock():
-    print("[KERNEL] Dependency validation (self-contained mode)")
-
-    pyproject = Path("pyproject.toml")
-    lockfile = Path("requirements.lock")
-
-    if not pyproject.exists():
-        print("[FAIL] pyproject.toml missing")
+    if result.returncode != 0:
+        print("[FAIL] dependency kernel drift")
+        print(result.stderr)
         sys.exit(1)
 
-    if not lockfile.exists():
-        print("[FAIL] requirements.lock missing")
-        print("Generate lockfile in CI or locally using:")
-        print("  uv pip compile pyproject.toml -o requirements.lock")
-        sys.exit(1)
-
-    lock_text = lockfile.read_text()
-
-    if "==" not in lock_text:
-        print("[FAIL] Invalid lockfile format (missing pinned versions)")
-        sys.exit(1)
-
-    lines = normalize_lock(lock_text)
-
-    if len(lines) == 0:
-        print("[FAIL] Empty dependency lockfile")
-        sys.exit(1)
-
-    print("[PASS] Dependency kernel validation complete")
+    print("[PASS] dependency kernel stable")
 
 
 def dependency_healing_phase():
@@ -118,7 +95,7 @@ def validate_dag_contract():
 
 
 def main(mode: str = "ci") -> None:
-    validate_dependency_lock()
+    validate_dependency_kernel()
 
     dependency_healing_phase()
 

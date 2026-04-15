@@ -71,3 +71,8 @@ export default defineConfig([
   },
 ])
 ```
+
+## Progress
+- Import graph boundary enforcement added
+- Observability contract schema validation added
+- Deterministic cache layer integrated

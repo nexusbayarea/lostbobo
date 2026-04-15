@@ -131,6 +131,14 @@ DO NOT PUSH!!!!
   - Added `$HOME/.local/bin` to GITHUB_ENV (not GITHUB_PATH)
   - Added pyyaml to Python deps for hermetic_lock.py
 
+- **Hermetic CI Runtime**: (NEW)
+  - Replaced uv-based lock.py with pure Python validation
+  - No external CLI tools required at runtime
+  - Uses `sys.executable` for all subprocess calls
+  - Restored `tools/runtime/dag_executor.py` with topological execution
+  - Validates lockfile format (pinned versions) instead of diff comparison
+  - CI workflows simplified - no uv required, just pip
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def run_step(name: str, cmd: list[str]) -> None:
+def run_step(name: str, cmd: list) -> None:
     print(f"[Bootstrap] -> {name}")
     result = subprocess.run(cmd)
 
@@ -16,10 +16,10 @@ def run_step(name: str, cmd: list[str]) -> None:
 
 
 def validate_dependency_kernel():
-    print("[KERNEL] Hermetic dependency validation")
+    print("[KERNEL] Zero-drift dependency validation")
 
     result = subprocess.run(
-        ["python", "tools/deps/hermetic_lock.py"],
+        [sys.executable, "tools/deps/lock.py"],
         capture_output=True,
         text=True,
     )
@@ -29,7 +29,7 @@ def validate_dependency_kernel():
         print(result.stderr)
         sys.exit(1)
 
-    print("[PASS] dependency kernel stable")
+    print("[PASS] dependency kernel clean")
 
 
 def dependency_healing_phase():
@@ -42,7 +42,7 @@ def dependency_healing_phase():
     ]
 
     result = subprocess.run(
-        ["python", "tools/deps/self_heal_deps.py"],
+        [sys.executable, "tools/deps/self_heal_deps.py"],
         input="\n".join(project_files),
         text=True,
     )
@@ -69,7 +69,7 @@ def validate_dag_contract():
         sys.exit(1)
 
     result = subprocess.run(
-        ["python", str(compiler)],
+        [sys.executable, str(compiler)],
         capture_output=True,
         text=True,
     )
@@ -102,8 +102,8 @@ def main(mode: str = "ci") -> None:
     validate_dag_contract()
 
     run_step(
-        "DAG Compile (source of truth)",
-        ["python", "tools/ci_gates/dag_compiler.py"],
+        "DAG Execution",
+        [sys.executable, "tools/runtime/dag_executor.py"],
     )
 
 

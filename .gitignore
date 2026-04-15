@@ -71,3 +71,6 @@ gha-creds-*.json
 .gemini/
 gha-creds-*.json
 
+# PROGRESS.md
+progress.md
+

@@ -2,8 +2,9 @@ import sys
 import subprocess
 from pathlib import Path
 from tools.runtime.contract import CONTRACT
+from tools.runtime.capabilities import CAPABILITIES
 from tools.runtime.trace import Trace
-from tools.runtime.signature import compute_node_signature
+
 from tools.runtime.state import load_state, save_state
 
 CONTRACT.apply()
@@ -22,6 +23,20 @@ def read_lock() -> set[str]:
         for line in LOCKFILE.read_text().splitlines()
         if line.strip() and "==" in line
     }
+
+
+def verify_capabilities():
+    print("[KERNEL] capability validation")
+    for cap in CAPABILITIES.values():
+        if not cap.enabled:
+            continue
+        missing = [p for p in cap.required_files if not Path(p).exists()]
+        if missing:
+            print(f"[FAIL] capability '{cap.name}' missing files:")
+            for m in missing:
+                print(" ", m)
+            sys.exit(1)
+    print("[PASS] capabilities valid")
 
 
 def validate_lock_format() -> bool:
@@ -151,6 +166,7 @@ def main():
     print("[KERNEL] boot sequence start")
 
     trace = Trace()
+    verify_capabilities()
     validate_dependencies()
     self_heal()
 

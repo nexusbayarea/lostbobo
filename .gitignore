@@ -18,6 +18,10 @@ scripts/
 runtime/
 packages/
 
+# Docker
+# Allow Docker build files
+!docker/
+
 # Python - no backend present
 *.py
 __pycache__/

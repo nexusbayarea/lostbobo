@@ -15,7 +15,8 @@ def run_step(name: str, cmd: list[str]) -> None:
     print(f"[PASS] {name}")
 
 
-def normalize(lines: str) -> set[str]:
+def normalize_lock(lines: str) -> set[str]:
+    """Ensure stable ordering + remove metadata noise."""
     return {
         line.strip()
         for line in lines.splitlines()
@@ -45,7 +46,7 @@ def validate_dependency_lock():
         print("[FAIL] Invalid lockfile format (missing pinned versions)")
         sys.exit(1)
 
-    lines = normalize(lock_text)
+    lines = normalize_lock(lock_text)
 
     if len(lines) == 0:
         print("[FAIL] Empty dependency lockfile")

@@ -110,6 +110,8 @@ DO NOT PUSH!!!!
   - Validates JSON output from dag_compiler
   - Bootstrap now only validates, no execution orchestration
 
+- **Lock Normalization**: Added `normalize_lock()` for stable ordering
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

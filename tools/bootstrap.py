@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import json
 from pathlib import Path
 
 
@@ -75,13 +76,55 @@ def dependency_healing_phase():
     print("[PASS] Dependency Healing")
 
 
+def validate_dag_contract():
+    print("[KERNEL] DAG contract validation")
+
+    manifest = Path("tools/ci_manifest.yml")
+    compiler = Path("tools/ci_gates/dag_compiler.py")
+
+    if not manifest.exists():
+        print("[FAIL] missing tools/ci_manifest.yml")
+        sys.exit(1)
+
+    if not compiler.exists():
+        print("[FAIL] missing dag_compiler.py")
+        sys.exit(1)
+
+    result = subprocess.run(
+        ["python", str(compiler)],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        print("[FAIL] DAG compilation failed")
+        print(result.stderr)
+        sys.exit(1)
+
+    try:
+        output = json.loads(result.stdout)
+        if "modules" not in output:
+            print("[FAIL] DAG output missing 'modules' key")
+            sys.exit(1)
+        if not isinstance(output.get("modules"), list):
+            print("[FAIL] DAG output 'modules' must be a list")
+            sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"[FAIL] DAG output invalid JSON: {e}")
+        sys.exit(1)
+
+    print("[PASS] DAG contract valid")
+
+
 def main(mode: str = "ci") -> None:
     validate_dependency_lock()
 
     dependency_healing_phase()
 
+    validate_dag_contract()
+
     run_step(
-        "DAG Execution (compiled)",
+        "DAG Compile (source of truth)",
         ["python", "tools/ci_gates/dag_compiler.py"],
     )
 

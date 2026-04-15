@@ -104,6 +104,12 @@ DO NOT PUSH!!!!
   - bootstrap now runs `tools/ci_gates/dag_compiler.py` instead of dag_executor
   - Compiler outputs JSON execution plan (not runtime execution)
 
+- **Bootstrap Cleanup**: Removed runtime DAG executor completely
+  - Deleted `tools/runtime/dag_executor.py`
+  - Added DAG contract validation step
+  - Validates JSON output from dag_compiler
+  - Bootstrap now only validates, no execution orchestration
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

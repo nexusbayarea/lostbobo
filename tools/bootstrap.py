@@ -1,7 +1,5 @@
-import subprocess
 import sys
-import json
-from pathlib import Path
+import subprocess
 
 
 def run_step(name: str, cmd: list) -> None:
@@ -15,95 +13,10 @@ def run_step(name: str, cmd: list) -> None:
     print(f"[PASS] {name}")
 
 
-def validate_dependency_kernel():
-    print("[KERNEL] Zero-drift dependency validation")
-
-    result = subprocess.run(
-        [sys.executable, "tools/deps/lock.py"],
-        capture_output=True,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        print("[FAIL] dependency kernel drift")
-        print(result.stderr)
-        sys.exit(1)
-
-    print("[PASS] dependency kernel clean")
-
-
-def dependency_healing_phase():
-    print("[BOOTSTRAP] Dependency Healing Phase")
-
-    project_files = [
-        "tools/bootstrap.py",
-        "tools/ci_gates/dag_compiler.py",
-        "tools/ci_gates/system_contract.py",
-    ]
-
-    result = subprocess.run(
-        [sys.executable, "tools/deps/self_heal_deps.py"],
-        input="\n".join(project_files),
-        text=True,
-    )
-
-    if result.returncode != 0:
-        print("[FAIL] Dependency Healing")
-        sys.exit(result.returncode)
-
-    print("[PASS] Dependency Healing")
-
-
-def validate_dag_contract():
-    print("[KERNEL] DAG contract validation")
-
-    manifest = Path("tools/ci_manifest.yml")
-    compiler = Path("tools/ci_gates/dag_compiler.py")
-
-    if not manifest.exists():
-        print("[FAIL] missing tools/ci_manifest.yml")
-        sys.exit(1)
-
-    if not compiler.exists():
-        print("[FAIL] missing dag_compiler.py")
-        sys.exit(1)
-
-    result = subprocess.run(
-        [sys.executable, str(compiler)],
-        capture_output=True,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        print("[FAIL] DAG compilation failed")
-        print(result.stderr)
-        sys.exit(1)
-
-    try:
-        output = json.loads(result.stdout)
-        if "modules" not in output:
-            print("[FAIL] DAG output missing 'modules' key")
-            sys.exit(1)
-        if not isinstance(output.get("modules"), list):
-            print("[FAIL] DAG output 'modules' must be a list")
-            sys.exit(1)
-    except json.JSONDecodeError as e:
-        print(f"[FAIL] DAG output invalid JSON: {e}")
-        sys.exit(1)
-
-    print("[PASS] DAG contract valid")
-
-
 def main(mode: str = "ci") -> None:
-    validate_dependency_kernel()
-
-    dependency_healing_phase()
-
-    validate_dag_contract()
-
     run_step(
-        "DAG Execution",
-        [sys.executable, "tools/runtime/dag_executor.py"],
+        "Kernel Boot",
+        [sys.executable, "tools/runtime/kernel.py"],
     )
 
 

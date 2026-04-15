@@ -139,6 +139,12 @@ DO NOT PUSH!!!!
   - Validates lockfile format (pinned versions) instead of diff comparison
   - CI workflows simplified - no uv required, just pip
 
+- **True Kernel Mode**: (NEW)
+  - Created `tools/runtime/kernel.py` - single execution authority
+  - Unified dependency validation, DAG execution, self-heal
+  - `tools/bootstrap.py` now just calls kernel
+  - No external tool dependencies (uv/pip CLI drift eliminated)
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

@@ -2,6 +2,7 @@ import sys
 import subprocess
 from pathlib import Path
 from tools.runtime.contract import CONTRACT
+from tools.runtime.trace import Trace
 
 CONTRACT.apply()
 
@@ -75,18 +76,31 @@ def load_manifest():
     return yaml.safe_load(MANIFEST.read_text())
 
 
-def run_node(node: dict) -> int:
+def run_node(name: str, node: dict, trace: Trace) -> int:
     path = node.get("path", "")
 
     if not validate_import(path):
+        trace.start_node(name)
+        trace.end_node(name, False, "missing file")
         return 1
 
-    print(f"[DAG] Running: {node.get('name', path)}")
-    result = subprocess.run([sys.executable, path])
+    trace.start_node(name)
+
+    result = subprocess.run(
+        [sys.executable, path],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        trace.end_node(name, False, result.stderr)
+    else:
+        trace.end_node(name, True)
+
     return result.returncode
 
 
-def execute_dag(manifest: dict):
+def execute_dag(manifest: dict, trace: Trace):
     nodes = manifest.get("nodes", {})
 
     executed = set()
@@ -101,7 +115,7 @@ def execute_dag(manifest: dict):
             if run(dep) != 0:
                 return 1
 
-        rc = run_node(node)
+        rc = run_node(name, node, trace)
         executed.add(name)
         return rc
 
@@ -135,11 +149,13 @@ def self_heal():
 def main():
     print("[KERNEL] boot sequence start")
 
+    trace = Trace()
     validate_dependencies()
     self_heal()
 
     manifest = load_manifest()
-    rc = execute_dag(manifest)
+    rc = execute_dag(manifest, trace)
+    trace.save()
 
     if rc != 0:
         print(f"[FAIL] DAG execution failed with code {rc}")

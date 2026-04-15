@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from .hash import file_hash
 

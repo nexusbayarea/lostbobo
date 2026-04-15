@@ -2,7 +2,6 @@
 Tests for boot.
 """
 
-import pytest
 
 
 def test_run_boot_dag_success():

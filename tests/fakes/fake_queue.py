@@ -1,7 +1,7 @@
 import asyncio
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Optional
 
 
 @dataclass

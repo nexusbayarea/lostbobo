@@ -15,7 +15,6 @@ Usage:
 
 import os
 import sys
-import subprocess
 import threading
 import signal
 
@@ -27,7 +26,7 @@ SERVICE_ROLE = os.getenv("SERVICE_ROLE", "api").lower()
 
 def run_api():
     """Start API server only."""
-    print(f"🚀 Starting SimHPC API (port 8080)...")
+    print("🚀 Starting SimHPC API (port 8080)...")
 
     pod_app_path = "/runpod-volume/app"
     if os.path.exists(pod_app_path):
@@ -41,7 +40,7 @@ def run_api():
     try:
         from worker import app
     except ImportError as e:
-        print(f"❌ Critical Error: Could not import 'app' from 'worker.py'")
+        print("❌ Critical Error: Could not import 'app' from 'worker.py'")
         raise e
 
     app.add_middleware(
@@ -57,7 +56,7 @@ def run_api():
 
 def run_worker():
     """Start worker only."""
-    print(f"🔧 Starting SimHPC Worker (background)...")
+    print("🔧 Starting SimHPC Worker (background)...")
 
     pod_app_path = "/runpod-volume/app"
     if os.path.exists(pod_app_path):
@@ -75,7 +74,7 @@ def run_worker():
 
 def run_unified():
     """Start both API and worker (dev/small cluster)."""
-    print(f"🚀 Starting SimHPC Unified (API + Worker)...")
+    print("🚀 Starting SimHPC Unified (API + Worker)...")
 
     pod_app_path = "/runpod-volume/app"
     if os.path.exists(pod_app_path):
@@ -86,7 +85,7 @@ def run_unified():
         try:
             from worker import app
         except ImportError as e:
-            print(f"❌ Critical Error: Could not import 'app'")
+            print("❌ Critical Error: Could not import 'app'")
             raise e
 
         app.add_middleware(
@@ -130,7 +129,7 @@ def main():
         run_unified()
     else:
         print(f"❌ Invalid SERVICE_ROLE={SERVICE_ROLE}")
-        print(f"Valid roles: api, worker, unified")
+        print("Valid roles: api, worker, unified")
         sys.exit(1)
 
 

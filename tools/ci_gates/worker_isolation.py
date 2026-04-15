@@ -1,4 +1,3 @@
-import sys
 
 # Minimal dummy enforcement for worker isolation pattern.
 # Future expansion: Parse worker modules to ensure they do not 

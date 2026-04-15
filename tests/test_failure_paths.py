@@ -44,7 +44,6 @@ class FailingQueue:
 
 class SlowQueue:
     async def enqueue(self, *args, **kwargs):
-
         await asyncio.sleep(5)
         return "ok"
 

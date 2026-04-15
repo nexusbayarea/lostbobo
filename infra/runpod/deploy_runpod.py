@@ -32,7 +32,7 @@ def get_infisical_secret(name):
         if result.returncode == 0:
             lines = result.stdout.strip().split("\n")
             return lines[-1] if lines else None
-    except:
+    except Exception:
         pass
     return None
 

@@ -3,7 +3,6 @@ Tests for boot.
 """
 
 
-
 def test_run_boot_dag_success():
     assert True
 

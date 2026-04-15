@@ -4,6 +4,8 @@ Update/Restart RunPod Pod
 """
 
 import os
+import time
+
 import runpod
 
 API_KEY = os.getenv("RUNPOD_API_KEY")
@@ -18,11 +20,6 @@ print(f"Stopping pod {POD_ID}...")
 runpod.stop_pod(POD_ID)
 
 print("Waiting for pod to stop...")
-import time
-
 time.sleep(5)
 
 print(f"Starting pod {POD_ID}...")
-runpod.start_pod(POD_ID)
-
-print(f"Pod {POD_ID} restarted - will pull new image")

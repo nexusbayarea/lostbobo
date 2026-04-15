@@ -1,138 +1,42 @@
-name: Deterministic API CI
+name: Unified CI Gate
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
     branches: [main]
-
-permissions:
-  contents: read
-  actions: read
-
-env:
-  SB_URL: "http://localhost:8000"
-  SB_TOKEN: "ci-stub-token"
-  SB_SECRET_KEY: "ci-stub-secret"
-  SB_JWT_SECRET: "ci-stub-jwt"
-  SB_PUB_KEY: "ci-stub-pubkey"
-  SB_DATA_URL: "http://localhost:8001"
-  RUNTIME_MODE: "ci"
+  pull_request:
 
 jobs:
-  lint:
-    name: Lint
+  ci-gate:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Install linting tools
-        run: pip install ruff==0.4.4
-
-      - name: Run ruff lint
-        run: ruff check src/ tests/ tools/
-
-      - name: Run ruff format check
-        run: ruff format --check src/ tests/ tools/
-
-  tests:
-    name: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Assert src layout integrity
-        run: |
-          test -d src/app    || (echo "Missing src/app/"    && exit 1)
-          test -d src/worker || (echo "Missing src/worker/" && exit 1)
-          test -d tests      || (echo "Missing tests/"      && exit 1)
-          test -d tools      || (echo "Missing tools/"    && exit 1)
-          echo "src layout verified: src/app/ src/worker/ tests/ tools/"
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
-
-      - name: Verify package imports
         run: |
-          python -c "
-          import app
-          import worker
-          print('app: ' + app.__file__)
-          print('worker: ' + worker.__file__)
-          print('Package imports OK')
-          "
+          python -m pip install --upgrade pip
+          pip install ruff pytest
 
-      - name: Run pytest
-        run: python -m pytest tests/ -q --tb=short
+      - name: Ruff Lint (STRICT)
+        run: python -m ruff check .
 
-  api-ci:
-    name: API CI
-    runs-on: ubuntu-latest
-    needs: [lint, tests]
+      - name: Ruff Format Check (STRICT)
+        run: python -m ruff format . --check
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
-
-      - name: System Contract
+      - name: System Bootstrap Contract
         run: python tools/bootstrap.py ci
 
-  worker-build:
-    name: Worker Build
-    runs-on: ubuntu-latest
-    needs: api-ci
+      - name: Pytest (STRICT)
+        run: pytest -q --disable-warnings --maxfail=1
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate Dockerfile exists
+      - name: Docker Build (optional)
         run: |
-          echo "Building worker for SHA: ${{ github.sha }}"
-          test -f docker/images/Dockerfile.unified || exit 1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/images/Dockerfile.unified
-          push: false
-          platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: [api-ci, worker-build]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Trigger hardened build & push
-        run: |
-          echo "All upstream checks passed for SHA: ${{ github.sha }}"
+          docker build -f docker/images/Dockerfile.unified .

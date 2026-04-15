@@ -2,9 +2,11 @@
 Dependency drift check.
 Validates that the environment can boot and import core modules.
 """
+
 import os
 import sys
 import importlib
+
 
 def check_drift():
     module_name = os.getenv("DRIFT_TEST_IMPORT", "app.core.config")
@@ -18,6 +20,7 @@ def check_drift():
     except Exception as e:
         print(f"❌ Unexpected error during import of {module_name}: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     check_drift()

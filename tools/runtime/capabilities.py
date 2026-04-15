@@ -32,4 +32,11 @@ CAPABILITIES = {
             "tools/runtime/signature.py",
         ],
     ),
+    "state": Capability(
+        name="state",
+        enabled=False,   # SAFE DEFAULT
+        required_files=[
+            "tools/runtime/state.py",
+        ],
+    ),
 }

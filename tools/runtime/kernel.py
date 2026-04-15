@@ -5,7 +5,18 @@ from tools.runtime.contract import CONTRACT
 from tools.runtime.capabilities import CAPABILITIES
 from tools.runtime.trace import Trace
 
-from tools.runtime.state import load_state, save_state
+def get_state_handlers():
+    from tools.runtime.capabilities import CAPABILITIES
+
+    if not CAPABILITIES.get("state") or not CAPABILITIES["state"].enabled:
+        return None, None
+
+    try:
+        from tools.runtime.state import load_state, save_state
+        return load_state, save_state
+    except ImportError:
+        print("[WARN] state capability enabled but module missing")
+        return None, None
 
 CONTRACT.apply()
 

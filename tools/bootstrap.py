@@ -58,7 +58,7 @@ def dependency_healing_phase():
 
     project_files = [
         "tools/bootstrap.py",
-        "tools/runtime/dag_executor.py",
+        "tools/ci_gates/dag_compiler.py",
         "tools/ci_gates/system_contract.py",
     ]
 
@@ -81,8 +81,8 @@ def main(mode: str = "ci") -> None:
     dependency_healing_phase()
 
     run_step(
-        "DAG Executor",
-        ["python", "tools/runtime/dag_executor.py"],
+        "DAG Execution (compiled)",
+        ["python", "tools/ci_gates/dag_compiler.py"],
     )
 
 

@@ -100,6 +100,10 @@ DO NOT PUSH!!!!
   - Validates lockfile format, pinned versions only
   - Removed compilation step (only verifies committed artifacts)
 
+- **DAG Execution Fix**: Replaced dag_executor with dag_compiler
+  - bootstrap now runs `tools/ci_gates/dag_compiler.py` instead of dag_executor
+  - Compiler outputs JSON execution plan (not runtime execution)
+
 All tests pass locally:
 ```
 [System Contract] -> DAG Validation

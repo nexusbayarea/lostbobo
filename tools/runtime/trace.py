@@ -23,6 +23,7 @@ class Trace:
             "stdout": None,
             "stderr": None,
             "command": None,
+            "skipped": False,
         }
 
     def end_node(self, name: str, success: bool, result=None):
@@ -35,6 +36,24 @@ class Trace:
             node["stdout"] = result.stdout
             node["stderr"] = result.stderr
             node["command"] = result.args
+
+    def skip_node(self, name: str):
+        if name in self.data["nodes"]:
+            self.data["nodes"][name]["status"] = "success"
+            self.data["nodes"][name]["skipped"] = True
+            self.data["nodes"][name]["duration"] = 0
+        else:
+            self.data["nodes"][name] = {
+                "status": "success",
+                "start": time.time(),
+                "end": time.time(),
+                "duration": 0,
+                "error": None,
+                "stdout": None,
+                "stderr": None,
+                "command": None,
+                "skipped": True,
+            }
 
     def save(self):
         self.data["end_time"] = time.time()

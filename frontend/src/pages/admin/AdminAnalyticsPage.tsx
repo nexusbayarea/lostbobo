@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, CreditCard, Terminal, Cpu, Zap, Activity, ShieldAlert, AlertTriangle, AlertCircle, Trash2, StopCircle, RefreshCw, ChevronRight, LayoutList, MessageSquare, Loader2 } from 'lucide-react';
+import { Users, CreditCard, Zap, Activity, ShieldAlert, AlertTriangle, AlertCircle, Trash2, StopCircle, RefreshCw, LayoutList, MessageSquare, Loader2, Play, Eye } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { WakeGPU } from '@/components/admin/WakeGPU';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -19,24 +19,26 @@ export function AdminAnalyticsPage() {
   const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState('fleet');
   const [fleetStatus, setFleetStatus] = useState<any>(null);
-  const [fleetMetrics, setFleetMetrics] = useState<any>(null);
+  const [traceData, setTraceData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
 
   const fetchDashboardData = async () => {
     try {
       setRefreshing(true);
       const token = await getToken();
-      
-      const [status, metrics] = await Promise.all([
+      if (!token) return;
+
+      const [status, trace] = await Promise.all([
         api.getFleetStatus(token),
-        api.getFleetMetrics(token).catch(() => null) // Fallback if edge function fails
+        api.getTrace().catch(() => null)
       ]);
 
       setFleetStatus(status);
-      setFleetMetrics(metrics);
+      setTraceData(trace);
     } catch (error) {
       console.error('Failed to fetch admin dashboard data:', error);
       toast.error('Failed to fetch fleet status');
@@ -75,9 +77,11 @@ export function AdminAnalyticsPage() {
     setActionLoading(podId);
     try {
       const token = await getToken();
-      await api.stopPod(token, podId);
-      toast.success('Pod stop command sent');
-      fetchDashboardData();
+      if (token) {
+        await api.stopPod(token, podId);
+        toast.success('Pod stop command sent');
+        fetchDashboardData();
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to stop pod');
     } finally {
@@ -90,9 +94,11 @@ export function AdminAnalyticsPage() {
     setActionLoading(podId);
     try {
       const token = await getToken();
-      await api.terminatePod(token, podId);
-      toast.success('Pod termination command sent');
-      fetchDashboardData();
+      if (token) {
+        await api.terminatePod(token, podId);
+        toast.success('Pod termination command sent');
+        fetchDashboardData();
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to terminate pod');
     } finally {
@@ -148,6 +154,7 @@ export function AdminAnalyticsPage() {
             <nav className="space-y-1">
               {[
                 { id: 'fleet', label: 'Fleet Analytics', icon: Activity },
+                { id: 'trace', label: 'DAG Trace', icon: Play },
                 { id: 'users', label: 'User Management', icon: Users },
                 { id: 'ci_policies', label: 'CI Policies', icon: ShieldAlert },
                 { id: 'revenue', label: 'Stripe Revenue', icon: CreditCard },
@@ -502,9 +509,146 @@ export function AdminAnalyticsPage() {
                 </div>
               </div>
             )}
+            {activeTab === 'trace' && (
+              <div className="space-y-8">
+                <Card className="bg-slate-900 border-slate-800">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-white">DAG Execution Trace</CardTitle>
+                        <CardDescription className="text-slate-500">
+                          Recorded execution inputs, outputs, and diagnostics.
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => api.replayFailed()}
+                          className="bg-slate-950 border-slate-700 text-cyan-400 hover:text-white"
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          Replay Failed
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => api.replayFull()}
+                          className="bg-slate-950 border-slate-700 text-slate-400 hover:text-white"
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Replay Full
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {traceData?.nodes ? (
+                      <Table>
+                        <TableHeader className="bg-slate-950 border-slate-800">
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead className="text-slate-500 font-bold uppercase text-[10px]">Node</TableHead>
+                            <TableHead className="text-slate-500 font-bold uppercase text-[10px]">Status</TableHead>
+                            <TableHead className="text-slate-500 font-bold uppercase text-[10px]">Duration</TableHead>
+                            <TableHead className="text-slate-500 font-bold uppercase text-[10px]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(traceData.nodes).map(([name, node]: [string, any]) => (
+                            <TableRow key={name} className="border-slate-800 hover:bg-slate-800/30">
+                              <TableCell className="font-mono text-cyan-400 text-xs">{name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={cn(
+                                  "border-none",
+                                  node.status === "success" ? "bg-green-500/10 text-green-400" :
+                                  node.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
+                                )}>
+                                  {node.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs text-slate-400">
+                                {node.duration ? `${node.duration.toFixed(2)}s` : '-'}
+                              </TableCell>
+                              <TableCell className="space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedNode({ name, ...node })}
+                                  className="h-7 px-2 text-[10px] bg-slate-950 border-slate-700 text-slate-400 hover:text-white"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  View
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="p-8 text-center bg-slate-950/30">
+                        <Activity className="w-8 h-8 text-slate-700 mx-auto mb-2 opacity-20" />
+                        <p className="text-xs text-slate-600 font-mono">NO TRACE DATA AVAILABLE</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </main>
       </div>
+      <Dialog open={!!selectedNode} onOpenChange={() => setSelectedNode(null)}>
+        <DialogContent className="max-w-3xl bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              {selectedNode?.name}
+              <Badge variant="outline" className={cn(
+                "border-none",
+                selectedNode?.status === "success" ? "bg-green-500/10 text-green-400" :
+                selectedNode?.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
+              )}>
+                {selectedNode?.status}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-4 p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Duration</h4>
+                  <p className="font-mono text-sm text-white">
+                    {selectedNode?.duration ? `${selectedNode.duration.toFixed(4)}s` : '-'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Start Time</h4>
+                  <p className="font-mono text-sm text-white">
+                    {selectedNode?.start ? new Date(selectedNode.start * 1000).toISOString() : '-'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase">Command</h4>
+                <pre className="font-mono text-xs text-cyan-400 bg-slate-950 p-2 rounded">
+                  {selectedNode?.command ? JSON.stringify(selectedNode.command) : '-'}
+                </pre>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase">Stdout</h4>
+                <pre className="font-mono text-xs text-slate-400 bg-slate-950 p-2 rounded max-h-32 overflow-auto">
+                  {selectedNode?.stdout || '-'}
+                </pre>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase">Stderr</h4>
+                <pre className="font-mono text-xs text-red-400 bg-slate-950 p-2 rounded max-h-32 overflow-auto">
+                  {selectedNode?.stderr || '-'}
+                </pre>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

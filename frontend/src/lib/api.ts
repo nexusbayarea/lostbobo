@@ -1,5 +1,3 @@
-
-// src/lib/api.ts
 import { toast } from 'sonner';
 
 const API_BASE_URL = '/api/api/v1';
@@ -9,13 +7,13 @@ const getHeaders = (token?: string) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   } else {
     headers['X-API-Key'] = API_KEY;
   }
-  
+
   return headers;
 };
 
@@ -36,7 +34,7 @@ class ApiClient {
     const config: RequestInit = {
       ...options,
       headers: {
-        ...getHeaders(options.headers?.Authorization?.split(' ')[1]),
+        ...getHeaders(options.headers?.['Authorization']?.split(' ')[1]),
         ...options.headers,
       },
       credentials: 'include',
@@ -55,7 +53,7 @@ class ApiClient {
 
       if (!response.ok) {
         const errorMessage = data?.error || data?.message || data?.detail || `HTTP ${response.status}`;
-        
+
         if (showToast) {
           toast.error(errorMessage, { duration: 6000 });
         }
@@ -88,112 +86,43 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' }, showToast);
   }
 
-  async getUserProfile(token: string): Promise<UserProfile> {
-    return this.request<UserProfile>('/user/profile', {
+  async getTrace(): Promise<any> {
+    return this.request<any>('/admin/observability', { method: 'GET' }, false);
+  }
+
+  async replayFailed(): Promise<{ status: string }> {
+    return this.request<{ status: string }>('/admin/replay', { method: 'POST' }, false);
+  }
+
+  async replayFull(): Promise<{ status: string }> {
+    return this.request<{ status: string }>('/admin/replay/full', { method: 'POST' }, false);
+  }
+
+  async getFleetStatus(token?: string): Promise<any> {
+    return this.request<any>('/admin/fleet', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    }, false);
+  }
+
+  async getFleetMetrics(token?: string): Promise<any> {
+    return this.request<any>('/admin/fleet/metrics', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    }, false);
+  }
+
+  async stopPod(token: string, podId: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/admin/fleet/pod/${podId}/stop`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
-    });
+    }, false);
   }
 
-  async getUsage(token: string): Promise<{ used: number; limit: number; remaining: number }> {
-    return this.request<{ used: number; limit: number; remaining: number }>('/simulations/usage', {
+  async terminatePod(token: string, podId: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/admin/fleet/pod/${podId}/terminate`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
-    });
-  }
-
-  async subscribe(plan: string, token: string): Promise<{ url: string }> {
-    return this.request<{ url: string }>('/subscribe', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ plan }),
-    });
-  }
-
-  async startRobustnessRun(config: any, token?: string): Promise<RunStatusResponse> {
-    return this.request<RunStatusResponse>('/robustness/run', {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: JSON.stringify({
-        config: {
-          enabled: true,
-          num_runs: config.numRuns,
-          sampling_method: config.samplingMethod,
-          parameters: config.parameters.map((p: any) => ({
-            name: p.name,
-            base_value: p.baseValue,
-            unit: p.unit || '',
-            description: p.description || '',
-            perturbable: p.perturbable,
-            min_value: p.min,
-            max_value: p.max
-          })),
-          convergence_timeout_sec: config.timeout || 300,
-          random_seed: config.seed
-        }
-      }),
-    });
-  }
-
-  async getRunStatus(runId: string, token?: string): Promise<RunStatusResponse> {
-    return this.request<RunStatusResponse>(`/robustness/status/${runId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-  }
-
-  async listRuns(token?: string): Promise<any> {
-    return this.request<any>('/robustness/runs', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-  }
-
-  async getSamplingMethods(token?: string): Promise<any> {
-    return this.request<any>('/sampling-methods', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-  }
-
-  async cancelRobustnessRun(runId: string, token?: string): Promise<any> {
-    return this.request<any>(`/robustness/cancel/${runId}`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-  }
-
-  async exportPdf(runId: string, token?: string): Promise<Blob> {
-    const url = `${this.baseUrl}/robustness/report/${runId}/pdf`;
-    const response = await fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-    if (!response.ok) {
-      throw new Error('Failed to export PDF');
-    }
-    return response.blob();
-  }
-
-  async pollStatus(
-    runId: string,
-    token?: string,
-    onProgress?: (progress: number) => void
-  ): Promise<RunStatusResponse> {
-    const data = await this.getRunStatus(runId, token);
-    
-    if (data.status === 'completed' || data.status === 'failed') {
-      return data;
-    }
-    
-    if (onProgress) {
-      let percent = 0;
-      if (typeof data.progress === 'number') {
-        percent = data.progress;
-      } else if (data.progress && typeof data.progress === 'object') {
-        percent = Math.round((data.progress.current / data.progress.total) * 100);
-      }
-      onProgress(percent);
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return this.pollStatus(runId, token, onProgress);
+    }, false);
   }
 }
 
 export const api = new ApiClient();
-

@@ -34,11 +34,11 @@ jobs:
       - name: Install linting tools
         run: pip install ruff==0.4.4
 
-      - name: Run ruff
-        run: ruff check app/ worker/ tests/
+      - name: Run ruff lint
+        run: ruff check src/ tests/ tools/
 
       - name: Run ruff format check
-        run: ruff format --check app/ worker/ tests/
+        run: ruff format --check src/ tests/ tools/
 
   tests:
     name: Tests
@@ -51,19 +51,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Assert flat layout integrity
+      - name: Assert src layout integrity
         run: |
-          test -d app    || (echo "Missing app/"    && exit 1)
-          test -d worker || (echo "Missing worker/" && exit 1)
-          test -d tests  || (echo "Missing tests/"  && exit 1)
-          echo "Flat layout verified: app/ worker/ tests/"
+          test -d src/app    || (echo "Missing src/app/"    && exit 1)
+          test -d src/worker || (echo "Missing src/worker/" && exit 1)
+          test -d tests      || (echo "Missing tests/"      && exit 1)
+          test -d tools      || (echo "Missing tools/"    && exit 1)
+          echo "src layout verified: src/app/ src/worker/ tests/ tools/"
 
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
       - name: Verify package imports
-        # Multi-line block avoids YAML scalar parsing issues with colons
-        # inside single-line python -c strings.
         run: |
           python -c "
           import app
@@ -73,8 +72,8 @@ jobs:
           print('Package imports OK')
           "
 
-      - name: Skip direct pytest (covered by system contract)
-        run: echo "pytest runs inside system contract"
+      - name: Run pytest
+        run: python -m pytest tests/ -q --tb=short
 
   api-ci:
     name: API CI
@@ -101,8 +100,25 @@ jobs:
           pip list
           pwd
 
+      - name: Boot validation
+        run: pytest tests/test_boot.py -xvs
+
+      - name: Boot fail-fast validation
+        run: pytest tests/test_boot_failfast.py -xvs
+
+      - name: Run dependency drift check
+        run: python tools/check_dependency_drift.py
+        env:
+          DRIFT_TEST_IMPORT: "app.core.config"
+
+      - name: DAG system tests
+        run: pytest tests/test_dag.py -xvs
+
       - name: System Contract
         run: python tools/bootstrap.py ci
+
+    outputs:
+      sha: ${{ github.sha }}
 
   worker-build:
     name: Worker Build

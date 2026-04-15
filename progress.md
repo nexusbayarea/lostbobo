@@ -2,21 +2,21 @@
 
 ## April 14, 2026
 
-### Fixed: Explicit pytest paths (already done)
+### Fixed: src layout and CI workflow
 
-- **system_contract.py**: Uses `["python", "-m", "pytest", "-m", "dag", "tests"]`
-- Explicit `tests` path ensures deterministic test discovery in CI
-- Already pushed in commit 2a7980d
+- **pyproject.toml**: 
+  - Added `src = ["src"]` to ruff config
+  - Added `packages = ["app", "worker"]` to setuptools
+  - Fixed `license = { text = "MIT" }`
+  - Added `uv>=0.4.0` to dev/ci deps
+  
+- **dag-ci.yml**:
+  - Changed lint to `src/ tests/ tools/` paths
+  - Changed tests to check `src/app/ src/worker/ tests/ tools/`
+  - Added explicit pytest run in tests job
+  - Added boot validation, fail-fast, drift check, DAG tests to api-ci
 
-### Fixed: CI/runtime parity
-
-- **dag-ci.yml**: Added PYTHONPATH, debug steps, explicit path to pytest
-
-### Previously Fixed: CI dependency chain
-
-- **dag-ci.yml**: Changed `api-ci` needs from `[lint]` to `[lint, tests]`
-
-All tests pass:
+All tests pass locally:
 ```
 [System Contract] -> DAG Validation
 [PASS]

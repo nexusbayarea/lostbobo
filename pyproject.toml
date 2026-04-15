@@ -4,7 +4,7 @@ version = "2.7.2"
 description = "SimHPC Unified Platform - Simulation backend for API + GPU workers + autoscaler"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = { text = "MIT" }
 authors = [
     { name = "nexusbayarea", email = "nexusbayarea@gmail.com" }
 ]
@@ -52,23 +52,23 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff==0.4.4",
     "mypy>=1.8",
+    "uv>=0.4.0",
 ]
 ci = [
     "ruff==0.4.4",
     "mypy>=1.8",
+    "uv>=0.4.0",
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I"]
 ignore = ["E402"]
 
-# FIX: single authoritative pytest config — pytest.ini has been deleted.
-# Having both pytest.ini and [tool.pytest.ini_options] causes pytest to pick
-# one silently; keeping only this section removes the ambiguity.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --tb=short"
@@ -84,8 +84,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+packages = ["app", "worker"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["app*", "worker*", "packages*"]
-exclude = ["tests*"]

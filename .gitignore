@@ -4,31 +4,59 @@
  — PUBLIC REPO (FRONTEND ONLY)
 # ==============================================================================
 
-# Backend system - BLOCKED
-app/
-worker/
-ci/
-autoscaler/
-tools/
-infra/
-docker/
+# =========================
+# Runtime / Build artifacts
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.log
+dist/
+build/
+.venv/
+venv/
+.env
+*.egg-info/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+.DS_Store
+
+# =========================
+# Node / frontend builds
+# =========================
+node_modules/
+.next/
+.vercel/
+*.tsbuildinfo
+
+# =========================
+# Secrets
+# =========================
+*.pem
+*.key
+
+# =========================
+# Docker runtime artifacts only
+# =========================
+.docker/
+
+# =========================
+# Optional local data
+# =========================
+data/
+logs/
+
+# infra/ should be tracked if used by CI or deployment
+
 # Allow frontend scripts
 !frontend/scripts/
-scripts/
 runtime/
-packages/
-
-# Docker
-# Allow Docker build files
-!docker/
-
-# Allow Docker and CI tools
-!docker/
-!tools/
-!ci/
 
 # Python - no backend present
-*.py
 __pycache__/
 .venv/
 venv/
@@ -61,11 +89,12 @@ data/
 logs/
 *.log
 
+# skills/
+
 # Legacy / Internal
-skills/
 legacy_archive/
 skills/
-*.md
+
 # Exclude internal docs
 READ ME_DO NOT PUSH/
 !README.md
@@ -77,9 +106,5 @@ simhpc.egg-info/
 .gemini/
 gha-creds-*.json
 
-.gemini/
-gha-creds-*.json
-
 # PROGRESS.md
 progress.md
-

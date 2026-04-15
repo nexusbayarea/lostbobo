@@ -13,15 +13,34 @@ def run_step(name: str, cmd: list[str]) -> None:
     print(f"[PASS] {name}")
 
 
-def main(mode: str = "ci") -> None:
-    run_step(
-        "DAG Validation",
-        ["python", "tools/ci_gates/dag_validator.py"],
+def dependency_healing_phase():
+    print("[BOOTSTRAP] Dependency Healing Phase")
+
+    project_files = [
+        "tools/bootstrap.py",
+        "tools/runtime/dag_executor.py",
+        "tools/ci_gates/system_contract.py",
+    ]
+
+    result = subprocess.run(
+        ["python", "tools/deps/self_heal_deps.py"],
+        input="\n".join(project_files),
+        text=True,
     )
 
+    if result.returncode != 0:
+        print("[FAIL] Dependency Healing")
+        sys.exit(result.returncode)
+
+    print("[PASS] Dependency Healing")
+
+
+def main(mode: str = "ci") -> None:
+    dependency_healing_phase()
+
     run_step(
-        "System Contract",
-        ["python", "tools/ci_gates/system_contract.py"],
+        "DAG Executor",
+        ["python", "tools/runtime/dag_executor.py"],
     )
 
 

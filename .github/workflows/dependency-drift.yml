@@ -1,0 +1,71 @@
+name: Dependency Drift Detection
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  DRIFT_TEST_IMPORT: "app.core.config"
+  DRIFT_FULL_CHECK: "1"
+  SB_URL: "http://localhost:8000"
+  SB_TOKEN: "ci-stub"
+  SB_SECRET_KEY: "ci-stub-secret"
+  SB_JWT_SECRET: "ci-stub-jwt"
+  SB_PUB_KEY: "ci-stub-pubkey"
+  SB_DATA_URL: "http://localhost:8001"
+
+jobs:
+  dependency-drift:
+    name: Check Dependency Lock
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Check lockfile drift
+        run: |
+          uv pip compile pyproject.toml -o /tmp/requirements.lock
+          if ! diff -u requirements.lock /tmp/requirements.lock; then
+            echo "Dependency drift detected."
+            echo "Fix: uv pip compile pyproject.toml -o requirements.lock"
+            exit 1
+          fi
+          echo "No drift detected"
+
+      - name: Verify resolution consistency
+        run: |
+          uv venv .ci-venv
+          uv pip install --python .ci-venv/bin/python -r requirements.lock
+          uv pip freeze --python .ci-venv/bin/python > /tmp/freeze.txt
+          if ! diff -u requirements.lock /tmp/freeze.txt; then
+            echo "Resolution inconsistency detected."
+            exit 1
+          fi
+          echo "Resolution consistent"
+
+      - name: Install package and run drift script
+        run: |
+          uv pip install --python .ci-venv/bin/python -e .
+          .ci-venv/bin/python tools/check_dependency_drift.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+          DRIFT_FULL_CHECK: ""
+
+      - name: Hint on failure
+        if: failure() && github.event_name == 'pull_request'
+        run: |
+          echo "Fix: uv pip compile pyproject.toml -o requirements.lock"
+          echo "Then: git add requirements.lock && git commit -m 'chore: update lockfile'"

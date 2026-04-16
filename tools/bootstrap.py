@@ -1,7 +1,24 @@
-from tools.registry import load, validate
+import sys
+import importlib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+
+def assert_imports():
+    try:
+        importlib.import_module("tools.runtime.tools.system_tools")
+    except ImportError as e:
+        print(f"[BOOTSTRAP FAIL] Import resolution failed: {e}")
+        sys.exit(1)
 
 
 def bootstrap():
+    assert_imports()
+    
+    from tools.registry import load, validate
+    
     print("[BOOTSTRAP] validating module map")
     validate()
 
@@ -12,7 +29,6 @@ def bootstrap():
     system_tools.register_system_tools()
 
     from tools.runtime.ci_compiler import compile_ci
-
     graph = compile_ci()
     order = graph.topo()
 
@@ -30,5 +46,9 @@ def bootstrap():
     return 0
 
 
-if __name__ == "__main__":
+def main():
     raise SystemExit(bootstrap())
+
+
+if __name__ == "__main__":
+    main()

@@ -190,3 +190,211 @@ Explain the following simulation result in one sentence.
 ```
 
 If the notebook text appears → **Mercury is working**.
+
+---
+
+## Session Log: April 15, 2026 - DAG Trace & Replay Features
+
+### Features Implemented
+
+1. **Extended Trace Layer** (`tools/runtime/trace.py`)
+   - Node structure now includes: status, start, end, duration, error, stdout, stderr, command
+   - `end_node()` captures result.stdout, result.stderr, result.args
+
+2. **Kernel Integration** (`tools/runtime/kernel.py`)
+   - `run_node()` now passes result to trace for recording
+   - Captures exact command used for each node execution
+
+3. **Replay Engine** (`tools/runtime/replay.py`)
+   - Deterministic reproduction of CI failures locally
+   - Usage: `python tools/runtime/replay.py` (failed nodes)
+   - Usage: `python tools/runtime/replay.py full` (entire DAG)
+   - Zero-drift debugging with CI parity
+
+4. **Admin API Endpoints** (`src/app/api/admin/observability.py`)
+   - `POST /admin/replay` - replay failed nodes
+   - `POST /admin/replay/full` - replay entire DAG
+   - Uses subprocess.Popen for async execution
+
+5. **Admin UI Updates** (`frontend/src/pages/admin/AdminAnalyticsPage.tsx`)
+   - New "DAG Trace" tab in sidebar
+   - Table showing nodes with status, duration, actions
+   - "View" button opens dialog with stdout/stderr/command
+   - "Replay Failed" and "Replay Full" buttons
+
+6. **API Client** (`frontend/src/lib/api.ts`)
+   - Added: `getTrace()`, `replayFailed()`, `replayFull()`
+   - Added: `getFleetStatus()`, `getFleetMetrics()`, `stopPod()`, `terminatePod()`
+
+### Commands Run
+
+```bash
+# Ruff lint check (found unused import)
+python -m ruff check . --exit-non-zero-on-fix
+
+# Fix and commit
+git add -f tools/runtime/kernel.py tools/runtime/trace.py ...
+git commit -m "feat(trace): Add DAG trace with replay engine..."
+git push origin main
+
+# Ruff fix for bootstrap.py
+python -m ruff check . --exit-non-zero-on-fix --fix
+git commit -m "fix: Remove unused CONTRACT import in bootstrap.py"
+git push origin main
+```
+
+### Files Modified
+
+- `tools/runtime/trace.py` - Extended node structure
+- `tools/runtime/kernel.py` - Pass result to trace
+- `tools/runtime/replay.py` - Replay engine (new file)
+- `src/app/api/admin/observability.py` - Added replay endpoints
+- `frontend/src/lib/api.ts` - Added API methods
+- `frontend/src/pages/admin/AdminAnalyticsPage.tsx` - Trace tab UI
+- `tools/bootstrap.py` - Removed unused import (ruff fix)
+- `frontend/README.md` - Updated kernel entry (ruff fix)
+
+### Not Committed (per user request)
+
+- `ROADMAP.md` - Updated with v2.6.0 features
+
+---
+
+## Session Log: April 15, 2026 - Unified CI Gate
+
+### Features Implemented
+
+1. **Pre-commit Config** (`.pre-commit-config.yaml`)
+   - ruff v0.4.4 with --fix and ruff-format
+   - Auto-formats on every commit
+
+2. **Unified CI Gate** (`tools/ci_gate.py`)
+   - Single deterministic pipeline in order:
+     1. format-check: `ruff format . --check`
+     2. lint: `ruff check . --exit-non-zero-on-fix`
+     3. import-graph: `python -c "import tools.runtime.kernel"`
+     4. contract: `python tools/bootstrap.py ci`
+   - Local == CI identical ordering
+   - Failures reproducible, no "works locally" drift
+
+3. **Makefile Alias**
+   - `make ci` runs the unified gate
+   - Drop-in implementation for developers
+
+### Commands Run
+
+```bash
+# Test the gate
+python tools/ci_gate.py
+
+# Install pre-commit hooks
+pip install pre-commit
+pre-commit install
+```
+
+### Files Created
+
+- `.pre-commit-config.yaml` - Pre-commit configuration
+- `tools/ci_gate.py` - Unified CI gate
+- `Makefile` - Make alias
+
+### Not Committed (per user request)
+
+- `ROADMAP.md` - Updated with v2.6.0 features (not pushed)
+- `docs/internal/info.md` - Session log (not pushed)
+
+---
+
+## Session Log: April 15, 2026 - Distributed Kernel v2
+
+### Features Implemented
+
+1. **Distributed Kernel Core** (`tools/runtime/kernel.py`)
+   - `Task` dataclass: id, fn, deps, retries
+   - `Lease` dataclass: task_id, worker_id, lease_id, expires_at (crash-safety)
+   - `TaskState` dataclass: status (pending/leased/running/success/failed), attempt, result
+   - `Queue` abstraction with `InMemoryQueue` implementation
+   - `Kernel` class with:
+     - `add_task()` - register tasks
+     - `lease_task()` - assign task to worker with lease
+     - `report_success()` / `report_failure()` - worker results
+     - `snapshot()` - observability
+   - `Worker` class: stateless executor that leases and reports
+
+2. **Architecture Change**
+   - Kernel = scheduler + lease management (no direct execution)
+   - Workers = execution plane only
+   - Queue = decoupling layer
+   - Enables horizontal scaling, crash-safe execution, retry-safe DAG
+
+3. **Legacy Support**
+   - DAG kernel functions retained for bootstrap compatibility
+
+### Files Modified
+
+- `tools/runtime/kernel.py` - Added distributed Kernel v2 classes
+
+### Not Committed (per user request)
+
+- `ROADMAP.md` - Will be updated
+
+---
+
+## Session Log: April 15, 2026 - CI Gate Update
+
+### Changes Made
+
+1. **CI Workflow** (`.github/workflows/dag-ci.yml`)
+   - Added: `pip install -e .` after pip upgrade
+   - Changed: `python tools/bootstrap.py ci` → `python -m tools.bootstrap ci`
+
+### Files Modified
+
+- `.github/workflows/dag-ci.yml` - CI gate workflow
+
+---
+
+## Session Log: April 15, 2026 - pyproject.toml Fix
+
+### Changes Made
+
+1. **pyproject.toml**
+   - Changed: `include = ["tools*"]` → `include = ["tools", "tools.*"]`
+   - Enables proper editable install for nested packages
+
+### Verification
+
+```bash
+pip install -e .
+python -c "from tools.runtime.deps import validate_lock; print('OK')"
+```
+Output: `OK`
+
+### Files Modified
+
+- `pyproject.toml` - Package discovery configuration
+
+---
+
+## Session Log: April 15, 2026 - Explicit Package Fix
+
+### Changes Made
+
+1. **pyproject.toml** (explicit packages)
+   ```toml
+   [tool.setuptools]
+   packages = ["tools", "tools.runtime", "tools.runtime.v2", "tools.runtime.v3"]
+   ```
+   - Removed auto-discovery, using explicit package list
+
+### Verification
+
+```bash
+pip install -e .
+python -c "from tools.runtime.deps import validate_lock; print('OK')"
+```
+Output: `OK`
+
+### Files Modified
+
+- `pyproject.toml` - Explicit packages configuration

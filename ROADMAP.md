@@ -1,6 +1,6 @@
 # SimHPC Roadmap
 
-> Last Updated: April 01, 2026
+> Last Updated: April 15, 2026
 
 ## Vision
 
@@ -44,6 +44,12 @@ SimHPC is a cloud-based GPU-accelerated finite element simulation platform with 
 - [x] **Supabase Initialization Fix (v2.5.3)** - Fixed Vercel environment variable injection via `envPrefix` (April 2026)
 - [x] **Logo Styling Update (v2.5.3)** - Removed glows/shadows and updated to theme-aware colors (April 2026)
 - [x] **SQL Security Hardening (v2.5.3)** - Hardened functions (SET search_path) and views (security_invoker) (April 2026)
+- [x] **DAG Trace Layer (v2.6.0)** - Extended node trace capturing stdout/stderr/command for deterministic replay (April 2026)
+- [x] **Replay Engine (v2.6.0)** - Time-travel debugger to reproduce CI failures locally with zero drift (April 2026)
+- [x] **Admin Trace UI (v2.6.0)** - Observability tab with per-node replay/view actions and detail dialogs (April 2026)
+- [x] **Unified CI Gate (v2.6.1)** - Single pipeline: format, lint, import-graph, contract for local==CI determinism (April 2026)
+- [x] **Pre-commit Hooks (v2.6.1)** - Auto-format on every commit, eliminates CI drift (April 2026)
+- [x] **Make CI Alias (v2.6.1)** - `make ci` drops into unified gate execution (April 2026)
 
 ### Phase 2: Enterprise Features (Completed ✅)
 

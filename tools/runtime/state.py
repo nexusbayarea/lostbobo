@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from tools.runtime.contract import CONTRACT
 
 STATE_FILE = CONTRACT.root / ".runtime_state.json"

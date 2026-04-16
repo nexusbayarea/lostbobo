@@ -1,6 +1,5 @@
 import hashlib
 from pathlib import Path
-from tools.runtime.contract import CONTRACT
 
 
 def hash_file(path: Path) -> str:

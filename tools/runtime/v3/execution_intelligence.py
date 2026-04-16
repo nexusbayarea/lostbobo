@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Set, Any
-from collections import defaultdict
+from typing import Dict, List, Set
 
 from tools.runtime.contract import CONTRACT
 from tools.runtime.v2.execution_log import ExecutionLog

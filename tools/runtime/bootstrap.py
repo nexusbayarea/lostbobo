@@ -8,4 +8,3 @@ def bootstrap():
         sys.path.insert(0, str(ROOT))
 
     # ensure deterministic import root
-    import tools.runtime.graph  # forces graph registration

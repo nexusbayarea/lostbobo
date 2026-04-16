@@ -1,110 +1,82 @@
 # ==============================================================================
-# SimHPC .gitignore
-.imc-cache
- — PUBLIC REPO (FRONTEND ONLY)
+# SimHPC - Clean Deterministic Ignore (Backend + CI Stable)
 # ==============================================================================
 
-# =========================
-# Runtime / Build artifacts
-# =========================
+# -------------------------
+# Python
+# -------------------------
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.log
-dist/
-build/
-.venv/
-venv/
-.env
-*.egg-info/
 
-# =========================
-# IDE
-# =========================
-.vscode/
-.idea/
-.DS_Store
-
-# =========================
-# Node / frontend builds
-# =========================
-node_modules/
-.next/
-.vercel/
-*.tsbuildinfo
-
-# =========================
-# Secrets
-# =========================
-*.pem
-*.key
-
-# =========================
-# Docker runtime artifacts only
-# =========================
-.docker/
-
-# =========================
-# Optional local data
-# =========================
-data/
-logs/
-
-# infra/ should be tracked if used by CI or deployment
-
-# Allow frontend scripts
-!frontend/scripts/
-runtime/
-
-# Python - no backend present
-__pycache__/
 .venv/
 venv/
 ENV/
-.pytest_cache/
-.ruff_cache/
-*.egg-info/
-
-# Node / Frontend
-node_modules/
-dist/
-build/
-.vercel/
-.next/
-*.tsbuildinfo
-
-# Secrets
 .env
 .env.*
-*.pem
-*.key
 
+*.egg-info/
+dist/
+build/
+
+.pytest_cache/
+.ruff_cache/
+
+# -------------------------
 # IDE
+# -------------------------
 .vscode/
 .idea/
 .DS_Store
 
-# Data
-data/
+# -------------------------
+# Logs / Data (local only)
+# -------------------------
 logs/
+data/
 *.log
 
-# skills/
+# -------------------------
+# Node / Frontend (if used)
+# -------------------------
+node_modules/
+.next/
+.vercel/
+*.tsbuildinfo
 
-# Legacy / Internal
+# -------------------------
+# Secrets
+# -------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+
+# -------------------------
+# Docker / Local runtime artifacts
+# -------------------------
+.docker/
+
+# -------------------------
+# CI / Auth artifacts
+# -------------------------
+gha-creds-*.json
+
+# -------------------------
+# Keep runtime SYSTEM CODE tracked (IMPORTANT)
+# -------------------------
+# NOTE:
+# tools/ MUST NOT be ignored — it is the runtime system
+# runtime/ MUST NOT be ignored — CI depends on it
+
+# -------------------------
+# Legacy / optional folders
+# -------------------------
 legacy_archive/
 skills/
 
-# Exclude internal docs
-READ ME_DO NOT PUSH/
-!README.md
-
-# Build artifacts
-simhpc.egg-info/
-.vercel
-
-.gemini/
-gha-creds-*.json
-
-# PROGRESS.md
+# -------------------------
+# Documentation noise
+# -------------------------
 progress.md

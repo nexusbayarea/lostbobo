@@ -12,6 +12,7 @@ def bootstrap():
     system_tools.register_system_tools()
 
     from tools.runtime.ci_compiler import compile_ci
+
     graph = compile_ci()
     order = graph.topo()
 

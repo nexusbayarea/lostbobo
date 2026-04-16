@@ -6,9 +6,24 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Optional, Set
 
-from tools.runtime.contract import CONTRACT
-from tools.runtime.v2.persistent_queue import PersistentQueue
-from tools.runtime.v2.execution_log import ExecutionLog
+
+
+class ExecutionLog:
+    def log(self, event: str, *args, **kwargs):
+        print(f"[LOG] {event}")
+
+
+class PersistentQueue:
+    def __init__(self):
+        self._q = []
+
+    def push(self, item):
+        self._q.append(item)
+
+    def pop(self):
+        if self._q:
+            return self._q.pop(0)
+        return None
 
 
 @dataclass
@@ -48,9 +63,6 @@ class Kernel:
         self.worker_last_seen: dict[str, float] = {}
         self.worker_ttl_s = lease_ttl_s * 2
 
-    # -------------------------
-    # task registration
-    # -------------------------
     def add_task(self, task: Task):
         self.tasks[task.id] = TaskState(task=task)
         self.log.log("task_registered", task.id)
@@ -58,9 +70,6 @@ class Kernel:
     def heartbeat(self, worker_id: str):
         self.worker_last_seen[worker_id] = time.time()
 
-    # -------------------------
-    # dependency resolution
-    # -------------------------
     def _deps_ready(self, task: Task) -> bool:
         return all(
             dep in self.tasks and self.tasks[dep].status == "success"
@@ -74,9 +83,6 @@ class Kernel:
                 self.queue.push(state.task.id)
                 self.log.log("queued", state.task.id)
 
-    # -------------------------
-    # leasing
-    # -------------------------
     def lease_task(self, worker_id: str) -> Optional[Task]:
         self._enqueue_ready()
 
@@ -103,9 +109,6 @@ class Kernel:
 
         return state.task
 
-    # -------------------------
-    # completion
-    # -------------------------
     def report_success(self, task_id: str, result: Any):
         state = self.tasks[task_id]
         state.status = "success"
@@ -126,9 +129,6 @@ class Kernel:
             state.status = "failed"
             self.log.log("dead", task_id)
 
-    # -------------------------
-    # observability + maintenance
-    # -------------------------
     def snapshot(self) -> dict[str, str]:
         return {k: v.status for k, v in self.tasks.items()}
 
@@ -151,7 +151,8 @@ class Kernel:
     def _reap_dead_workers(self):
         now = time.time()
         dead_workers = [
-            wid for wid, last in self.worker_last_seen.items()
+            wid
+            for wid, last in self.worker_last_seen.items()
             if now - last > self.worker_ttl_s
         ]
         for wid in dead_workers:
@@ -175,5 +176,6 @@ class Kernel:
                 except Exception as e:
                     self.log.log("reaper_error", "system", {"error": str(e)})
                 time.sleep(interval_s)
+
         t = threading.Thread(target=loop, daemon=True)
         t.start()

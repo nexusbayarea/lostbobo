@@ -6,21 +6,27 @@ from dataclasses import dataclass, field
 class Contract:
     root: Path = field(default_factory=lambda: Path(".").resolve())
 
-    entrypoints: list[str] = field(default_factory=lambda: [
-        "app.api.kernel",
-    ])
+    entrypoints: list[str] = field(
+        default_factory=lambda: [
+            "app.api.kernel",
+        ]
+    )
 
-    allowed_roots: set[str] = field(default_factory=lambda: {
-        "app",
-        "worker",
-        "tests",
-        "scripts",
-        "tools",
-    })
+    allowed_roots: set[str] = field(
+        default_factory=lambda: {
+            "app",
+            "worker",
+            "tests",
+            "scripts",
+            "tools",
+        }
+    )
 
-    forbidden_prefixes: set[str] = field(default_factory=lambda: {
-        "ci.",
-    })
+    forbidden_prefixes: set[str] = field(
+        default_factory=lambda: {
+            "ci.",
+        }
+    )
 
     def is_allowed_import(self, module: str) -> bool:
         return not any(module.startswith(bad) for bad in self.forbidden_prefixes)

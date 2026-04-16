@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Optional, Set
 
 
-
 class ExecutionLog:
     def log(self, event: str, *args, **kwargs):
         print(f"[LOG] {event}")

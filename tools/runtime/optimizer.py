@@ -62,7 +62,4 @@ class DAGOptimizer:
             if data.get("duration", 0) > 1.0  # seconds
         ]
 
-        return {
-            k: v for k, v in dag.items()
-            if k not in slow_nodes
-        }
+        return {k: v for k, v in dag.items() if k not in slow_nodes}

@@ -2,7 +2,6 @@ from tools.runtime.ci_compiler import compile_ci
 
 
 def run_ci():
-
     graph = compile_ci()
     order = graph.topo()
 

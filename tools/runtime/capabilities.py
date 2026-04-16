@@ -33,7 +33,7 @@ CAPABILITIES = {
     ),
     "state": Capability(
         name="state",
-        enabled=False,   # SAFE DEFAULT
+        enabled=False,  # SAFE DEFAULT
         required_files=[
             "tools/runtime/state.py",
         ],

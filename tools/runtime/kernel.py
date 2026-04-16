@@ -17,10 +17,8 @@ class Kernel:
     def boot(self, manifest: Dict[str, Any]):
         print("🌀 [KERNEL] Initializing boot sequence...")
 
-        # Use CONTRACT to satisfy Ruff F401 and ensure architectural integrity
-        if not hasattr(CONTRACT, "validate_manifest"):
-            print("⚠️ [KERNEL] CONTRACT missing validate_manifest, skipping validation.")
-        elif not CONTRACT.validate_manifest(manifest):
+        # Validate manifest against the system CONTRACT to satisfy linting
+        if not CONTRACT.validate_manifest(manifest):
             raise RuntimeError(
                 "Kernel boot aborted: Manifest violates system contract."
             )

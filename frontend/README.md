@@ -77,6 +77,7 @@ export default defineConfig([
 - Observability contract schema validation added
 - Deterministic cache layer integrated
 - Kernel Capability Registry added
+- Kernel contract schema restored
 - Kernel Guard with capability validation added
 - Safe import handling for optional modules added
 - CI gate protection via kernel_capability_check added

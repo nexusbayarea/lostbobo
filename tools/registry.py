@@ -2,8 +2,6 @@ from importlib import import_module
 
 MODULE_MAP = {
     "system_tools": "tools.runtime.tools.system_tools",
-    "ci_compiler": "tools.runtime.ci_compiler",
-    "ci_graph": "tools.runtime.ci_graph",
     "contract": "tools.runtime.contract",
     "deps": "tools.runtime.deps",
     "engine": "tools.runtime.engine",

@@ -1,9 +1,11 @@
 import json
 import time
 from pathlib import Path
-from tools.runtime.contract import CONTRACT
 
-TRACE_FILE = CONTRACT.paths["trace"]
+
+def _get_trace_file():
+    root = Path(__file__).resolve().parents[2]
+    return root / "runtime_trace.json"
 
 
 class Trace:
@@ -57,4 +59,4 @@ class Trace:
 
     def save(self):
         self.data["end_time"] = time.time()
-        TRACE_FILE.write_text(json.dumps(self.data, indent=2))
+        _get_trace_file().write_text(json.dumps(self.data, indent=2))

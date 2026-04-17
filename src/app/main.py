@@ -5,9 +5,9 @@ from src.app.api.main import api_router
 app = FastAPI(title="SimHPC API")
 
 origins = [
-    "http://localhost:5173",
     "https://simhpc-70zmkqotk-nexusbayareas-projects.vercel.app",
     "https://frontend-cqt8oaeji-nexusbayareas-projects.vercel.app",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(

@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 from src.app.api.main import api_router
 
 app = FastAPI(title="SimHPC API")
 
 origins = [
     "https://simhpc-70zmkqotk-nexusbayareas-projects.vercel.app",
-    "https://frontend-cqt8oaeji-nexusbayareas-projects.vercel.app",
     "http://localhost:5173",
 ]
 
@@ -23,4 +23,4 @@ app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
 def root():
-    return {"message": "SimHPC API is online"}
+    return {"message": "SimHPC A40 API is online", "status": "secure"}

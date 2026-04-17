@@ -1,10 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
-// PASTE your real credentials here:
-const supabaseUrl = "https://ldzztrnghaaonparyggz.supabase.co";
-const supabaseKey = "sb_publishable_BTPKB2cbCifXpkENl43thw_dxio3DkO";
+/**
+ * SimHPC Supabase Client
+ * * Note: We use 'VITE_' prefix here because Vite only exposes variables 
+ * prefixed with VITE_ to your client-side code.
+ * * In Infisical/Vercel, ensure these are mapped:
+ * SB_URL -> VITE_SB_URL
+ * SB_PUB_KEY -> VITE_SB_PUB_KEY
+ */
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = import.meta.env.VITE_SB_URL;
+const supabaseKey = import.meta.env.VITE_SB_PUB_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error(
+    "Supabase configuration missing. Ensure VITE_SB_URL and VITE_SB_PUB_KEY are set in Infisical/Vercel."
+  );
+}
+
+export const supabase = createClient(supabaseUrl || '', supabaseKey || '');
 
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({

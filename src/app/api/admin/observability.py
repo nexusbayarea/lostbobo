@@ -16,12 +16,12 @@ TRACE_FILE = Path(__file__).resolve().parents[5] / "runtime_trace.json"
 @router.get("/admin/observability", response_class=HTMLResponse)
 def get_dashboard():
     stats = tm.get_baseline_stats()
-    
+
     # Ensure values are safely formatted for display
-    total_runs = stats.get('total_runs', 0)
-    p95_latency = stats.get('p95_wall_clock', 0.0)
-    avg_gpu = stats.get('avg_gpu', 0.0) or 0.0
-    total_cost = stats.get('total_cost', 0.0) or 0.0
+    total_runs = stats.get("total_runs", 0)
+    p95_latency = stats.get("p95_wall_clock", 0.0)
+    avg_gpu = stats.get("avg_gpu", 0.0) or 0.0
+    total_cost = stats.get("total_cost", 0.0) or 0.0
 
     # Simple Tailwind-based UI for zero-footprint modern UX
     return f"""
@@ -65,20 +65,22 @@ def get_dashboard():
     </html>
     """
 
+
 @router.get("/admin/traction-proof")
 def export_csv():
     # Uses pandas to create a clean CSV/Excel-ready table
     if not DB_PATH.exists():
-         return Response(content="No data available", media_type="text/plain")
+        return Response(content="No data available", media_type="text/plain")
 
     with sqlite3.connect(DB_PATH) as conn:
         df = pd.read_sql_query("SELECT * FROM runs", conn)
-    
+
     return Response(
-        content=df.to_csv(index=False), 
-        media_type="text/csv", 
-        headers={"Content-Disposition": "attachment; filename=traction_proof.csv"}
+        content=df.to_csv(index=False),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=traction_proof.csv"},
     )
+
 
 @router.post("/admin/replay")
 def replay_failed():

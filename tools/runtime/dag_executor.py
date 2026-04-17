@@ -6,6 +6,7 @@ from tools.runtime.telemetry import TelemetryManager
 
 tm = TelemetryManager()
 
+
 def load_manifest() -> dict:
     path = Path("tools/ci_manifest.yml")
     if not path.exists():
@@ -22,29 +23,29 @@ def run_node(node: dict) -> int:
         print(f"[DAG] missing node: {path}")
         return 1
 
-    name = node.get('name', path)
+    name = node.get("name", path)
     print(f"[DAG] Running: {name}")
-    
+
     start_time = time.time()
     result = subprocess.run([sys.executable, path])
     end_time = time.time()
-    
+
     duration = end_time - start_time
-    
+
     # Placeholder for GPU util; in a real scenario, this would sample nvidia-smi
-    gpu_util = 42.0 
+    gpu_util = 42.0
     status = "success" if result.returncode == 0 else "failed"
-    
+
     # Record telemetry
     # We assume 'sim_type' is the node name for this baseline
     tm.record_run(
-        project="SimHPC", 
-        sim_type=name, 
-        duration=duration, 
-        gpu_util=gpu_util, 
-        status=status
+        project="SimHPC",
+        sim_type=name,
+        duration=duration,
+        gpu_util=gpu_util,
+        status=status,
     )
-    
+
     return result.returncode
 
 

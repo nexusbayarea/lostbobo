@@ -57,6 +57,11 @@ share/python-wheels/
 MANIFEST
 
 # -------------------------
+# Frontend Libraries (PROTECTED)
+# -------------------------
+!frontend/src/lib/
+
+# -------------------------
 # Environment & Dependencies
 # -------------------------
 .venv/

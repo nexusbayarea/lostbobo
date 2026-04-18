@@ -29,7 +29,9 @@ jobs:
           $HOME/.local/bin/uv pip install --system -e .
 
       - name: Run Python Unified CI Gate
-        run: python tools/ci_gate.py
+        run: |
+          cd backend
+          python ../tools/ci_gate.py
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

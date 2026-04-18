@@ -111,3 +111,5 @@ coverage.xml
 !tools/
 !src/
 !app/
+.vercel
+.env*.local

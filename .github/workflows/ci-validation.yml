@@ -31,7 +31,7 @@ jobs:
       - name: Run Python Unified CI Gate
         run: |
           cd backend
-          python ../tools/ci_gate.py
+          python tools/ci_gate.py
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

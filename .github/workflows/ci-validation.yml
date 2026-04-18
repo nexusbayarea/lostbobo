@@ -21,6 +21,10 @@ jobs:
           format: dotenv
           outputFileName: .env
 
+      - name: Auth with GHCR
+        run: |
+          echo "$GIT_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -41,6 +45,11 @@ jobs:
         run: |
           cd backend
           python tools/ci_gate.py
+
+      - name: Update RunPod Template
+        run: |
+          cd backend
+          python tools/update_runpod.py
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

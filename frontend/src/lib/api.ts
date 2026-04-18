@@ -123,6 +123,10 @@ class ApiClient {
       headers: { Authorization: `Bearer ${token}` }
     }, false);
   }
+
+  async getUsage(): Promise<any> {
+    return this.request<any>('/admin/usage', { method: 'GET' }, false);
+  }
 }
 
 export const api = new ApiClient();

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.app.api.main import api_router
+from backend.app.api.main import api_router
 
 app = FastAPI(title="SimHPC API")
 

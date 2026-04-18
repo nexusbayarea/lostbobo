@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from src.app.api.admin.observability import router as observability_router
+from backend.app.api.admin.observability import router as observability_router
 
 api_router = APIRouter()
 

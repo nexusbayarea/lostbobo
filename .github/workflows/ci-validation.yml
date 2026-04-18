@@ -23,7 +23,7 @@ jobs:
 
       - name: Auth with GHCR
         run: |
-          echo "$GIT_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ env.GIT_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Set up Python
         uses: actions/setup-python@v5

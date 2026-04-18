@@ -16,8 +16,8 @@ jobs:
         uses: Infisical/secrets-action@v1.0.12
         with:
           method: universal
-          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
-          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          client-id: ${{ secrets.GIT_RUNPOD_CLIENT_ID }}
+          client-secret: ${{ secrets.GIT_RUNPOD_CLIENT_SECRET }}
           project-slug: simhpc
           env-slug: prod
 

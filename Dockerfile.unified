@@ -20,11 +20,13 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # --- Stage 2: Application Layer ---
 WORKDIR /app
 
-# Install SimHPC dependencies first
+# 1. Install dependencies first (Cache Layer)
+# Copy pyproject.toml and uv.lock from backend/ to the root of the build context
 COPY backend/pyproject.toml backend/uv.lock* ./
 RUN uv pip install --system -r pyproject.toml || pip install --no-cache-dir -r pyproject.toml
 
-# Copy SimHPC backend application code
+# 2. Copy application code
+# Consolidates backend logic into /app/backend
 COPY backend/ ./backend/
 
 # Process management

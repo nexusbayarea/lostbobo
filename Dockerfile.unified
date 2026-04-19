@@ -1,31 +1,31 @@
 # Use the NVIDIA runtime for A40 compatibility
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
-# 1. Set environment variables immediately
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     PATH="/root/.local/bin:${PATH}"
 
-# 2. Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 python3-pip curl supervisor libgomp1 \
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 3. Install uv correctly
+# Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 WORKDIR /app
 
-# 4. Copy the backend manifest
-# This assumes your repo structure has a folder named 'backend'
+# Copy manifest from backend folder
 COPY backend/pyproject.toml backend/uv.lock* ./
 
-# 5. Install dependencies using uv (Fixes the '[project]' parsing error)
+# Install using uv
 RUN uv pip install --system .
 
-# 6. Copy the rest of the application
+# Copy backend source
 COPY backend/ ./backend/
+
+# Copy the Supervisor config from the docker/supervisor folder
 COPY docker/supervisor/simhpc.conf /etc/supervisor/conf.d/simhpc.conf
 
 EXPOSE 8080 8000

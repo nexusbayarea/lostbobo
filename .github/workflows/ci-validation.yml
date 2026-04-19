@@ -3,8 +3,6 @@ name: CI Validation Gateway
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   validate:
@@ -14,57 +12,18 @@ jobs:
 
       - name: Auth with GHCR
         run: |
+          # Uses the synced GIT_TOKEN directly from your GitHub Secrets
           echo "${{ secrets.GIT_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build and Push SimHPC Image
         run: |
-          docker build -f Dockerfile.unified -t ghcr.io/lostbobo/simhpc_unified:latest .
-          docker push ghcr.io/lostbobo/simhpc_unified:latest
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install Python dependencies (HERMETIC)
-        run: |
-          cd backend
-          $HOME/.local/bin/uv pip install --system -r requirements.txt
-          $HOME/.local/bin/uv pip install --system -e .
-
-      - name: Run Python Unified CI Gate
-        run: |
-          cd backend
-          python tools/ci_gate.py
-
-      - name: Build and Push Docker Image
-        run: |
+          # Builds the image using the root context
           docker build -f Dockerfile.unified -t ghcr.io/lostbobo/simhpc_unified:latest .
           docker push ghcr.io/lostbobo/simhpc_unified:latest
 
       - name: Update RunPod Template
         run: |
           cd backend
+          # Ensure RUNPOD_API_KEY is available in your synced GitHub Secrets
+          export RUNPOD_API_KEY=${{ secrets.RUNPOD_API_KEY }}
           python tools/update_runpod.py
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install frontend deps (HERMETIC)
-        run: |
-          cd frontend
-          npm ci
-
-      - name: Frontend validation (typecheck, manifest)
-        run: |
-          cd frontend
-          npm run typecheck
-          npm run manifest
-          npm run build

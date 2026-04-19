@@ -1,38 +1,33 @@
-# --- Stage 1: Runtime Base ---
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04 AS base
+# Use the NVIDIA runtime for A40 compatibility
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
-# Optimize Python and pathing for SimHPC
+# 1. Set environment variables immediately
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    UV_SYSTEM_PYTHON=1
+    PATH="/root/.local/bin:${PATH}"
 
-# Install essential runtime libraries
+# 2. Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3 python3-pip curl supervisor libgomp1 libgl1-mesa-glx \
+    python3 python3-pip curl supervisor libgomp1 \
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install uv for high-speed, hermetic installs
+# 3. Install uv correctly
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:${PATH}"
 
-# --- Stage 2: Application Layer ---
 WORKDIR /app
 
-# 1. Install dependencies first (Cache Layer)
-# Copy pyproject.toml and uv.lock from backend/ to the root of the build context
+# 4. Copy the backend manifest
+# This assumes your repo structure has a folder named 'backend'
 COPY backend/pyproject.toml backend/uv.lock* ./
-RUN uv pip install --system -r pyproject.toml || pip install --no-cache-dir -r pyproject.toml
 
-# 2. Copy application code
-# Consolidates backend logic into /app/backend
+# 5. Install dependencies using uv (Fixes the '[project]' parsing error)
+RUN uv pip install --system .
+
+# 6. Copy the rest of the application
 COPY backend/ ./backend/
-
-# Process management
 COPY docker/supervisor/simhpc.conf /etc/supervisor/conf.d/simhpc.conf
 
 EXPOSE 8080 8000
 
-# Start Supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/simhpc.conf"]

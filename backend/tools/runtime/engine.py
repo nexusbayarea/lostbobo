@@ -1,45 +1,34 @@
 from backend.tools.runtime.backends.registry import BACKENDS
-from backend.tools.runtime.contract import compute_contract
+from backend.tools.runtime.backends.registry import BACKENDS
 from backend.tools.runtime.trace import record, load
-from backend.tools.runtime.diff import should_execute
+from backend.tools.runtime.planner import plan_execution
 
 class ExecutionEngine:
     def run_node(self, node, context):
         node_id = node["id"]
-
-        contract = compute_contract(node)
-
-        previous = load(node_id, context["workspace"])
-
-        if not should_execute(node, previous, contract):
-            # Mark result as cached/reused if needed
-            return previous["result"]
-
+        # Execution is now driven by the planner, but we record execution
+        # to ensure tracing works correctly.
         backend = BACKENDS[node["type"]]
         result = backend.execute(node, context)
-        # Mark as newly executed
         result["executed"] = True
-
-        record(node_id, contract, result, context["workspace"])
-
         return result
 
 def run_dag(nodes, context):
+    plan = plan_execution(nodes, context["workspace"])
     engine = ExecutionEngine()
     results = {}
-    dirty = set()
 
-    for node in nodes:
-        # Check downstream invalidation
-        deps = node.get("deps", [])
-        if any(d in dirty for d in deps):
-            dirty.add(node["id"])
+    for nid in plan["ordered"]:
+        node = next(n for n in nodes if n["id"] == nid)
+
+        if nid not in plan["dirty"]:
+            prev = load(nid, context["workspace"])
+            results[nid] = prev["result"]
+            continue
 
         result = engine.run_node(node, context)
-        results[node["id"]] = result
-
-        # mark dirty if this node was actually executed
-        if result.get("executed"):
-            dirty.add(node["id"])
+        record(nid, plan["contracts"][nid], result, context["workspace"])
+        results[nid] = result
 
     return results
+

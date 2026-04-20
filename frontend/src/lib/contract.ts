@@ -15,6 +15,11 @@ export const PLATFORM_CONTRACT = {
   SIMULATION_CONFIG: {
     MODEL_TYPES: ['Parametric Sweep', 'Latin Hypercube', 'Sobol GSA'],
     GEOMETRY_TEMPLATES: ['Turbine Blade', 'Heat Sink', 'Pressure Vessel'],
+    GEOMETRY_MAP: {
+      'Heat Sink': 'https://[id].supabase.co/storage/v1/object/public/sim-templates/heatsink.mesh',
+      'Turbine Blade': 'https://[id].supabase.co/storage/v1/object/public/sim-templates/turbine.mesh',
+      'Pressure Vessel': 'https://[id].supabase.co/storage/v1/object/public/sim-templates/vessel.mesh'
+    },
     SOLVERS: ['MFEM (Structural)', 'SUNDIALS (Thermal)', 'Mercury-Hybrid'],
   }
 } as const;

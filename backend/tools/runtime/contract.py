@@ -1,14 +1,14 @@
-import os
+import hashlib
+import json
 
-CONTRACT = {
-    "SOLVERS": {
-        "MFEM (Structural)": {"url": os.getenv("SB_SOLVER_MFEM_URL"), "version": "4.6.0"},
-        "SUNDIALS (Thermal)": {"url": os.getenv("SB_SOLVER_SUNDIALS_URL"), "version": "6.5.0"},
-        "Mercury-Hybrid": {"url": os.getenv("SB_SOLVER_MERCURY_URL"), "version": "1.0.0"}
-    },
-    "GEOMETRIES": {
-        "Heat Sink": {"url": os.getenv("SB_GEO_HEATSINK_URL")},
-        "Turbine Blade": {"url": os.getenv("SB_GEO_TURBINE_URL")},
-        "Pressure Vessel": {"url": os.getenv("SB_GEO_VESSEL_URL")}
+def compute_contract(node: dict) -> str:
+    """
+    Deterministic hash of node definition.
+    """
+    payload = {
+        "type": node["type"],
+        "inputs": node.get("inputs", {}),
     }
-}
+
+    encoded = json.dumps(payload, sort_keys=True).encode()
+    return hashlib.sha256(encoded).hexdigest()

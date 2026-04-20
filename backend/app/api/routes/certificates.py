@@ -79,26 +79,32 @@ async def generate_certificate(job_id: str, user: dict = Depends(lambda: _verify
         "verification_url": f"https://simhpc.com/verify/{cert_id}"
     }
 
-from fastapi.responses import StreamingResponse
-from backend.app.services.pdf_service import PDFReportService
+from fastapi import APIRouter, HTTPException, Response
+from backend.app.services.pdf_service import PDFService
+from backend.app.core.supabase import supabase
 
-@router.get("/download/{certificate_id}")
-async def download_certificate_pdf(certificate_id: str):
-    # 1. Fetch certificate and simulation data
-    cert_res = _supabase.table("simulation_certificates").select("*").eq("certificate_id", certificate_id).single().execute()
-    if not cert_res.data:
-        raise HTTPException(404, "Certificate not found")
-        
-    sim_res = _supabase.table("simulations").select("*").eq("job_id", cert_res.data["job_id"]).single().execute()
-    if not sim_res.data:
-        raise HTTPException(404, "Simulation data not found")
+router = APIRouter()
 
-    # 2. Generate PDF using our new service
-    pdf_buffer = PDFReportService.generate_certificate_pdf(cert_res.data, sim_res.data)
+@router.get("/download/{cert_hash}")
+async def download_certificate(cert_hash: str):
+    """
+    Fetches simulation metadata and generates a verifiable PDF report.
+    """
+    # 1. Verify the certificate exists in our 'Moat'
+    res = supabase.table("simulation_history").select("*").eq("certificate_hash", cert_hash).single().execute()
+    
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Certificate not found")
 
-    # 3. Stream the file back
-    return StreamingResponse(
-        pdf_buffer, 
+    # 2. Generate the PDF buffer
+    pdf_service = PDFService()
+    pdf_buffer = pdf_service.generate_report(res.data)
+
+    # 3. Stream the file back to the browser
+    return Response(
+        content=pdf_buffer.getvalue(),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=SimHPC_Report_{certificate_id[:8]}.pdf"}
+        headers={
+            "Content-Disposition": f"attachment; filename=SimHPC_Report_{cert_hash[:8]}.pdf"
+        }
     )

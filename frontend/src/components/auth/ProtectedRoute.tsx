@@ -1,27 +1,28 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import React, { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
   requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requireAdmin = false 
+}) => {
+  const { user, loading, userTier } = useAuth();
+  const location = useLocation();
+
+  // Simple check for founder/admin: replace with your specific logic
+  const isAdmin = user?.email === 'nexusbayarea@gmail.com';
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <div className="loading-spinner">Verifying Mercury AI Credentials...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to="/SignIn" state={{ from: location }} replace />;
   }
 
   if (requireAdmin && !isAdmin) {
@@ -29,4 +30,6 @@ export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) 
   }
 
   return <>{children}</>;
-}
+};
+
+export default ProtectedRoute;

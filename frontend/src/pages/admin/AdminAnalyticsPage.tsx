@@ -1,159 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSimulations } from '../../hooks/useSimulations';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { 
   Copy, Check, Activity, LayoutDashboard, 
-  Terminal, ShieldAlert, ChevronRight, Inbox 
+  Terminal, ChevronRight, Inbox, AlertCircle 
 } from 'lucide-react';
 
-// --- Sub-Component: Copy-to-Clipboard ---
-const CopyButton = ({ text }: { text: string }) => {
+// --- Sub-Component: Defensive Copy Button ---
+const CopyButton = ({ text }: { text: string | undefined | null }) => {
   const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  
+  const handleCopy = async () => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   };
+
+  if (!text) return null;
+
   return (
-    <button onClick={handleCopy} className="ml-2 text-muted-foreground hover:text-primary transition-colors">
+    <button 
+      onClick={handleCopy} 
+      title="Copy ID"
+      className="ml-2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+    >
       {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
     </button>
   );
 };
 
-// --- Sub-Component: Breadcrumbs ---
-const Breadcrumbs = ({ paths }: { paths: string[] }) => (
-  <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-    {paths.map((path, i) => (
-      <React.Fragment key={path}>
-        <span className="capitalize hover:text-foreground cursor-pointer">{path}</span>
-        {i < paths.length - 1 && <ChevronRight size={14} />}
-      </React.Fragment>
-    ))}
-  </nav>
-);
-
 export const AdminAnalyticsPage = () => {
   const { user } = useAuth();
-  const { simulations, loading } = useSimulations(user?.id || '');
-  const [fleetMetrics, setFleetMetrics] = useState({ active_pods: 0, hourly_spend_usd: '0.00' });
+  const { simulations = [], loading, error } = useSimulations(user?.id || '');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [fleetMetrics, setFleetMetrics] = useState({ active_pods: 0, hourly_spend_usd: '0.00' });
 
+  // 1. Safe Metric Fetching
   useEffect(() => {
+    let isMounted = true;
     const fetchMetrics = async () => {
-      const { data } = await supabase.functions.invoke('get-fleet-metrics');
-      if (data) setFleetMetrics(data);
+      try {
+        const { data, error: fetchError } = await supabase.functions.invoke('get-fleet-metrics');
+        if (isMounted && data && !fetchError) {
+          setFleetMetrics({
+            active_pods: data.active_pods ?? 0,
+            hourly_spend_usd: data.hourly_spend_usd ?? '0.00'
+          });
+        }
+      } catch (err) {
+        console.error("Metric sync failed:", err);
+      }
     };
+
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
+
+  // 2. Memoized filtering to prevent unnecessary re-renders
+  const safeSimulations = useMemo(() => {
+    return Array.isArray(simulations) ? simulations : [];
+  }, [simulations]);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Mobile/Tablet Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
-          onClick={() => setSidebarOpen(false)} 
-        />
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Responsive Sidebar */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-border 
-        transition-transform duration-300 transform 
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-border transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex flex-col h-full">
           <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">S</div>
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold text-xs">HPC</div>
             <h2 className="text-xl font-bold tracking-tight">SimHPC</h2>
           </div>
-
-          <nav className="flex-1 space-y-2">
-            <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md bg-accent text-accent-foreground">
-              <LayoutDashboard size={18} /> <span>Fleet Analytics</span>
+          
+          <nav className="flex-1 space-y-1">
+            <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md bg-accent text-accent-foreground text-sm font-medium">
+              <LayoutDashboard size={18} /> Fleet Analytics
             </button>
-            <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-accent/50 transition-colors">
-              <Terminal size={18} /> <span>Live Logs</span>
+            <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
+              <Terminal size={18} /> Live Logs
             </button>
           </nav>
 
-          {/* System Heartbeat (Port 8080) */}
-          <div className="mt-auto p-3 bg-muted rounded-lg border border-border">
+          <div className="mt-auto p-3 bg-muted/50 rounded-lg border border-border">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Gateway: 8080</span>
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Gateway: 8080</span>
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
             </div>
-            <p className="text-xs text-muted-foreground">Cluster Healthy</p>
+            <p className="text-[11px] text-muted-foreground">Cluster: Primary-Alpha</p>
           </div>
         </div>
       </aside>
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-        <div className="flex items-center justify-between lg:block">
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 -ml-2 text-muted-foreground"
-          >
-            <Activity size={24} />
-          </button>
-          <Breadcrumbs paths={['admin', 'fleet_analytics']} />
-        </div>
-
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Fleet Analytics</h1>
-          <p className="text-muted-foreground">Real-time resource allocation and job telemetry.</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+            <span>Admin</span> <ChevronRight size={12} /> <span className="text-foreground">Fleet Analytics</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Fleet Analytics</h1>
         </header>
 
-        {/* Empty State Logic */}
-        {simulations.length === 0 && !loading ? (
-          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-border rounded-xl bg-card/50">
-            <Inbox className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
-            <h3 className="text-lg font-medium">No Active Simulations</h3>
-            <p className="text-muted-foreground mb-6 text-sm text-center max-w-xs">
-              Provisioning new compute nodes is required to see live telemetry data.
-            </p>
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90">
-              Launch Fleet Node
+        {/* 3. Conditional State Mapping */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse">
+            Syncing with Supabase cluster...
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-64 bg-destructive/5 border border-destructive/20 rounded-xl p-6 text-center">
+            <AlertCircle className="text-destructive mb-2" size={32} />
+            <p className="text-sm font-medium text-destructive">Failed to load simulations</p>
+            <p className="text-xs text-muted-foreground mt-1">Please verify your admin permissions.</p>
+          </div>
+        ) : safeSimulations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-border rounded-xl bg-card/30">
+            <Inbox className="w-10 h-10 text-muted-foreground/30 mb-4" />
+            <h3 className="text-sm font-semibold">No simulation data found</h3>
+            <p className="text-xs text-muted-foreground mt-1 mb-6">Initialize a job via the API to see live metrics.</p>
+            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:opacity-90">
+              Go to Sandbox
             </button>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-             <table className="w-full text-left text-sm">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-muted/50 border-b border-border text-muted-foreground">
                   <tr>
-                    <th className="px-6 py-4 font-medium">Job ID</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
-                    <th className="px-6 py-4 font-medium">Telemetry</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase">Job ID</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase text-center">Status</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase">Compute Load</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {simulations.map(sim => (
-                    <tr key={sim.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-6 py-4 font-mono flex items-center">
-                        {sim.job_id.substring(0, 8)}...
+                  {safeSimulations.map((sim) => (
+                    <tr key={sim.id} className="hover:bg-muted/20 transition-colors group">
+                      <td className="px-6 py-4 font-mono text-[13px] flex items-center">
+                        <span className="text-muted-foreground/60">#</span>
+                        {sim.job_id?.substring(0, 8) ?? 'N/A'}
                         <CopyButton text={sim.job_id} />
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                          {sim.status}
+                      <td className="px-6 py-4 text-center">
+                        <span className={`
+                          px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-tight uppercase
+                          ${sim.status === 'processing' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}
+                        `}>
+                          {sim.status ?? 'idle'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div 
-                            className="bg-primary h-full transition-all duration-500 ease-out" 
-                            style={{ width: `${sim.progress}%` }} 
-                          />
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="bg-primary h-full transition-all duration-700 ease-in-out" 
+                              style={{ width: `${Math.min(100, sim.progress ?? 0)}%` }} 
+                            />
+                          </div>
+                          <span className="text-[11px] font-mono text-muted-foreground w-8">
+                            {sim.progress ?? 0}%
+                          </span>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-             </table>
+              </table>
+            </div>
           </div>
         )}
       </main>

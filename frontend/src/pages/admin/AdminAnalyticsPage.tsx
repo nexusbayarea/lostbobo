@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSimulations } from '../../hooks/useSimulations';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 
 const AdminAnalyticsPage = () => {
   const { user } = useAuth();
-  // Using a dummy user id for now; implement proper admin fetch logic if needed
   const { simulations, loading } = useSimulations(user?.id || ''); 
   
   const [activeTab, setActiveTab] = useState('fleet_analytics');
+  const [fleetMetrics, setFleetMetrics] = useState({ active_pods: 0, hourly_spend_usd: '0.00', active_simulations: 0 });
 
-  const activeSims = simulations.filter(sim => sim.status === 'processing').length;
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      const { data, error } = await supabase.functions.invoke('get-fleet-metrics');
+      if (data) {
+        setFleetMetrics(data);
+      } else if (error) {
+        console.error("Failed to fetch fleet metrics:", error);
+      }
+    };
+
+    fetchMetrics();
+    const intervalId = setInterval(fetchMetrics, 60000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   const queuedSims = simulations.filter(sim => sim.status === 'queued').length;
-  
-  const activeRunPods = Math.ceil(activeSims / 2);
-  const hourlySpend = (activeRunPods * 0.44).toFixed(2);
 
   return (
     <div className="admin-layout flex h-screen bg-gray-900 text-white">
@@ -54,15 +66,15 @@ const AdminAnalyticsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
                 <h3 className="text-gray-400 text-sm">Active Workers (RunPod)</h3>
-                <p className="text-4xl font-bold text-white mt-2">{activeRunPods}</p>
+                <p className="text-4xl font-bold text-white mt-2">{fleetMetrics.active_pods}</p>
               </div>
               <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
                 <h3 className="text-gray-400 text-sm">Compute Burn Rate</h3>
-                <p className="text-4xl font-bold text-red-400 mt-2">${hourlySpend} <span className="text-lg">/hr</span></p>
+                <p className="text-4xl font-bold text-red-400 mt-2">${fleetMetrics.hourly_spend_usd} <span className="text-lg">/hr</span></p>
               </div>
               <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
                 <h3 className="text-gray-400 text-sm">Active Simulations</h3>
-                <p className="text-4xl font-bold text-cyan-400 mt-2">{activeSims}</p>
+                <p className="text-4xl font-bold text-cyan-400 mt-2">{fleetMetrics.active_simulations}</p>
               </div>
               <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
                 <h3 className="text-gray-400 text-sm">Queue Depth</h3>

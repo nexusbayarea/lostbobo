@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSimulations } from '../../hooks/useSimulations';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
+import { RunStatusResponse } from '../../types/simulations';
 import { 
   Copy, Check, Activity, LayoutDashboard, 
   Terminal, ChevronRight, Inbox, AlertCircle 
@@ -10,7 +11,7 @@ import {
 // --- Sub-Component: Defensive Copy Button ---
 const CopyButton = ({ text }: { text: string | undefined | null }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = async () => {
     if (!text) return;
     try {
@@ -34,6 +35,20 @@ const CopyButton = ({ text }: { text: string | undefined | null }) => {
     </button>
   );
 };
+
+// --- Helpers ---
+const isPingRecent = (ping?: string) => {
+  if (!ping) return false;
+  const lastPing = new Date(ping).getTime();
+  const now = new Date().getTime();
+  return now - lastPing < 1000 * 60 * 5; // 5 min threshold
+};
+
+const formatPing = (ping?: string) => {
+  if (!ping) return 'N/A';
+  return new Date(ping).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 
 export const AdminAnalyticsPage = () => {
   const { user } = useAuth();
@@ -139,12 +154,13 @@ export const AdminAnalyticsPage = () => {
                 <thead className="bg-muted/50 border-b border-border text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 font-semibold text-xs uppercase">Job ID</th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase text-center">Status</th>
-                    <th className="px-6 py-4 font-semibold text-xs uppercase">Compute Load</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase text-center">Verify</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase text-center">Cost</th>
+                    <th className="px-6 py-4 font-semibold text-xs uppercase">Health</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {safeSimulations.map((sim) => (
+                  {(safeSimulations as RunStatusResponse[]).map((sim) => (
                     <tr key={sim.id} className="hover:bg-muted/20 transition-colors group">
                       <td className="px-6 py-4 font-mono text-[13px] flex items-center">
                         <span className="text-muted-foreground/60">#</span>
@@ -152,23 +168,20 @@ export const AdminAnalyticsPage = () => {
                         <CopyButton text={sim.job_id} />
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`
-                          px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-tight uppercase
-                          ${sim.status === 'processing' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}
-                        `}>
-                          {sim.status ?? 'idle'}
-                        </span>
+                        {sim.certificate_hash ? (
+                          <span title="Verifiable Run" className="text-emerald-500">🛡️</span>
+                        ) : (
+                          <span className="text-gray-600">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center text-xs font-bold text-gray-400">
+                        {sim.credit_cost} CR
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                            <div 
-                              className="bg-primary h-full transition-all duration-700 ease-in-out" 
-                              style={{ width: `${Math.min(100, sim.progress ?? 0)}%` }} 
-                            />
-                          </div>
-                          <span className="text-[11px] font-mono text-muted-foreground w-8">
-                            {sim.progress ?? 0}%
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2 w-2 rounded-full ${isPingRecent(sim.last_ping) ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className="text-[10px] text-gray-500 uppercase">
+                            {formatPing(sim.last_ping)}
                           </span>
                         </div>
                       </td>

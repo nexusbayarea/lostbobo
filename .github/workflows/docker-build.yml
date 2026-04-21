@@ -50,7 +50,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           file: backend/worker/Dockerfile
           push: true
           tags: |

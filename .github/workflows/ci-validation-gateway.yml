@@ -21,11 +21,17 @@ jobs:
 
       - name: Install Backend (HERMETIC)
         run: |
-          uv pip install --system -r backend/requirements.txt
-          uv pip install --system -e ./backend
+          uv venv
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> $GITHUB_ENV
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+          source .venv/bin/activate
+          uv pip install -r backend/requirements.txt
+          uv pip install -e ./backend
 
       - name: Run Python Unified CI Gate
-        run: python3 backend/tools/ci_gate.py
+        run: |
+          source .venv/bin/activate
+          python3 backend/tools/ci_gate.py
 
       # --- FRONTEND VALIDATION ---
       - name: Set up Node.js

@@ -14,7 +14,7 @@ def main():
     print("[CI-GATE] Unified execution starting")
 
     # 1. Linting
-    run_cmd(["python3", "-m", "ruff", "check", "backend/", "--fix"])
+    run_cmd(["python3", "-m", "ruff", "check", "backend/"])
     run_cmd(["python3", "-m", "ruff", "format", "backend/", "--check"])
 
     # 2. Call your System Contract

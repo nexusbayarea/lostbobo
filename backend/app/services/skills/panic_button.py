@@ -10,7 +10,7 @@ mcp = FastMCP("SimHPC-Panic-Button")
 
 # Initialize Admin Clients using existing core settings
 # Assumes these env vars are provided by the orchestration environment
-supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
+supabase = create_client(os.getenv("SB_URL"), os.getenv("SB_SERVICE_ROLE_KEY"))
 redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
 

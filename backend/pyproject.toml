@@ -8,3 +8,10 @@ select = ["E", "F", "B", "UP"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.setuptools]
+packages = ["app", "packages", "autoscaler", "compiler", "data", "infra", "tools", "worker"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

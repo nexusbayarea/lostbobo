@@ -146,3 +146,6 @@
 ## 2026-04-21
 - Renamed 'SB_URL' to 'SB_URL' in 'docker-compose' and 'panic_button.py'.
 - Frontend 'supabase.ts' is already using 'VITE_SB_URL' and 'VITE_SB_PUB_KEY'.
+# #   2 0 2 6 - 0 4 - 2 1 
+ -   G l o b a l l y   r e n a m e d   ' S U P A B A S E _ U R L '   a n d   ' S U P A B A S E _ P U B _ K E Y '   t o   ' S B _ U R L '   a n d   ' S B _ P U B _ K E Y '   a c r o s s   t h e   r e p o s i t o r y   t o   s t a n d a r d i z e   e n v i r o n m e n t   c o n f i g u r a t i o n .  
+ 

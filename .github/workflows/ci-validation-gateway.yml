@@ -22,12 +22,13 @@ jobs:
       - name: Install Backend (HERMETIC)
         run: |
           uv venv
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> $GITHUB_ENV
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
           source .venv/bin/activate
           # Explicitly install tools and requirements
           uv pip install ruff networkx
           uv pip install -r backend/requirements.txt
           uv pip install -e ./backend
-          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
       - name: Run Python Unified CI Gate
         run: |

@@ -2,15 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install uv supervisor requests
+COPY backend /app/backend
 
-COPY pyproject.toml uv.lock ./
-COPY app ./app
-COPY worker ./worker
-COPY packages ./packages
+WORKDIR /app/backend
 
-RUN uv pip install --system -e .
+RUN python tools/env_bootstrap.py prod
 
-COPY worker/supervisor/simhpc.conf /etc/supervisor/conf.d/simhpc.conf
+COPY backend/worker/supervisor/simhpc.conf /etc/supervisor/conf.d/simhpc.conf
 
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/simhpc.conf"]

@@ -36,14 +36,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-        shell: bash
+      - name: Bootstrap Environment
+        run: python tools/env_bootstrap.py ci
 
       - name: Run CI (single entrypoint)
-        run: cd .. && python tools/run_ci.py
+        run: python3 ../tools/run_ci.py
 
   deploy:
     name: Deploy

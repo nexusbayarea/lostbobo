@@ -123,9 +123,7 @@ def main():
     if args.seed:
         os.environ["SIMHPC_SEED"] = str(args.seed)
 
-    run("Install runtime deps", "uv venv && uv pip install --system -r requirements.api.lock")
-    run("Install dev deps", "uv pip install --system -r requirements.dev.lock")
-    run("Install package", "uv pip install --system -e .")
+    run("Bootstrap Environment", "python tools/env_bootstrap.py ci")
 
     run("Ruff lint", "ruff check . --config pyproject.toml")
     run("Ruff format check", "ruff format . --check --config pyproject.toml")

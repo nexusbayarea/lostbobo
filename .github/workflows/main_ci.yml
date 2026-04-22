@@ -28,7 +28,7 @@ jobs:
           source .venv/bin/activate
           uv pip install ruff
           uv pip install -r backend/requirements.txt
-          python3 -m ruff check backend/
+          python3 -m ruff check backend/ --config backend/pyproject.toml
           uv pip compile backend/requirements.txt -o /tmp/check.txt
           if ! diff -u backend/requirements.txt /tmp/check.txt; then
             echo "❌ Dependency drift detected!"

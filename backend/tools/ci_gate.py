@@ -13,9 +13,9 @@ def run_cmd(cmd):
 def main():
     print("[CI-GATE] Unified execution starting")
 
-    # 1. Linting
-    run_cmd(["python3", "-m", "ruff", "check", "backend/"])
-    run_cmd(["python3", "-m", "ruff", "format", "backend/", "--check"])
+    # 1. Linting with explicit config path
+    run_cmd(["python3", "-m", "ruff", "check", "backend/", "--config", "backend/pyproject.toml"])
+    run_cmd(["python3", "-m", "ruff", "format", "backend/", "--check", "--config", "backend/pyproject.toml"])
 
     # 2. Call your System Contract
     run_cmd(["python3", "backend/tools/ci_gates/system_contract.py"])

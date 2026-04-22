@@ -5,7 +5,7 @@ WORKDIR /app
 # Install uv for faster dependency management
 RUN pip install uv supervisor requests
 
-# FIXED: Points to the backend sub-directory for the manifest
+# Point to the backend sub-directory for the manifest
 COPY backend/pyproject.toml backend/uv.lock* ./
 
 # Copy backend source components with consistent paths
@@ -20,6 +20,7 @@ COPY backend/worker ./worker
 # Install using the system python via uv
 RUN uv pip install --system -e .
 
-COPY docker/supervisor.conf /etc/supervisord.conf
+# Correct path for supervisor config
+COPY backend/worker/supervisor/simhpc.conf /etc/supervisord.conf
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]

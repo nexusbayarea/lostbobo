@@ -1,9 +1,13 @@
 import hashlib
 import json
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
+
+from backend.app.core.supabase import supabase
+from backend.app.services.pdf_service import PDFService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,7 +39,7 @@ class CertificateVerifyResponse(BaseModel):
 
 
 @router.post("/generate/{job_id}")
-async def generate_certificate(job_id: str, user: dict = Depends(lambda: _verify_auth)):
+async def generate_certificate(job_id: str, user: Annotated[dict, Depends(lambda: _verify_auth)]):
     """Generates an immutable certificate for a completed simulation."""
     if not _supabase:
         raise HTTPException(503, "Database connection unavailable")
@@ -43,26 +47,14 @@ async def generate_certificate(job_id: str, user: dict = Depends(lambda: _verify
     user_id = user.get("user_id_internal")
 
     # 1. Fetch the simulation record
-    res = (
-        _supabase.table("simulations")
-        .select("*")
-        .eq("job_id", job_id)
-        .eq("user_id", user_id)
-        .single()
-        .execute()
-    )
+    res = _supabase.table("simulations").select("*").eq("job_id", job_id).eq("user_id", user_id).single().execute()
     sim_data = res.data
 
     if not sim_data or sim_data.get("status") != "completed":
         raise HTTPException(400, "Simulation not found or not completed.")
 
     # 2. Check if certificate already exists
-    cert_check = (
-        _supabase.table("simulation_certificates")
-        .select("certificate_id")
-        .eq("job_id", job_id)
-        .execute()
-    )
+    cert_check = _supabase.table("simulation_certificates").select("certificate_id").eq("job_id", job_id).execute()
     if cert_check.data:
         return {
             "status": "success",
@@ -105,27 +97,13 @@ async def generate_certificate(job_id: str, user: dict = Depends(lambda: _verify
     }
 
 
-from fastapi import APIRouter, Response
-
-from backend.app.core.supabase import supabase
-from backend.app.services.pdf_service import PDFService
-
-router = APIRouter()
-
-
 @router.get("/download/{cert_hash}")
 async def download_certificate(cert_hash: str):
     """
     Fetches simulation metadata and generates a verifiable PDF report.
     """
     # 1. Verify the certificate exists in our 'Moat'
-    res = (
-        supabase.table("simulation_history")
-        .select("*")
-        .eq("certificate_hash", cert_hash)
-        .single()
-        .execute()
-    )
+    res = supabase.table("simulation_history").select("*").eq("certificate_hash", cert_hash).single().execute()
 
     if not res.data:
         raise HTTPException(status_code=404, detail="Certificate not found")

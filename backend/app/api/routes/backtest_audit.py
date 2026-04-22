@@ -47,8 +47,8 @@ async def audit_backtest(run_id: str):
         "summary": "Auto-generated audit summary",
     }
 
-    supabase.table("walk_forward_runs").update(
-        {"audit_result": result, "audit_score": audit_score}
-    ).eq("id", run_id).execute()
+    supabase.table("walk_forward_runs").update({"audit_result": result, "audit_score": audit_score}).eq(
+        "id", run_id
+    ).execute()
 
     return result

@@ -46,9 +46,7 @@ class PDFReportService:
         results = sim_data.get("result_summary", {})
         if isinstance(results, dict):
             for key, value in results.items():
-                c.drawString(
-                    1.2 * inch, y_offset, f"• {str(key).replace('_', ' ').title()}: {str(value)}"
-                )
+                c.drawString(1.2 * inch, y_offset, f"• {str(key).replace('_', ' ').title()}: {str(value)}")
                 y_offset -= 0.2 * inch
 
         # 5. The Verification QR Code
@@ -58,9 +56,7 @@ class PDFReportService:
         qr.save(qr_img_buffer, format="PNG")
         qr_img_buffer.seek(0)
 
-        c.drawImage(
-            qr_img_buffer, width - 2.5 * inch, 1 * inch, width=1.5 * inch, height=1.5 * inch
-        )
+        c.drawImage(qr_img_buffer, width - 2.5 * inch, 1 * inch, width=1.5 * inch, height=1.5 * inch)
         c.setFont("Helvetica-Oblique", 8)
         c.drawCentredString(width - 1.75 * inch, 0.8 * inch, "Scan to verify integrity")
 

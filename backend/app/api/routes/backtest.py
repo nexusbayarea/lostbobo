@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import timedelta
+from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends
@@ -18,7 +19,7 @@ def enqueue_simulation(job_data: dict):
 
 
 @router.post("/api/v1/backtest/run")
-async def create_backtest(payload: BacktestCreate, user: dict = Depends(verify_auth)):
+async def create_backtest(payload: BacktestCreate, user: Annotated[dict, Depends(verify_auth)]):
     run_id = str(uuid4())
 
     supabase.table("walk_forward_runs").insert(
@@ -32,10 +33,7 @@ async def create_backtest(payload: BacktestCreate, user: dict = Depends(verify_a
     ).execute()
 
     cursor = payload.start_date
-    while (
-        cursor + timedelta(days=payload.train_window_days + payload.test_window_days)
-        <= payload.end_date
-    ):
+    while cursor + timedelta(days=payload.train_window_days + payload.test_window_days) <= payload.end_date:
         train_start = cursor
         train_end = cursor + timedelta(days=payload.train_window_days)
         test_start = train_end
@@ -66,9 +64,7 @@ async def create_backtest(payload: BacktestCreate, user: dict = Depends(verify_a
             }
         ).execute()
 
-        enqueue_simulation(
-            {"type": "backtest_window", "window_id": window_id, "contract": contract}
-        )
+        enqueue_simulation({"type": "backtest_window", "window_id": window_id, "contract": contract})
 
         cursor += timedelta(days=payload.step_days)
 

@@ -30,15 +30,11 @@ async def trigger_global_shutdown() -> str:
             headers = {"Authorization": f"Bearer {os.getenv('RUNPOD_API_KEY')}"}
             # Fetch all pods
             pod_query = {"query": "{ myself { pods { id } } }"}
-            pods_res = await client.post(
-                "https://api.runpod.io/graphql", json=pod_query, headers=headers
-            )
+            pods_res = await client.post("https://api.runpod.io/graphql", json=pod_query, headers=headers)
             pods = pods_res.json()["data"]["myself"]["pods"]
 
             for pod in pods:
-                term_query = {
-                    "query": f'mutation {{ terminatePod(input: {{ podId: "{pod["id"]}" }}) }}'
-                }
+                term_query = {"query": f'mutation {{ terminatePod(input: {{ podId: "{pod["id"]}" }}) }}'}
                 await client.post("https://api.runpod.io/graphql", json=term_query, headers=headers)
                 report.append(f"💥 Terminated Pod: {pod['id']}")
     except Exception as e:

@@ -1,5 +1,5 @@
 """
-Main autoscaler loop for scaling worker pods based on queue depth
+scaler_engine loop for scaling worker pods based on queue depth
 """
 
 import logging
@@ -32,8 +32,6 @@ def get_current_worker_count() -> int:
     In production, this would call RunPod API or Kubernetes
     For now, return a placeholder
     """
-    # Placeholder implementation
-    # In production, this would query RunPod API for active workers
     return settings.MIN_WARM_WORKERS
 
 
@@ -54,7 +52,6 @@ def calculate_target_workers(queue_depth: int) -> int:
 def scale_workers(target_count: int) -> bool:
     """
     Scale worker pods to target count
-    In production, this would call RunPod API or Kubernetes
     """
     current_count = get_current_worker_count()
 
@@ -63,45 +60,35 @@ def scale_workers(target_count: int) -> bool:
         return True
 
     if target_count > current_count:
-        # Scale up
         to_add = target_count - current_count
         logger.info(f"Scaling up by {to_add} workers (from {current_count} to {target_count})")
-        # In production: call RunPod API to create new pods
-        # For now, just log the action
         return True
     else:
-        # Scale down
         to_remove = current_count - target_count
         logger.info(f"Scaling down by {to_remove} workers (from {current_count} to {target_count})")
-        # In production: call RunPod API to terminate pods
-        # For now, just log the action
         return True
 
 
-def main():
-    """Main autoscaler loop"""
+def scaler_engine():
+    """scaler_engine loop"""
     logger.info("Starting autoscaler...")
 
     while True:
         try:
-            # Get current queue depth
             queue_depth = get_queue_depth()
             logger.info(f"Current queue depth: {queue_depth}")
 
-            # Calculate target worker count
             target_workers = calculate_target_workers(queue_depth)
             logger.info(f"Target worker count: {target_workers}")
 
-            # Scale workers if needed
             scale_workers(target_workers)
-
-            # Sleep before next check
-            time.sleep(30)  # Check every 30 seconds
+            time.sleep(30)
 
         except Exception as e:
             logger.error(f"Error in autoscaler loop: {e}")
-            time.sleep(60)  # Longer sleep on error
+            time.sleep(60)
 
 
+# CRITICAL FIX: In Python, this must ALWAYS be "__main__", but it calls your new function.
 if __name__ == "__main__":
-    main()
+    scaler_engine()

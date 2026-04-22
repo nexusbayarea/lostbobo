@@ -15,9 +15,7 @@ def enforce_liquidity(quantity, volume, max_rate):
 def execute_order(order, price_row, config):
     side = order["side"]
     base_price = apply_spread(side, price_row["bid"], price_row["ask"])
-    qty = enforce_liquidity(
-        order["quantity"], price_row["volume"], config["max_participation_rate"]
-    )
+    qty = enforce_liquidity(order["quantity"], price_row["volume"], config["max_participation_rate"])
     slip = compute_slippage(base_price, qty, price_row["volume"])
 
     final_price = base_price + slip if side == "buy" else base_price - slip

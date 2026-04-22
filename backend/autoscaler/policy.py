@@ -54,9 +54,7 @@ def should_scale_down(current_workers: int, queue_depth: int, policy: dict[str, 
     return False
 
 
-def calculate_desired_workers(
-    current_workers: int, queue_depth: int, policy: dict[str, Any]
-) -> int:
+def calculate_desired_workers(current_workers: int, queue_depth: int, policy: dict[str, Any]) -> int:
     """
     Calculate desired worker count based on queue depth and policy
     """

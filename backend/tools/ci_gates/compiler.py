@@ -22,11 +22,7 @@ class DependencyCompiler:
 
     def _get_module_name(self, path):
         clean_path = path.replace("\\", ".").replace("/", ".")
-        return (
-            clean_path.replace(self.root_dir.replace("\\", "."), "backend")
-            .removesuffix(".py")
-            .strip(".")
-        )
+        return clean_path.replace(self.root_dir.replace("\\", "."), "backend").removesuffix(".py").strip(".")
 
     def _extract_imports(self, path, module):
         with open(path) as f:

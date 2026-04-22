@@ -30,9 +30,7 @@ async def reap_idle_workers() -> str:
         async with httpx.AsyncClient() as client:
             query = {"query": "{ myself { pods { id name status } } }"}
             headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
-            response = await client.post(
-                "https://api.runpod.io/graphql", json=query, headers=headers
-            )
+            response = await client.post("https://api.runpod.io/graphql", json=query, headers=headers)
 
             if response.status_code != 200:
                 return f"❌ RunPod API Error: {response.text}"
@@ -44,11 +42,7 @@ async def reap_idle_workers() -> str:
 
                 # 2. Check the worker_heartbeat table
                 res = (
-                    supabase.table("worker_heartbeat")
-                    .select("last_ping")
-                    .eq("pod_id", pod_id)
-                    .maybe_single()
-                    .execute()
+                    supabase.table("worker_heartbeat").select("last_ping").eq("pod_id", pod_id).maybe_single().execute()
                 )
 
                 if not res.data:
@@ -64,18 +58,14 @@ async def reap_idle_workers() -> str:
 
                 # 3. Terminate if stale and currently 'RUNNING'
                 if is_stale and pod["status"] == "RUNNING":
-                    terminate_query = {
-                        "query": f'mutation {{ terminatePod(input: {{ podId: "{pod_id}" }}) }}'
-                    }
+                    terminate_query = {"query": f'mutation {{ terminatePod(input: {{ podId: "{pod_id}" }}) }}'}
                     term_resp = await client.post(
                         "https://api.runpod.io/graphql", json=terminate_query, headers=headers
                     )
 
                     if term_resp.status_code == 200:
                         reaped_count += 1
-                        logs.append(
-                            f"💀 Reaped stale Pod {pod_id} (Last seen: {last_ping.strftime('%H:%M:%S')})"
-                        )
+                        logs.append(f"💀 Reaped stale Pod {pod_id} (Last seen: {last_ping.strftime('%H:%M:%S')})")
                     else:
                         logs.append(f"❌ Failed to reap Pod {pod_id}: {term_resp.text}")
 

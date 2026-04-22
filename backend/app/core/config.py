@@ -16,9 +16,18 @@ class Settings(BaseSettings):
     S3_ENDPOINT: str = os.getenv("RUNPOD_S3_ENDPOINT", "")
     S3_REGION: str = os.getenv("RUNPOD_REGION", "us-east-1")
     S3_VOLUME_ID: str = os.getenv("RUNPOD_VOLUME_ID", "")
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    QUEUE_HIGH: str = "simhpc:queue:high"
+    QUEUE_MED: str = "simhpc:queue:medium"
+    QUEUE_DEFAULT: str = "simhpc:queue:default"
+    MIN_WARM_WORKERS: int = int(os.getenv("MIN_WARM_WORKERS", "1"))
 
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "SimHPC"
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings

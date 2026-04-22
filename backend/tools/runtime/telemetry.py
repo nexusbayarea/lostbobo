@@ -27,9 +27,7 @@ class TelemetryManager:
                 )
             """)
 
-    def record_run(
-        self, project: str, sim_type: str, duration: float, gpu_util: float, status: str
-    ):
+    def record_run(self, project: str, sim_type: str, duration: float, gpu_util: float, status: str):
         cost = (duration / 3600) * RUNPOD_HOURLY_RATE
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute(

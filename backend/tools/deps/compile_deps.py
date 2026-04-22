@@ -130,9 +130,7 @@ def main() -> None:
         pass
 
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True
-        )
+        result = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True)
         if result.returncode == 0:
             locked = []
             for line in result.stdout.splitlines():

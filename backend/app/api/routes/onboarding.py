@@ -11,4 +11,4 @@ async def initialize_user(user_id: str):
         result = await onboarding_service.onboard_new_user(user_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

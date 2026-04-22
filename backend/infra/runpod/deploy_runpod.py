@@ -76,9 +76,7 @@ def deploy():
     print(f"Resuming pod {POD_ID}...")
     resume_resp = requests.post(
         "https://api.runpod.io/graphql",
-        json={
-            "query": f'mutation {{ podResume(input: {{ podId: "{POD_ID}", gpuCount: 1 }}) {{ id }} }}'
-        },
+        json={"query": f'mutation {{ podResume(input: {{ podId: "{POD_ID}", gpuCount: 1 }}) {{ id }} }}'},
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",

@@ -36,9 +36,7 @@ async def list_simulations(user_id: str):
 @router.post("/generate-report/{job_id}", tags=["Mercury AI"])
 async def generate_guidance_report(job_id: str) -> Any:
     try:
-        res = (
-            supabase.table("simulation_history").select("*").eq("job_id", job_id).single().execute()
-        )
+        res = supabase.table("simulation_history").select("*").eq("job_id", job_id).single().execute()
         sim_data = res.data
 
         if not sim_data:
@@ -60,9 +58,7 @@ async def generate_guidance_report(job_id: str) -> Any:
 
         updated_results = {**results_blob, "ai_report": report_content}
 
-        supabase.table("simulation_history").update({"results": updated_results}).eq(
-            "job_id", job_id
-        ).execute()
+        supabase.table("simulation_history").update({"results": updated_results}).eq("job_id", job_id).execute()
 
         return {"job_id": job_id, "report": report_content}
 

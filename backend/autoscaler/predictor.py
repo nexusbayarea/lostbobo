@@ -31,9 +31,7 @@ class SimplePredictor:
 
         recent_avg = np.mean(self.history[-3:]) if len(self.history) >= 3 else np.mean(self.history)
         older_avg = (
-            np.mean(self.history[:-3])
-            if len(self.history) >= 6
-            else np.mean(self.history[: len(self.history) // 2])
+            np.mean(self.history[:-3]) if len(self.history) >= 6 else np.mean(self.history[: len(self.history) // 2])
         )
 
         if recent_avg > older_avg * 1.2:

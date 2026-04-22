@@ -113,12 +113,12 @@ def main():
     args = parser.parse_args()
 
     os.environ["RUNTIME_MODE"] = "ci"
-    os.environ["SB_URL"] = os.environ.get("SB_URL", "http://localhost:8000")
+    os.environ["SB_URL"] = os.environ.get("SB_URL", "http://localhost:8080")
     os.environ["SB_TOKEN"] = os.environ.get("SB_TOKEN", "ci-stub-token")
     os.environ["SB_SECRET_KEY"] = os.environ.get("SB_SECRET_KEY", "ci-stub-secret")
     os.environ["SB_JWT_SECRET"] = os.environ.get("SB_JWT_SECRET", "ci-stub-jwt")
     os.environ["SB_PUB_KEY"] = os.environ.get("SB_PUB_KEY", "ci-stub-pubkey")
-    os.environ["SB_DATA_URL"] = os.environ.get("SB_DATA_URL", "http://localhost:8001")
+    os.environ["SB_DATA_URL"] = os.environ.get("SB_DATA_URL", "http://localhost:8000")
 
     if args.seed:
         os.environ["SIMHPC_SEED"] = str(args.seed)

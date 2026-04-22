@@ -26,10 +26,11 @@ jobs:
         run: |
           pip install ruff
 
-      - name: Run Mutation Kernel (Mutation Phase)
-        run: python -m runtime.kernel
+      - name: Run Unified CI
+        run: python tools/run_ci.py
 
-      - name: Run Strict Validation (Read-Only Phase)
+      - name: Run Strict Validation (Read-Only Phase)      
         run: |
           ruff format --check .
           ruff check .
+

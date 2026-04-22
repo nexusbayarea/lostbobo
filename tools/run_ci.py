@@ -9,14 +9,15 @@ Usage:
     python tools/run_ci.py --auto-fix  # Attempt auto-fix in sandbox
 """
 import os
-import subprocess
 import sys
+import subprocess
 import argparse
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BACKEND = REPO_ROOT / "backend"
 
+sys.path.insert(0, str(REPO_ROOT))
 os.chdir(BACKEND)
 
 
@@ -122,18 +123,18 @@ def main():
     if args.seed:
         os.environ["SIMHPC_SEED"] = str(args.seed)
 
-    run("Install runtime deps", "uv pip install -r requirements.api.lock")
-    run("Install dev deps", "uv pip install -r requirements.dev.lock")
+    run("Install runtime deps", "uv venv && uv pip install --system -r requirements.api.lock")
+    run("Install dev deps", "uv pip install --system -r requirements.dev.lock")
 
     run("Ruff lint", "ruff check . --config pyproject.toml")
     run("Ruff format check", "ruff format . --check --config pyproject.toml")
 
-    run("Import check", "python -c 'from app.gateway import app; from worker.worker import worker; print(\"imports OK\")'")
+    run("Import check", "python3 -c 'from app.gateway import app; from worker.worker import worker; print(\"imports OK\")'")
 
-    run("Runtime Isolation Gate", "python ../tools/ci_gates/runtime_isolation.py")
+    run("Runtime Isolation Gate", f"python3 {REPO_ROOT}/tools/ci_gates/runtime_isolation.py")
 
     run_func = lambda n, c: run_with_auto_fix(n, c, args.auto_fix) if args.auto_fix else run
-    run_func("Tests", "pytest -q --tb=short ../tests/")
+    run_func("Tests", "python3 -m pytest -q --tb=short ../tests/")
 
     if args.replay:
         run("Replay diff", f"python -m runtime.replay_diff {args.replay} {args.contract or 'v1'}", check=False)

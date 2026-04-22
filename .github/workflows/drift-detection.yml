@@ -18,17 +18,25 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Verify clean install from pinned requirements
+      - name: Verify clean install from lockfile
         run: |
-          echo "🔍 Verifying pinned requirements install cleanly..."
+          echo "Verifying pinned requirements install cleanly..."
           uv venv
           source .venv/bin/activate
-          uv pip install -r backend/requirements.txt
-          echo "✅ All pinned packages resolved successfully"
+          uv pip install -r requirements.api.lock
+          uv pip install -e .
+          echo "All pinned packages resolved successfully"
+
+      - name: Check lockfile drift
+        run: |
+          uv pip compile backend/pyproject.toml -o requirements.api.lock.tmp
+          diff -q requirements.api.lock requirements.api.lock.tmp
+          echo "Lockfile is consistent"
 
       - name: Runtime import check
         run: |
           source .venv/bin/activate
+          # Ensure current directory is in PYTHONPATH for package discovery
           export PYTHONPATH=$GITHUB_WORKSPACE
           python3 -c "from backend.app.gateway import app; print('✅ Gateway import OK')"
 

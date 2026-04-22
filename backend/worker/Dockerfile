@@ -6,8 +6,8 @@ RUN pip install uv supervisor requests
 
 COPY pyproject.toml uv.lock ./
 COPY app ./app
-COPY packages ./packages
 COPY worker ./worker
+COPY packages ./packages
 
 RUN uv pip install --system -e .
 

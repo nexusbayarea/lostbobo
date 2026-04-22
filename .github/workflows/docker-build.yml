@@ -46,8 +46,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: backend/worker/Dockerfile
+          context: backend
+          file: worker/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.sha_tag }}

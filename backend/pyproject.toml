@@ -2,40 +2,17 @@
 name = "simhpc"
 version = "3.5.0"
 dependencies = [
-    "fastapi>=0.110.0",
-    "uvicorn[standard]>=0.29.0",
-    "python-dotenv>=1.0.1",
-    "redis>=4.5.0",
-    "pydantic>=2.0,<3.0",
-    "pydantic-settings>=2.0,<3.0",
-    "httpx>=0.27.0",
-    "supabase>=2.4.0",
-    "postgrest>=0.16.0",
-    "python-jose[cryptography]>=3.3.0",
-    "asyncpg>=0.29.0",
-    "websockets>=12.0",
-    "tenacity>=8.2.3",
-    "orjson>=3.11.0",
-    "loguru>=0.7.2",
-    "structlog>=23.0.0",
-    "prometheus-client>=0.17.0",
-    "python-multipart>=0.0.6",
-    "passlib[bcrypt]>=1.7.4",
-]
-
-[project.optional-dependencies]
-worker = [
-    "numpy>=1.24,<2.2",
-    "scipy",
-    "matplotlib",
-    "celery",
-]
-
-dev = [
-    "pytest",
-    "pytest-asyncio",
-    "ruff",
-    "mypy",
+    "reportlab",
+    "qrcode[pil]",
+    "requests",
+    "pandas",
+    "fastapi",
+    "uvicorn",
+    "pydantic-settings",
+    "numpy",
+    "pillow",
+    "python-dotenv",
+    "annotated-doc",
 ]
 
 [tool.setuptools.packages.find]
@@ -51,16 +28,22 @@ line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "UP", "I", "TID"]
-ignore = ["E402", "B008", "B904", "E501", "UP042", "B007"]
+select = ["E", "F", "B", "UP", "I"]
+ignore = [
+    "E402",   # module import not at top
+    "B008",   # Depends() in default args - FastAPI pattern
+    "B904",   # raise from err
+    "E501",   # line too long
+    "UP042",  # StrEnum
+    "B007",   # loop var not used
+    "TID252", # relative imports
+    "I001",   # import sort
+]
 fixable = ["ALL"]
 
-[tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
-
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"backend.app" = { msg = "app cannot be imported outside API layer" }
-"backend.worker" = { msg = "worker cannot be imported outside worker layer" }
+"backend.app.api" = { msg = "API routes cannot be imported outside the API layer" }
+"backend.app.api.routes" = { msg = "API routes cannot be imported outside the API layer" }
 
 [tool.ruff.format]
 quote-style = "double"

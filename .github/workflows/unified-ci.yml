@@ -1,0 +1,38 @@
+name: Unified Deterministic CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      RUNTIME_MODE: ci
+      SB_URL: http://localhost:8080
+      SB_TOKEN: ci-stub-token
+      SB_SECRET_KEY: ci-stub-secret
+      SB_JWT_SECRET: ci-stub-jwt
+      SB_PUB_KEY: ci-stub-pubkey
+      SB_DATA_URL: http://localhost:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install ruff
+
+      - name: Run CI
+        run: python tools/run_ci.py

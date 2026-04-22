@@ -1,11 +1,15 @@
 import sys
+from pathlib import Path
 
+LOCKFILE = Path(__file__).resolve().parent.parent / "requirements.api.lock"
 FORBIDDEN = ["numpy", "scipy", "torch"]
 
-with open("backend/requirements.api.lock") as f:
-    content = f.read()
+if not LOCKFILE.exists():
+    print(f"Lockfile not found: {LOCKFILE}")
+    sys.exit(1)
 
-violations = [pkg for pkg in FORBIDDEN if pkg in content]
+content = LOCKFILE.read_text()
+violations = [pkg for pkg in FORBIDDEN if f"\n{pkg}==" in content]
 
 if violations:
     print(f"API lock contaminated: {violations}")

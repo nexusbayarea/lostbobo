@@ -24,6 +24,9 @@ jobs:
   ci:
     name: Full CI Pipeline
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -41,23 +44,23 @@ jobs:
       # ---------- STRUCTURE GUARD ----------
       - name: Assert src layout
         run: |
-          test -d backend/app || (echo "Missing backend/app" && exit 1)
-          test -d backend/worker || (echo "Missing backend/worker" && exit 1)
+          test -d app || (echo "Missing app" && exit 1)
+          test -d worker || (echo "Missing worker" && exit 1)
 
       # ---------- LINT ----------
       - name: Install lint tools
         run: pip install ruff==0.4.4
 
       - name: Ruff format check
-        run: ruff format --check .
+        run: ruff format --check . --config pyproject.toml
 
       - name: Ruff lint
-        run: ruff check .
+        run: ruff check . --config pyproject.toml
 
       # ---------- LOCKFILE DRIFT ----------
       - name: Verify lockfile consistency
         run: |
-          uv pip compile backend/pyproject.toml -o requirements.api.lock.tmp
+          uv pip compile pyproject.toml -o requirements.api.lock.tmp
           diff -q requirements.api.lock requirements.api.lock.tmp
 
       # ---------- INSTALL (DETERMINISTIC) ----------
@@ -72,33 +75,33 @@ jobs:
       - name: Verify imports
         run: |
           source .venv/bin/activate
-          python -c "from backend.app.gateway import app; from backend.worker.worker import worker; print('imports OK')"
+          python -c "from app.gateway import app; from worker.worker import worker; print('imports OK')"
 
       - name: Enforce import boundaries
         run: |
           source .venv/bin/activate
-          python backend/tools/ci_gates/check_import_boundaries.py
+          python tools/ci_gates/check_import_boundaries.py
 
       # ---------- TESTS ----------
       - name: Run tests
         run: |
           source .venv/bin/activate
-          python -m pytest tests/ -q --tb=short
+          python -m pytest ../tests/ -q --tb=short
 
       - name: Boot validation
         run: |
           source .venv/bin/activate
-          pytest tests/test_boot.py -xvs
+          pytest ../tests/test_boot.py -xvs
 
       - name: Boot fail-fast validation
         run: |
           source .venv/bin/activate
-          pytest tests/test_boot_failfast.py -xvs
+          pytest ../tests/test_boot_failfast.py -xvs
 
       - name: DAG system tests
         run: |
           source .venv/bin/activate
-          pytest tests/test_dag.py -xvs
+          pytest ../tests/test_dag.py -xvs
 
       # ---------- PURITY CHECKS ----------
       - name: API purity (no worker deps)
@@ -108,7 +111,7 @@ jobs:
 
       # ---------- DOCKER BUILD ----------
       - name: Validate Dockerfile
-        run: test -f Dockerfile.unified
+        run: test -f ../Dockerfile.unified
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -117,7 +120,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.unified
+          file: ../Dockerfile.unified
           push: false
           platforms: linux/amd64
           cache-from: type=gha

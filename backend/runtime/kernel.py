@@ -31,3 +31,6 @@ class Kernel:
 
 
 KERNEL = Kernel()
+
+if __name__ == "__main__":
+    KERNEL.boot({"capabilities": {"state_enabled": True}})

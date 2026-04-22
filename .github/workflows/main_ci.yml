@@ -12,12 +12,12 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.11"
-  SB_URL: "http://localhost:8000"
+  SB_URL: "http://localhost:8080"
   SB_TOKEN: "ci-stub-token"
   SB_SECRET_KEY: "ci-stub-secret"
   SB_JWT_SECRET: "ci-stub-jwt"
   SB_PUB_KEY: "ci-stub-pubkey"
-  SB_DATA_URL: "http://localhost:8001"
+  SB_DATA_URL: "http://localhost:8000"
   RUNTIME_MODE: "ci"
 
 jobs:

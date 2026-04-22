@@ -1,19 +1,23 @@
-import subprocess
+import os
 import sys
+import subprocess
+import json
 from pathlib import Path
-from runtime.compiler.ast_normalizer import normalize_file
+from datetime import datetime
 
-# Set backend as canonical import root
+# Explicitly add backend to sys.path so 'runtime' is available
 ROOT = Path(__file__).resolve().parents[3]
 BACKEND = ROOT / "backend"
 sys.path.insert(0, str(BACKEND))
+
+# Use absolute imports relative to the backend package root
+from runtime.compiler.ast_normalizer import normalize_file
 
 class ExecutionKernel:
     """
     Kernel acts as a PURE MUTATION engine. 
     It performs normalization and structural fixes, 
-    but NEVER validates results. Validation is the 
-    exclusive responsibility of the CI 'read-only' gate.
+    but NEVER validates results.
     """
     def execute(self):
         print("[KERNEL] Starting single-pass deterministic normalization")

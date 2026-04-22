@@ -1,59 +1,75 @@
 import os
+import json
+import subprocess
 import sys
 from pathlib import Path
+from datetime import datetime
+from runtime.compiler.ast_normalizer import normalize_file
 
-# Set the backend as the ONLY import root
-ROOT = Path(__file__).resolve().parents[3] # C:\Users\arche\SimHPC
+# Set backend as canonical import root
+ROOT = Path(__file__).resolve().parents[3]
 BACKEND = ROOT / "backend"
 sys.path.insert(0, str(BACKEND))
 
-import subprocess
-from runtime.compiler.ast_normalizer import normalize_file
+class ExecutionKernel:
+    def __init__(self):
+        self.run_id = datetime.utcnow().isoformat()
+        self.trace = []
+        self.violations = {}
 
-def ensure_deps():
-    print("[KERNEL] Ensuring dependencies...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "ruff"], check=True)
+    def count_violations(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "ruff", "check", "backend"],
+            capture_output=True, text=True
+        )
+        import re
+        match = re.search(r"Found (\d+) error", result.stdout)
+        return int(match.group(1)) if match else 0
 
-def normalize_source():
-    print("[KERNEL] AST normalization stage")
-    for path in Path(BACKEND).rglob("*.py"):
-        normalize_file(path)
+    def run_stage(self, name, action):
+        before = self.count_violations()
+        print(f"[KERNEL] Starting {name}...")
+        
+        if callable(action):
+            action()
+        else:
+            subprocess.run(action, shell=True)
+            
+        after = self.count_violations()
+        self.trace.append({
+            "stage": name,
+            "before": before,
+            "after": after,
+            "delta": before - after
+        })
+        return after <= before
 
-def run(cmd: str):
-    print(f"[KERNEL] {cmd}")
-    # Run with PYTHONPATH set to backend
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(BACKEND)
-    return subprocess.run(cmd, shell=True, env=env).returncode
+    def execute(self):
+        stages = [
+            ("AST Normalization", lambda: [normalize_file(p) for p in Path(BACKEND).rglob("*.py")]),
+            ("Import Fix", "python -m ruff check backend --select I --fix"),
+            ("Format", "python -m ruff format backend"),
+            ("Typing Fix", "python -m ruff check backend --select UP --fix"),
+            ("Unsafe Fixes", "python -m ruff check backend --fix --unsafe-fixes"),
+        ]
 
-def run_kernel():
-    print("[KERNEL] boot sequence start")
-    
-    # 1. STRUCTURAL NORMALIZATION
-    normalize_source()
+        for name, action in stages:
+            if not self.run_stage(name, action):
+                print(f"[KERNEL] FAILED at {name}")
+                return 1
 
-    # 2. IMPORT FIX (safe)
-    run("python -m ruff check backend --select I --fix")
-
-    # 3. FORMAT
-    run("python -m ruff format backend")
-
-    # 4. TYPE MODERNIZATION
-    run("python -m ruff check backend --select UP --fix")
-
-    # 5. UNSAFE COMPLETION PASS
-    run("python -m ruff check backend --fix --unsafe-fixes")
-
-    # 6. FINAL STRICT VALIDATION
-    code = run("python -m ruff check backend")
-
-    if code != 0:
-        print("[KERNEL] FAILED - non-converged state")
-        return 1
-
-    print("[KERNEL] SUCCESS - converged state")
-    return 0
+        final = self.count_violations()
+        output = {
+            "run_id": self.run_id,
+            "status": "SUCCESS" if final == 0 else "FAILED",
+            "trace": self.trace,
+            "final_violations": final
+        }
+        with open("ci_run_summary.json", "w") as f:
+            json.dump(output, f, indent=2)
+        
+        return 0 if final == 0 else 1
 
 if __name__ == "__main__":
-    ensure_deps()
-    raise SystemExit(run_kernel())
+    kernel = ExecutionKernel()
+    raise SystemExit(kernel.execute())

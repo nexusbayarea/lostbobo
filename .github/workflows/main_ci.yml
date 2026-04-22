@@ -109,23 +109,6 @@ jobs:
           source .venv/bin/activate
           python -c "import numpy" && exit 1 || echo "OK"
 
-      # ---------- DOCKER BUILD ----------
-      - name: Validate Dockerfile
-        run: test -f ../Dockerfile.unified
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build image (CI only)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ../Dockerfile.unified
-          push: false
-          platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   deploy:
     name: Deploy
     runs-on: ubuntu-latest

@@ -42,18 +42,3 @@ jobs:
         run: |
           export PYTHONPATH=$GITHUB_WORKSPACE
           python -m tools.bootstrap ci
-
-      - name: Auth with GHCR
-        run: |
-          echo "${{ secrets.GIT_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Build and Push SimHPC Image
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/simhpc_unified:latest
-          docker build -f ../Dockerfile.unified -t $IMAGE ..
-          docker push $IMAGE
-
-      - name: Update RunPod Template
-        run: |
-          export RUNPOD_API_KEY=${{ secrets.RUNPOD_API_KEY }}
-          python tools/update_runpod.py

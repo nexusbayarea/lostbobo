@@ -1,6 +1,6 @@
 import json
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 
 def normalize_output(output: Any) -> Any:
@@ -30,13 +30,13 @@ def compare_values(expected: Any, actual: Any) -> bool:
     return normalize_output(expected) == normalize_output(actual)
 
 
-def diff_nodes(replayed_nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def diff_nodes(replayed_nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Compare expected vs actual outputs for each node.
-    
+
     Args:
         replayed_nodes: List of node replay results from tools.runtime.replay.replay()
-        
+
     Returns:
         List of diffs (empty if no differences)
     """
@@ -64,15 +64,15 @@ def diff_trace(
     trace_path: str,
     executor: Callable[[str, dict], Any],
     contract_version: str = "v1",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Load trace, replay, and diff in one call.
-    
+
     Args:
         trace_path: Path to saved ExecutionTrace JSON
         executor: Callable that executes a node
         contract_version: Contract version to use
-        
+
     Returns:
         List of diffs (empty if no differences)
     """
@@ -82,7 +82,7 @@ def diff_trace(
     return diff_nodes(replayed)
 
 
-def save_diff_report(diffs: List[Dict[str, Any]], output_path: str):
+def save_diff_report(diffs: list[dict[str, Any]], output_path: str):
     """
     Save diff report to JSON file.
     """
@@ -90,7 +90,7 @@ def save_diff_report(diffs: List[Dict[str, Any]], output_path: str):
         json.dump(diffs, f, indent=2)
 
 
-def load_diff_report(input_path: str) -> List[Dict[str, Any]]:
+def load_diff_report(input_path: str) -> list[dict[str, Any]]:
     """
     Load diff report from JSON file.
     """
@@ -98,7 +98,7 @@ def load_diff_report(input_path: str) -> List[Dict[str, Any]]:
         return json.load(f)
 
 
-def format_diffs(diffs: List[Dict[str, Any]]) -> str:
+def format_diffs(diffs: list[dict[str, Any]]) -> str:
     """
     Format diffs for human-readable output.
     """

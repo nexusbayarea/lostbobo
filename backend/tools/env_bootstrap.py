@@ -1,5 +1,5 @@
-import platform
 import json
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -26,10 +26,14 @@ def main(mode="dev"):
 
     print("[ENV] bootstrap complete")
 
-    print(json.dumps({
-        "python": platform.python_version(),
-        "os": platform.system(),
-    }))
+    print(
+        json.dumps(
+            {
+                "python": platform.python_version(),
+                "os": platform.system(),
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -6,9 +6,11 @@ Usage:
     python tools/runtime/replay_diff.py <trace_path> <contract_version> [executor_module]
     python tools/runtime/replay_diff.py trace_latest.json v1
 """
+
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any
 
 from runtime.diff import diff_nodes, format_diffs, save_diff_report
 from runtime.replay import replay
@@ -20,6 +22,7 @@ def default_executor(node_name: str, input_data: dict) -> Any:
     Replace this with custom executor for your system.
     """
     import importlib.util
+
     from runtime.manifest import load_manifest
 
     manifest = load_manifest()
@@ -61,6 +64,7 @@ def main():
 
     if executor_module:
         import importlib
+
         mod = importlib.import_module(executor_module)
         executor = getattr(mod, "executor", default_executor)
 

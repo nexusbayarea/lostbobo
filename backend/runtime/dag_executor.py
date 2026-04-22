@@ -2,15 +2,15 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from runtime.contract import CONTRACTS
 from runtime.telemetry import TelemetryManager
-from runtime.trace import NodeTrace, capture_trace, run_node as trace_run_node
+from runtime.trace import NodeTrace, capture_trace
+from runtime.trace import run_node as trace_run_node
 
 tm = TelemetryManager()
 
-TRACE_NODES: List[NodeTrace] = []
+TRACE_NODES: list[NodeTrace] = []
 
 
 def load_manifest() -> dict:

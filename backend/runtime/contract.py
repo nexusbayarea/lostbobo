@@ -1,16 +1,16 @@
-from dataclasses import dataclass, field
-from typing import Set, Dict, Any, Optional
 import hashlib
 import json
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
 class ExecutionContract:
     version: str
-    allowed_modules: Set[str]
-    forbidden_imports: Set[str]
-    entrypoints: Set[str]
-    allowed_roots: Set[str] = field(default_factory=set)
+    allowed_modules: set[str]
+    forbidden_imports: set[str]
+    entrypoints: set[str]
+    allowed_roots: set[str] = field(default_factory=set)
 
     def validate_manifest(self, manifest: dict[str, Any]) -> bool:
         for node in manifest.get("nodes", {}).values():
@@ -34,12 +34,12 @@ class ExecutionContract:
 
 class ContractRegistry:
     def __init__(self):
-        self.contracts: Dict[str, ExecutionContract] = {}
+        self.contracts: dict[str, ExecutionContract] = {}
 
     def register(self, contract: ExecutionContract):
         self.contracts[contract.version] = contract
 
-    def get(self, version: str) -> Optional[ExecutionContract]:
+    def get(self, version: str) -> ExecutionContract | None:
         return self.contracts.get(version)
 
     def latest(self) -> ExecutionContract:
@@ -52,9 +52,7 @@ class ContractRegistry:
         removed = a.allowed_modules - b.allowed_modules
 
         if removed:
-            raise RuntimeError(
-                f"Incompatible contract change: removed modules {removed}"
-            )
+            raise RuntimeError(f"Incompatible contract change: removed modules {removed}")
 
 
 CONTRACTS = ContractRegistry()

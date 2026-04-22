@@ -1,14 +1,14 @@
 import json
 import time
-from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass
+from typing import Any
 
 
 @dataclass
 class NodeTrace:
     name: str
-    input: Dict[str, Any]
-    output: Dict[str, Any]
+    input: dict[str, Any]
+    output: dict[str, Any]
     status: str
     duration_ms: float
 
@@ -17,8 +17,8 @@ class NodeTrace:
 class ExecutionTrace:
     contract_version: str
     timestamp: float
-    nodes: List[NodeTrace]
-    manifest_hash: Optional[str] = None
+    nodes: list[NodeTrace]
+    manifest_hash: str | None = None
 
     def save(self, path: str):
         with open(path, "w") as f:
@@ -36,7 +36,7 @@ class ExecutionTrace:
         )
 
 
-def run_node(name: str, fn, input_data: dict, trace_nodes: List[NodeTrace]) -> dict:
+def run_node(name: str, fn, input_data: dict, trace_nodes: list[NodeTrace]) -> dict:
     start = time.time()
 
     try:
@@ -61,7 +61,7 @@ def run_node(name: str, fn, input_data: dict, trace_nodes: List[NodeTrace]) -> d
     return output
 
 
-def capture_trace(contract_version: str, nodes: List[NodeTrace], manifest_hash: Optional[str] = None) -> ExecutionTrace:
+def capture_trace(contract_version: str, nodes: list[NodeTrace], manifest_hash: str | None = None) -> ExecutionTrace:
     return ExecutionTrace(
         contract_version=contract_version,
         timestamp=time.time(),

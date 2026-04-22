@@ -83,6 +83,11 @@ jobs:
           source .venv/bin/activate
           python tools/ci_gates/check_import_boundaries.py
 
+      - name: Runtime Isolation Gate (HARD)
+        run: |
+          source .venv/bin/activate
+          python tools/ci_gates/runtime_isolation.py
+
       # ---------- TESTS ----------
       - name: Run tests
         run: |

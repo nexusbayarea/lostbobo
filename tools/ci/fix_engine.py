@@ -18,6 +18,12 @@ FIX_STRATEGIES = {
         "command": "uv pip compile pyproject.toml -o requirements.api.lock",
         "description": "Add missing dependency to lockfile",
     },
+    "i001": {
+        "action": "fix_imports",
+        "extract": None,
+        "command": "python -m ruff check . --select I --fix",
+        "description": "Fix import ordering",
+    },
     "importerror": {
         "action": "fix_import",
         "extract": None,
@@ -162,6 +168,7 @@ def get_fix_confidence(fix: dict) -> float:
         "add_dependency": 0.8,
         "install_dev_deps": 0.9,
         "format_code": 0.95,
+        "fix_imports": 0.9,
         "fix_import": 0.7,
     }
     

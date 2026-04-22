@@ -52,8 +52,8 @@ FAILURE_PATTERNS = {
         "fix": "Verify file paths in config",
     },
     "i001": {
-        "hint": "imports not sorted (run ruff format)",
-        "fix": "python -m ruff format .",
+        "hint": "imports not sorted (run ruff check . --select I --fix)",
+        "fix": "python -m ruff check . --select I --fix",
     },
     "up006": {
         "hint": "legacy typing syntax - use built-in generics",

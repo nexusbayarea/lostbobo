@@ -1,3 +1,19 @@
+from dataclasses import dataclass
+
+
+@dataclass
+class ExecutionContract:
+    allowed_modules: set[str]
+    forbidden_imports: set[str]
+    entrypoints: set[str]
+
+
+CONTRACT = ExecutionContract(
+    allowed_modules={"app", "worker", "tools", "scripts", "tests"},
+    forbidden_imports={"ci."},
+    entrypoints={"app.api.kernel"},
+)
+
 import hashlib
 import json
 

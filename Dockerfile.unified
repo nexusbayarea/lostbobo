@@ -15,14 +15,13 @@ RUN apt-get update && apt-get install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 WORKDIR /app
-ENV PYTHONPATH=/app
 
-# Copy manifest and lockfile
-COPY backend/pyproject.toml backend/requirements.lock ./
+# Copy manifest and lockfile from backend/
+COPY backend/pyproject.toml backend/requirements.api.lock ./
 
-# Install using lockfile
-RUN pip install --no-cache-dir -r requirements.lock
-RUN pip install --no-cache-dir -e .
+# Install deps from lockfile, then install package (non-editable for prod)
+RUN pip install --no-cache-dir -r requirements.api.lock
+RUN pip install --no-cache-dir .
 
 # Copy backend source components with consistent paths
 COPY backend/app ./app

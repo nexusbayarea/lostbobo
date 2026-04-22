@@ -26,20 +26,24 @@ def run_node(node, cwd=None):
     result = subprocess.run(
         node["cmd"],
         shell=True,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
         cwd=cwd,
     )
 
     duration = time.time() - start
 
+    stdout = (result.stdout or "").strip()
+    stderr = (result.stderr or "").strip()
+
     entry = {
         "node": node["id"],
         "name": node.get("name", node["id"]),
         "cmd": node["cmd"],
         "return_code": result.returncode,
-        "stdout": result.stdout[-5000:] if result.stdout else "",
-        "stderr": result.stderr[-5000:] if result.stderr else "",
+        "stdout": stdout[-5000:] if stdout else "",
+        "stderr": stderr[-5000:] if stderr else "",
         "duration": round(duration, 3),
         "status": "PASS" if result.returncode == 0 else "FAIL",
     }
@@ -49,7 +53,8 @@ def run_node(node, cwd=None):
     print(f"[TRACE] {entry['status']} - {entry['duration']}s")
 
     if result.returncode != 0:
-        print(f"[TRACE] STDERR: {result.stderr[-1000:]}")
+        output = stderr or stdout or "(empty)"
+        print(f"[TRACE] OUTPUT: {output[:1000]}")
         return False
 
     return True
@@ -67,6 +72,17 @@ def get_last_success():
             return data
     
     return None
+
+
+def validate_trace_node(node):
+    """Validate that a trace node has complete signal data."""
+    if node["status"] == "FAIL":
+        if not node.get("stderr") and not node.get("stdout"):
+            raise RuntimeError(
+                f"Non-informative failure in node {node['node']} - "
+                "no stderr or stdout captured"
+            )
+    return True
 
 
 def report_failure(auto_fix=False):
@@ -118,6 +134,7 @@ def run_dag(cwd=None, auto_fix=False):
         success = run_node(node, cwd=cwd)
         if not success:
             print(f"\n[TRACE] FAILED at node: {node.get('name', node['id'])}")
+            validate_trace_node(TRACE[-1])
             save_trace()
             save_history()
             report_failure(auto_fix=auto_fix)

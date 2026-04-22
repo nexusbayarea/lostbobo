@@ -1,1 +1,2 @@
-# worker placeholder
+def worker():
+    return None

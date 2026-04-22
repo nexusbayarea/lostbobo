@@ -14,7 +14,7 @@ dependencies = [
 
 [tool.setuptools]
 # Only include directories that exist and contain __init__.py
-packages = ["app", "packages", "compiler", "infra", "tools", "worker"]
+packages = ["app", "packages", "autoscaler", "compiler", "infra", "tools", "worker"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

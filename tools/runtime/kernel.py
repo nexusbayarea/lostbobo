@@ -1,33 +1,67 @@
-"""
-SimHPC Kernel (v3.0.0)
-The heart of the runtime, managing capabilities and execution state.
-"""
-
-from typing import Any
-
-from tools.runtime.contract import CONTRACT
-from tools.runtime.execution_log import ExecutionLog
+import subprocess
+import json
 
 
-class Kernel:
-    def __init__(self):
-        self.log = ExecutionLog()
-        self.active_capabilities = set()
+STAGES = [
+    {
+        "name": "import_fix",
+        "cmd": "python -m ruff check . --select I --fix",
+        "category": "IMPORTS",
+    },
+    {
+        "name": "format",
+        "cmd": "python -m ruff format .",
+        "category": "FORMAT",
+    },
+    {
+        "name": "typing_fix",
+        "cmd": "python -m ruff check . --select UP --fix",
+        "category": "TYPING",
+    },
+    {
+        "name": "strict_lint",
+        "cmd": "python -m ruff check .",
+        "category": "STRICT",
+    },
+]
 
-    def boot(self, manifest: dict[str, Any]):
-        print("🌀 [KERNEL] Initializing boot sequence...")
 
-        # Use CONTRACT to satisfy strict linting and ensure architectural integrity
-        if not CONTRACT.validate_manifest(manifest):
-            raise RuntimeError("Kernel boot aborted: Manifest violates system contract.")
+def run_stage(stage):
+    print(f"\n[KERNEL] Running {stage['name']}")
 
-        if manifest.get("capabilities", {}).get("state_enabled"):
-            self._init_state_subsystem()
+    result = subprocess.run(stage["cmd"], shell=True)
 
-        print("🚀 [KERNEL] System online.")
-
-    def _init_state_subsystem(self):
-        print("💾 [KERNEL] State subsystem initialized.")
+    return {
+        "stage": stage["name"],
+        "category": stage["category"],
+        "code": result.returncode,
+    }
 
 
-KERNEL = Kernel()
+def run_kernel():
+    trace = []
+
+    print("[KERNEL] boot sequence start")
+
+    for stage in STAGES:
+        result = run_stage(stage)
+        trace.append(result)
+
+        # STRICT FAILURE ONLY AT END
+        if stage["name"] == "strict_lint" and result["code"] != 0:
+            print("[KERNEL] FAILED at strict gate")
+            break
+
+    with open("ci_trace.json", "w") as f:
+        json.dump(trace, f, indent=2)
+
+    if trace[-1]["code"] == 0:
+        print("\n[KERNEL] SUCCESS - system converged")
+        return 0
+
+    print("\n[KERNEL] FAILED - non-converged state")
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(run_kernel())

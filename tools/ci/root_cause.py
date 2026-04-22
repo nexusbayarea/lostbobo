@@ -51,6 +51,30 @@ FAILURE_PATTERNS = {
         "hint": "missing file or wrong path",
         "fix": "Verify file paths in config",
     },
+    "i001": {
+        "hint": "imports not sorted (run ruff format)",
+        "fix": "python -m ruff format .",
+    },
+    "up006": {
+        "hint": "legacy typing syntax - use built-in generics",
+        "fix": "python -m ruff check . --fix",
+    },
+    "up007": {
+        "hint": "legacy typing - use X | Y union syntax",
+        "fix": "python -m ruff check . --fix",
+    },
+    "up035": {
+        "hint": "deprecated typing imports (Set/Dict/List)",
+        "fix": "python -m ruff check . --fix",
+    },
+    "f401": {
+        "hint": "unused import - remove or prefix with _",
+        "fix": "python -m ruff check . --fix",
+    },
+    "f841": {
+        "hint": "unused variable - remove or prefix with _",
+        "fix": "python -m ruff check . --fix",
+    },
 }
 
 

@@ -1,179 +1,168 @@
-import os
+"""Targeted Fix Engine - Node-scoped fix proposals based on root cause."""
+import re
 import subprocess
-import shutil
-import tempfile
+import json
 from pathlib import Path
-from typing import Dict, Any, Optional
 
-SAFE_FIXES = {
-    "missing_dependency",
-    "lockfile_drift",
-    "missing_dev_dependency",
-    "pytest_missing",
+
+FIX_STRATEGIES = {
+    "modulenotfounderror": {
+        "action": "add_dependency",
+        "extract": "module",
+        "command": "uv pip compile pyproject.toml -o requirements.api.lock",
+        "description": "Add missing dependency to lockfile",
+    },
+    "no module named": {
+        "action": "add_dependency",
+        "extract": "module",
+        "command": "uv pip compile pyproject.toml -o requirements.api.lock",
+        "description": "Add missing dependency to lockfile",
+    },
+    "importerror": {
+        "action": "fix_import",
+        "extract": None,
+        "command": "python tools/ci_gates/import_guard.py",
+        "description": "Fix import boundary issue",
+    },
+    "pytest not found": {
+        "action": "install_dev_deps",
+        "extract": None,
+        "command": "pip install pytest pytest-asyncio ruff",
+        "description": "Install dev dependencies",
+    },
+    "syntaxerror": {
+        "action": "format_code",
+        "extract": None,
+        "command": "ruff format .",
+        "description": "Format code with ruff",
+    },
+    "indentationerror": {
+        "action": "format_code",
+        "extract": None,
+        "command": "ruff format .",
+        "description": "Fix indentation with ruff",
+    },
+    "nameerror": {
+        "action": "check_definitions",
+        "extract": "name",
+        "command": None,
+        "description": "Check for undefined name",
+    },
+    "attributeerror": {
+        "action": "check_api_version",
+        "extract": "attribute",
+        "command": None,
+        "description": "Check API version compatibility",
+    },
+    "connection refused": {
+        "action": "check_service",
+        "extract": None,
+        "command": None,
+        "description": "Check service configuration",
+    },
 }
 
 
-def apply_fix(failure: Dict[str, Any], repo_path: Path, dry_run: bool = True) -> Dict[str, Any]:
-    fix_type = failure.get("type")
+def extract_module(error: str):
+    """Extract module name from error message."""
+    patterns = [
+        r"named '(.+?)'",
+        r"No module named '(.+?)'",
+        r"module '(.+?)'",
+    ]
+    for pattern in patterns:
+        m = re.search(pattern, error)
+        if m:
+            return m.group(1)
+    return None
 
-    if fix_type not in SAFE_FIXES:
+
+def extract_name(error: str):
+    """Extract undefined name from error."""
+    m = re.search(r"NameError: name '(\w+)'", error)
+    return m.group(1) if m else None
+
+
+def extract_attribute(error: str):
+    """Extract missing attribute from error."""
+    m = re.search(r"'(\w+)' object has no attribute", error)
+    return m.group(1) if m else None
+
+
+def get_fix_strategy(error: str):
+    """Match error to fix strategy."""
+    error_lower = error.lower()
+    
+    for pattern, strategy in FIX_STRATEGIES.items():
+        if pattern in error_lower:
+            return strategy
+    
+    return None
+
+
+def propose_fix(root_cause: dict) -> dict:
+    """Propose targeted fix based on root cause analysis."""
+    error = (root_cause.get("error") or "").lower()
+    node = root_cause.get("root_node")
+    
+    strategy = get_fix_strategy(error)
+    
+    if not strategy:
         return {
-            "applied": False,
-            "reason": f"Unsafe fix type: {fix_type}",
-            "requires_manual": True,
+            "action": "manual_review",
+            "reason": "unclassified failure",
+            "node": node,
+            "error": error,
         }
-
-    result = {
-        "applied": False,
-        "fix_type": fix_type,
-        "command": "",
+    
+    extracted = None
+    if strategy.get("extract") == "module":
+        extracted = extract_module(root_cause.get("error", ""))
+    elif strategy.get("extract") == "name":
+        extracted = extract_name(root_cause.get("error", ""))
+    elif strategy.get("extract") == "attribute":
+        extracted = extract_attribute(root_cause.get("error", ""))
+    
+    return {
+        "action": strategy["action"],
+        "command": strategy.get("command"),
+        "description": strategy["description"],
+        "extracted": extracted,
+        "node": node,
+        "error": error,
     }
 
-    if fix_type == "missing_dependency":
-        result = _fix_missing_dependency(failure, repo_path, dry_run)
-    elif fix_type == "lockfile_drift":
-        result = _fix_lockfile_drift(repo_path, dry_run)
-    elif fix_type in ("missing_dev_dependency", "pytest_missing"):
-        result = _fix_dev_dependency(failure, repo_path, dry_run)
 
-    return result
+def generate_fix_script(fix: dict, workspace: str = ".") -> str:
+    """Generate shell script for applying fix."""
+    if not fix.get("command"):
+        return f"# No command for action: {fix['action']}"
+    
+    return f"""#!/bin/bash
+# Auto-generated fix script
+set -e
+cd {workspace}
+{fix['command']}
+echo "Fix applied: {fix.get('description')}"
+"""
 
 
-def _fix_missing_dependency(failure: Dict[str, Any], repo_path: Path, dry_run: bool) -> Dict[str, Any]:
-    module = failure.get("module", "unknown")
-    pyproject = repo_path / "backend" / "pyproject.toml"
+def validate_fix(fix: dict) -> bool:
+    """Check if fix is valid and applicable."""
+    if fix["action"] == "manual_review":
+        return False
+    if not fix.get("command"):
+        return False
+    return True
 
-    if not pyproject.exists():
-        return {"applied": False, "reason": "pyproject.toml not found"}
 
-    result = {
-        "applied": False,
-        "module": module,
-        "fix_type": "missing_dependency",
+def get_fix_confidence(fix: dict) -> float:
+    """Estimate fix confidence (0.0 - 1.0)."""
+    high_confidence_actions = {
+        "add_dependency": 0.8,
+        "install_dev_deps": 0.9,
+        "format_code": 0.95,
+        "fix_import": 0.7,
     }
-
-    if not dry_run:
-        with open(pyproject, "r") as f:
-            content = f.read()
-
-        if module not in content:
-            with open(pyproject, "a") as f:
-                f.write(f'\n{module} = "*"\n')
-
-            subprocess.run(
-                "cd backend && uv pip compile pyproject.toml -o requirements.api.lock",
-                shell=True,
-                cwd=repo_path,
-                capture_output=True,
-            )
-
-            result["applied"] = True
-            result["command"] = f"Added {module} to pyproject.toml and rebuilt lockfile"
-        else:
-            result["applied"] = True
-            result["command"] = f"Module {module} already in pyproject.toml, just rebuild lockfile"
-            subprocess.run(
-                "cd backend && uv pip compile pyproject.toml -o requirements.api.lock",
-                shell=True,
-                cwd=repo_path,
-                capture_output=True,
-            )
-
-    return result
-
-
-def _fix_lockfile_drift(repo_path: Path, dry_run: bool) -> Dict[str, Any]:
-    result = {
-        "applied": False,
-        "fix_type": "lockfile_drift",
-    }
-
-    if not dry_run:
-        subprocess.run(
-            "cd backend && uv pip compile pyproject.toml -o requirements.api.lock",
-            shell=True,
-            cwd=repo_path,
-            capture_output=True,
-        )
-        result["applied"] = True
-        result["command"] = "Rebuilt requirements.api.lock"
-
-    return result
-
-
-def _fix_dev_dependency(failure: Dict[str, Any], repo_path: Path, dry_run: bool) -> Dict[str, Any]:
-    dep = "pytest"
-    pyproject = repo_path / "backend" / "pyproject.toml"
-
-    result = {
-        "applied": False,
-        "dependency": dep,
-        "fix_type": "missing_dev_dependency",
-    }
-
-    if not dry_run:
-        with open(pyproject, "r") as f:
-            content = f.read()
-
-        if dep not in content:
-            with open(pyproject, "a") as f:
-                f.write(f'\n{dep} = "*"\n')
-
-            subprocess.run(
-                "cd backend && uv pip compile pyproject.toml -o requirements.dev.lock",
-                shell=True,
-                cwd=repo_path,
-                capture_output=True,
-            )
-
-            result["applied"] = True
-            result["command"] = f"Added {dep} to pyproject.toml and rebuilt dev lockfile"
-
-    return result
-
-
-def sandbox_fix(failure: Dict[str, Any], repo_root: str) -> Dict[str, Any]:
-    repo_path = Path(repo_root)
-
-    if failure.get("type") not in SAFE_FIXES:
-        return {
-            "applied": False,
-            "reason": f"Fix type {failure.get('type')} not in safe list",
-        }
-
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        repo_copy = tmp_path / "repo"
-
-        shutil.copytree(repo_path, repo_copy, dirs_exist_ok=True)
-
-        fix_result = apply_fix(failure, repo_copy, dry_run=False)
-
-        if not fix_result.get("applied"):
-            return fix_result
-
-        changed = list(repo_copy.rglob("*.lock")) + list(repo_copy.rglob("pyproject.toml"))
-        changes = []
-        for f in changed:
-            orig = repo_path / f.relative_to(repo_copy)
-            if orig.exists():
-                with open(f) as new_f, open(orig) as orig_f:
-                    if new_f.read() != orig_f.read():
-                        changes.append(str(f.relative_to(repo_copy)))
-
-        return {
-            "applied": True,
-            "changes": changes,
-            "sandbox_path": str(repo_copy),
-            "fix_command": fix_result.get("command", ""),
-        }
-
-
-def generate_patch(original: Path, modified: Path) -> Optional[str]:
-    result = subprocess.run(
-        ["git", "diff", "--no-color"],
-        capture_output=True,
-        text=True,
-        cwd=modified,
-    )
-    return result.stdout if result.stdout else None
+    
+    return high_confidence_actions.get(fix.get("action"), 0.3)

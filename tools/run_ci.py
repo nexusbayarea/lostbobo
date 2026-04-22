@@ -21,7 +21,6 @@ os.chdir(BACKEND)
 
 def main():
     parser = argparse.ArgumentParser(description="CI entrypoint")
-    parser.add_argument("--replay", help="Replay trace file")
     parser.add_argument("--auto-fix", action="store_true", help="Attempt auto-fix in sandbox on failure")
     args = parser.parse_args()
 
@@ -35,7 +34,7 @@ def main():
 
     from tools.ci.executor import run_dag
 
-    run_dag(cwd=str(BACKEND))
+    run_dag(cwd=str(BACKEND), auto_fix=args.auto_fix)
 
 
 if __name__ == "__main__":

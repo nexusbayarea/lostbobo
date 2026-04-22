@@ -4,15 +4,17 @@ import time
 import sys
 import os
 import glob
+import argparse
 from datetime import datetime
 from pathlib import Path
 from tools.ci.dag import CI_DAG
 from tools.ci.diff_engine import diff_runs
 from tools.ci.root_cause import find_root_failure, infer_hint
+from tools.ci.fix_engine import propose_fix, validate_fix
+from tools.ci.apply_fix import apply_and_validate
 
 TRACE = []
 HISTORY_DIR = "ci_history"
-
 os.makedirs(HISTORY_DIR, exist_ok=True)
 
 
@@ -67,7 +69,7 @@ def get_last_success():
     return None
 
 
-def report_failure():
+def report_failure(auto_fix=False):
     """Generate diff report and root cause analysis on failure."""
     print("\n" + "=" * 50)
     print("[DIFF] Comparing with last successful run")
@@ -93,18 +95,32 @@ def report_failure():
         print(f"  Hint: {root['hint']}")
         if root.get("fix"):
             print(f"  Fix: {root['fix']}")
+        
+        if auto_fix:
+            print("\n" + "=" * 50)
+            print("[SELF-HEAL] Attempting targeted fix")
+            print("=" * 50)
+            
+            fix_result = apply_and_validate(root)
+            print(f"\n[RESULT] {fix_result['status']}")
+            
+            if fix_result["status"] == "FIX_VERIFIED":
+                print("  ✓ Fix verified in sandbox")
+                print("  Run with --commit to apply fix")
+            else:
+                print("  ✖ Fix rejected - requires manual review")
     else:
         print("  No root cause found")
 
 
-def run_dag(cwd=None):
+def run_dag(cwd=None, auto_fix=False):
     for node in CI_DAG:
         success = run_node(node, cwd=cwd)
         if not success:
             print(f"\n[TRACE] FAILED at node: {node.get('name', node['id'])}")
             save_trace()
             save_history()
-            report_failure()
+            report_failure(auto_fix=auto_fix)
             sys.exit(1)
 
     save_trace()
@@ -137,8 +153,13 @@ def load_trace(path="ci_trace.json"):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cwd", default=None)
+    parser.add_argument("--auto-fix", action="store_true", help="Attempt auto-fix in sandbox on failure")
+    args = parser.parse_args()
+    
     try:
-        run_dag()
+        run_dag(cwd=args.cwd, auto_fix=args.auto_fix)
     except Exception as e:
         save_trace()
         save_history()

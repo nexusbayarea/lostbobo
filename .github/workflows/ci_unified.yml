@@ -16,5 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug CI filesystem
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Root directories:"
+          ls -R
+        working-directory: .
+
       - name: Run Unified CI
         run: python ../tools/run_ci.py
+        working-directory: backend

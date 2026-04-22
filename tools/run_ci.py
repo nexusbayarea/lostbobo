@@ -11,14 +11,41 @@ import os
 import subprocess
 import sys
 import argparse
+import json
+
+os.chdir("backend")
 
 
-def run(name, cmd, check=True):
+def run(name: str, cmd: str, check: bool = True) -> int:
     print(f"\n[CI] {name}")
-    result = subprocess.run(cmd, shell=True, cwd="backend")
+
+    result = subprocess.run(
+        cmd,
+        shell=True,
+        capture_output=True,
+        text=True,
+        cwd="backend",
+    )
+
+    if result.stdout:
+        print(result.stdout)
+
     if check and result.returncode != 0:
+        if result.stderr:
+            print(result.stderr)
+
+        full_log = (result.stdout or "") + "\n" + (result.stderr or "")
+
+        from tools.ci.diagnose import diagnose, save_failure
+
+        diagnosis = diagnose(full_log)
+        print(diagnosis["suggested_command"])
+
+        save_failure(diagnosis, "ci_failure.json")
+
         print(f"[FAIL] {name}")
         sys.exit(result.returncode)
+
     print(f"[PASS] {name}")
     return result.returncode
 

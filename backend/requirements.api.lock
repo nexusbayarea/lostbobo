@@ -28,11 +28,11 @@ idna==3.12
     # via
     #   anyio
     #   requests
-numpy==2.4.4
+numpy==2.2.6
     # via
     #   simhpc (pyproject.toml)
     #   pandas
-pandas==3.0.2
+pandas==2.3.3
     # via simhpc (pyproject.toml)
 pillow==12.2.0
     # via
@@ -53,6 +53,8 @@ python-dotenv==1.2.2
     # via
     #   simhpc (pyproject.toml)
     #   pydantic-settings
+pytz==2026.1.post1
+    # via pandas
 qrcode==8.2
     # via simhpc (pyproject.toml)
 reportlab==4.4.10

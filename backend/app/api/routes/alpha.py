@@ -22,7 +22,7 @@ SolverType = Literal["MFEM (Structural)", "SUNDIALS (Thermal)", "Mercury-Hybrid"
 
 
 class LaunchRequest(BaseModel):
-    model_config: ModelType
+    model_type: ModelType
     target_geometry: GeometryType
     physics_solver: SolverType
 
@@ -39,7 +39,7 @@ async def launch_simulation(request: LaunchRequest, user: dict = Depends(verify_
                 "user_id": user["id"],
                 "status": "queued",
                 "progress": 0,
-                "model_config": request.model_config,
+                "model_config": request.model_type,
                 "target_geometry": request.target_geometry,
                 "physics_solver": request.physics_solver,
             }

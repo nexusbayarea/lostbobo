@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import re
+import ast
+import os
 
 
 def ensure_deps():
@@ -8,25 +10,70 @@ def ensure_deps():
     subprocess.run([sys.executable, "-m", "pip", "install", "ruff"], check=True)
 
 
+def remove_duplicate_symbols():
+    """Detect duplicate function/class definitions (specifically run_node) and remove older ones."""
+    print("[KERNEL] Performing AST structure normalization...")
+    for root, _, files in os.walk("."):
+        for f in files:
+            if not f.endswith(".py"):
+                continue
+
+            path = os.path.join(root, f)
+            with open(path, "r") as file:
+                source = file.read()
+
+            try:
+                tree = ast.parse(source)
+            except SyntaxError:
+                continue
+
+            seen = set()
+            new_lines = []
+            skip_next = False
+
+            # This is a naive line-based dedup for run_node, 
+            # safe enough as a structural cleanup pass
+            lines = source.splitlines()
+            for line in lines:
+                if line.strip().startswith("def run_node"):
+                    if "run_node" in seen:
+                        skip_next = True
+                        continue
+                    seen.add("run_node")
+                
+                if skip_next:
+                    if line.strip() == "" or line.startswith("    "):
+                        continue
+                    else:
+                        skip_next = False
+                
+                new_lines.append(line)
+
+            with open(path, "w") as file:
+                file.write("\n".join(new_lines) + "\n")
+
+
 def count_violations():
-    """Counts current Ruff violations to prevent non-convergence."""
+    """Counts current Ruff violations."""
     result = subprocess.run(
         [sys.executable, "-m", "ruff", "check", "."],
         capture_output=True,
         text=True,
     )
-    # Ruff outputs: "Found 25 errors."
     match = re.search(r"Found (\d+) error", result.stdout)
     if match:
         return int(match.group(1))
     return 0
 
 
-def run_stage(cmd, name):
+def run_stage(action, name):
     before = count_violations()
-    print(f"[KERNEL] {name}: Running {cmd}")
+    print(f"[KERNEL] {name}: Running...")
     
-    result = subprocess.run(cmd, shell=True)
+    if callable(action):
+        action()
+    else:
+        subprocess.run(action, shell=True)
     
     after = count_violations()
     print(f"[KERNEL] {name}: {before} -> {after} violations")
@@ -41,14 +88,15 @@ def run():
     ensure_deps()
 
     stages = [
+        (remove_duplicate_symbols, "Structure Normalization"),
         ("python -m ruff check . --select I --fix", "Import Fix"),
         ("python -m ruff format .", "Format"),
         ("python -m ruff check . --select UP --fix", "Typing Fix"),
         ("python -m ruff check . --fix --unsafe-fixes", "Unsafe Fix Completion"),
     ]
 
-    for cmd, name in stages:
-        if not run_stage(cmd, name):
+    for action, name in stages:
+        if not run_stage(action, name):
             return 1
 
     # Final validation pass

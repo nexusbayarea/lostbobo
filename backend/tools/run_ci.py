@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-#!/usr/bin/env python
-"""
 Single-command CI entrypoint for deterministic execution.
 Run from backend/ directory: python tools/run_ci.py
 """

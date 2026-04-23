@@ -14,7 +14,6 @@ jobs:
       run:
         working-directory: backend
     env:
-      PYTHONPATH: ${{ github.workspace }}/backend
       RUNTIME_MODE: ci
       SB_URL: http://localhost:8080
       SB_TOKEN: ci-stub-token

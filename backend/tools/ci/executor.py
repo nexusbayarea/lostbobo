@@ -25,8 +25,7 @@ def run_node(node, cwd=None):
     result = subprocess.run(
         node["cmd"],
         shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         cwd=cwd,
     )

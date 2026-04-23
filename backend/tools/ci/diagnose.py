@@ -13,7 +13,6 @@ FIX_COMMANDS = {
 
 def classify(log: str) -> dict[str, Any]:
     log_lower = log.lower()
-    full_log = log
 
     if "modulenotfounderror" in log_lower or "no module named" in log_lower:
         match = re.search(r"No module named '([^']+)'", log)

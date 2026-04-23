@@ -28,7 +28,6 @@ idna==3.12
     # via
     #   anyio
     #   requests
-numpy==2.2.6
     # via
     #   simhpc (pyproject.toml)
     #   pandas

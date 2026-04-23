@@ -3,9 +3,10 @@
 Single-command CI entrypoint for deterministic execution.
 Run from backend/ directory: python tools/run_ci.py
 """
+
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 # When called with working-directory: backend in CI,
@@ -34,8 +35,8 @@ def run(label: str, cmd: list[str]) -> bool:
 def main():
     steps = [
         ("Ruff format check", ["python", "-m", "ruff", "format", "--check", "."]),
-        ("Ruff lint",         ["python", "-m", "ruff", "check", "."]),
-        ("API purity check",  ["python", "tools/check_api_purity.py"]),
+        ("Ruff lint", ["python", "-m", "ruff", "check", "."]),
+        ("API purity check", ["python", "tools/check_api_purity.py"]),
         ("Import boundaries", ["python", "tools/ci_gates/check_import_boundaries.py"]),
     ]
 

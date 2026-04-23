@@ -1,17 +1,16 @@
-import subprocess
-import json
-import time
-import sys
-import os
-import glob
 import argparse
+import glob
+import json
+import os
+import subprocess
+import sys
+import time
 from datetime import datetime
-from pathlib import Path
+
+from backend.tools.ci.apply_fix import apply_and_validate
 from backend.tools.ci.dag import CI_DAG
 from backend.tools.ci.diff_engine import diff_runs
-from backend.tools.ci.root_cause import find_root_failure, infer_hint
-from backend.tools.ci.fix_engine import propose_fix, validate_fix
-from backend.tools.ci.apply_fix import apply_and_validate
+from backend.tools.ci.root_cause import find_root_failure
 
 TRACE = []
 HISTORY_DIR = "ci_history"
@@ -63,14 +62,14 @@ def run_node(node, cwd=None):
 def get_last_success():
     """Find the last successful (all PASS) run in history."""
     files = sorted(glob.glob(f"{HISTORY_DIR}/*.json"))
-    
+
     for f in reversed(files):
         with open(f) as fp:
             data = json.load(fp)
-        
+
         if all(node["status"] == "PASS" for node in data):
             return data
-    
+
     return None
 
 
@@ -78,10 +77,7 @@ def validate_trace_node(node):
     """Validate that a trace node has complete signal data."""
     if node["status"] == "FAIL":
         if not node.get("stderr") and not node.get("stdout"):
-            raise RuntimeError(
-                f"Non-informative failure in node {node['node']} - "
-                "no stderr or stdout captured"
-            )
+            raise RuntimeError(f"Non-informative failure in node {node['node']} - " "no stderr or stdout captured")
     return True
 
 
@@ -90,7 +86,7 @@ def report_failure(auto_fix=False):
     print("\n" + "=" * 50)
     print("[DIFF] Comparing with last successful run")
     print("=" * 50)
-    
+
     prev = get_last_success()
     if prev:
         diff = diff_runs(prev, TRACE)
@@ -99,11 +95,11 @@ def report_failure(auto_fix=False):
             print(f"  {marker} {d['node']}: {d['prev']} -> {d['current']}")
     else:
         print("  No previous run found in history")
-    
+
     print("\n" + "=" * 50)
     print("[ROOT CAUSE] Failure Analysis")
     print("=" * 50)
-    
+
     root = find_root_failure(TRACE)
     if root:
         print(f"  Failed node: {root['root_node']}")
@@ -111,15 +107,15 @@ def report_failure(auto_fix=False):
         print(f"  Hint: {root['hint']}")
         if root.get("fix"):
             print(f"  Fix: {root['fix']}")
-        
+
         if auto_fix:
             print("\n" + "=" * 50)
             print("[SELF-HEAL] Attempting targeted fix")
             print("=" * 50)
-            
+
             fix_result = apply_and_validate(root)
             print(f"\n[RESULT] {fix_result['status']}")
-            
+
             if fix_result["status"] == "FIX_VERIFIED":
                 print("  ✓ Fix verified in sandbox")
                 print("  Run with --commit to apply fix")
@@ -174,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--cwd", default=None)
     parser.add_argument("--auto-fix", action="store_true", help="Attempt auto-fix in sandbox on failure")
     args = parser.parse_args()
-    
+
     try:
         run_dag(cwd=args.cwd, auto_fix=args.auto_fix)
     except Exception as e:

@@ -1,24 +1,23 @@
-import json
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from backend.tools.runtime.contract import CONTRACTS
-from backend.tools.runtime.trace import ExecutionTrace, NodeTrace
+from backend.tools.runtime.trace import ExecutionTrace
 
 
 def replay(
     trace_path: str,
     contract_version: str,
     executor: Callable[[str, dict], Any],
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Replay a saved trace under the specified contract version.
-    
+
     Args:
         trace_path: Path to the saved ExecutionTrace JSON file
         contract_version: Version of contract to use for replay
         executor: Callable that can execute a node by name with input data
-        
+
     Returns:
         List of replay results with expected vs actual outputs
     """
@@ -49,7 +48,7 @@ def replay(
     return results
 
 
-def replay_node(trace_path: str, node_name: str) -> Optional[Dict[str, Any]]:
+def replay_node(trace_path: str, node_name: str) -> dict[str, Any] | None:
     """
     Replay a specific node from a trace file.
     """
@@ -67,7 +66,7 @@ def replay_node(trace_path: str, node_name: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def list_trace_nodes(trace_path: str) -> List[str]:
+def list_trace_nodes(trace_path: str) -> list[str]:
     """
     List all node names in a trace.
     """

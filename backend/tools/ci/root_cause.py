@@ -1,6 +1,6 @@
 """Root Cause Analyzer - Identify failure origin and suggest fixes."""
-import re
 
+import re
 
 FAILURE_PATTERNS = {
     "modulenotfounderror": {
@@ -96,22 +96,22 @@ def find_root_failure(trace):
 def infer_hint(node):
     """Analyze error and return actionable hint."""
     err = (node.get("stderr", "") + node.get("stdout", "")).lower()
-    
+
     for pattern, info in FAILURE_PATTERNS.items():
         if pattern in err:
             return info["hint"]
-    
+
     return "unknown failure pattern"
 
 
 def get_fix_suggestion(node):
     """Get suggested fix for the failing node."""
     err = (node.get("stderr", "") + node.get("stdout", "")).lower()
-    
+
     for pattern, info in FAILURE_PATTERNS.items():
         if pattern in err:
             return info.get("fix")
-    
+
     return None
 
 
@@ -124,10 +124,10 @@ def extract_error_type(stderr):
 def analyze_failure_chain(trace):
     """Analyze the full failure chain."""
     failures = [n for n in trace if n["status"] == "FAIL"]
-    
+
     if not failures:
         return {"status": "pass", "failures": []}
-    
+
     return {
         "status": "fail",
         "count": len(failures),

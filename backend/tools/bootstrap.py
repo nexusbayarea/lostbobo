@@ -7,8 +7,8 @@ if str(ROOT) not in sys.path:
 
 
 def bootstrap():
-    from tools import registry
     from backend.tools.runtime.tools import system_tools
+    from tools import registry
 
     print("[BOOTSTRAP] validating module map")
     registry.validate()

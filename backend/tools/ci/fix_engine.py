@@ -1,9 +1,6 @@
 """Targeted Fix Engine - Node-scoped fix proposals based on root cause."""
-import re
-import subprocess
-import json
-from pathlib import Path
 
+import re
 
 FIX_STRATEGIES = {
     "modulenotfounderror": {
@@ -98,11 +95,11 @@ def extract_attribute(error: str):
 def get_fix_strategy(error: str):
     """Match error to fix strategy."""
     error_lower = error.lower()
-    
+
     for pattern, strategy in FIX_STRATEGIES.items():
         if pattern in error_lower:
             return strategy
-    
+
     return None
 
 
@@ -110,9 +107,9 @@ def propose_fix(root_cause: dict) -> dict:
     """Propose targeted fix based on root cause analysis."""
     error = (root_cause.get("error") or "").lower()
     node = root_cause.get("root_node")
-    
+
     strategy = get_fix_strategy(error)
-    
+
     if not strategy:
         return {
             "action": "manual_review",
@@ -120,7 +117,7 @@ def propose_fix(root_cause: dict) -> dict:
             "node": node,
             "error": error,
         }
-    
+
     extracted = None
     if strategy.get("extract") == "module":
         extracted = extract_module(root_cause.get("error", ""))
@@ -128,7 +125,7 @@ def propose_fix(root_cause: dict) -> dict:
         extracted = extract_name(root_cause.get("error", ""))
     elif strategy.get("extract") == "attribute":
         extracted = extract_attribute(root_cause.get("error", ""))
-    
+
     return {
         "action": strategy["action"],
         "command": strategy.get("command"),
@@ -143,7 +140,7 @@ def generate_fix_script(fix: dict, workspace: str = ".") -> str:
     """Generate shell script for applying fix."""
     if not fix.get("command"):
         return f"# No command for action: {fix['action']}"
-    
+
     return f"""#!/bin/bash
 # Auto-generated fix script
 set -e
@@ -171,5 +168,5 @@ def get_fix_confidence(fix: dict) -> float:
         "fix_imports": 0.9,
         "fix_import": 0.7,
     }
-    
+
     return high_confidence_actions.get(fix.get("action"), 0.3)

@@ -16,7 +16,21 @@ ROOT = Path(".")
 STDLIB = set(sys.stdlib_module_names)
 
 # Define internal root namespaces
-INTERNAL_NAMESPACES = {"app", "worker", "packages", "tools", "ci", "docker", "docs", "frontend", "supabase", "tests", "compiler", "infra", "scripts"}
+INTERNAL_NAMESPACES = {
+    "app",
+    "worker",
+    "packages",
+    "tools",
+    "ci",
+    "docker",
+    "docs",
+    "frontend",
+    "supabase",
+    "tests",
+    "compiler",
+    "infra",
+    "scripts",
+}
 
 
 def get_local_modules() -> set:
@@ -62,7 +76,9 @@ def check_requirements() -> None:
     # Changed to enforce use of lockfile
     reqs_path = Path("requirements.api.lock")
     if not reqs_path.exists():
-        print("ERROR: requirements.api.lock not found. Please run: uv pip compile pyproject.toml -o requirements.api.lock")
+        print(
+            "ERROR: requirements.api.lock not found. Please run: uv pip compile pyproject.toml -o requirements.api.lock"
+        )
         sys.exit(1)
 
     reqs = reqs_path.read_text().lower()

@@ -1,7 +1,6 @@
 import json
 import re
-from typing import Dict, Any, Optional
-
+from typing import Any
 
 FIX_COMMANDS = {
     "missing_dependency": "cd backend && uv pip compile pyproject.toml -o requirements.api.lock",
@@ -12,7 +11,7 @@ FIX_COMMANDS = {
 }
 
 
-def classify(log: str) -> Dict[str, Any]:
+def classify(log: str) -> dict[str, Any]:
     log_lower = log.lower()
     full_log = log
 
@@ -79,18 +78,18 @@ def classify(log: str) -> Dict[str, Any]:
     }
 
 
-def diagnose(log: str) -> Dict[str, Any]:
+def diagnose(log: str) -> dict[str, Any]:
     result = classify(log)
     result["suggested_command"] = result.get("fix", "")
     return result
 
 
-def save_failure(diagnosis: Dict[str, Any], path: str = "ci_failure.json"):
+def save_failure(diagnosis: dict[str, Any], path: str = "ci_failure.json"):
     with open(path, "w") as f:
         json.dump(diagnosis, f, indent=2)
 
 
-def load_failure(path: str = "ci_failure.json") -> Optional[Dict[str, Any]]:
+def load_failure(path: str = "ci_failure.json") -> dict[str, Any] | None:
     try:
         with open(path) as f:
             return json.load(f)
@@ -98,7 +97,7 @@ def load_failure(path: str = "ci_failure.json") -> Optional[Dict[str, Any]]:
         return None
 
 
-def format_diagnosis(diagnosis: Dict[str, Any]) -> str:
+def format_diagnosis(diagnosis: dict[str, Any]) -> str:
     if not diagnosis:
         return "No diagnosis available"
 

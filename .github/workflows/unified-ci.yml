@@ -34,5 +34,5 @@ jobs:
       - name: Install dependencies
         run: pip install ruff
 
-      - name: Run CI
-        run: python tools/run_ci.py
+      - name: Run CI Kernel
+        run: python ../tools/runtime/kernel.py

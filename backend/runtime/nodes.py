@@ -1,22 +1,25 @@
-from backend.runtime.ci_graph import CI_GRAPH, CINode
 from backend.runtime.graph import GRAPH, Node
+from backend.runtime.kernel import KERNEL
 
 
-def register_ci_nodes():
-    GRAPH.register(Node(id="lint", deps=[], fn=lambda: print("lint")))
-    GRAPH.register(Node(id="lockfile", deps=["lint"], fn=lambda: print("lockfile")))
-    GRAPH.register(Node(id="pruning", deps=["lint"], fn=lambda: print("pruning")))
-    GRAPH.register(Node(id="boundaries", deps=["lockfile"], fn=lambda: print("boundaries")))
-    GRAPH.register(Node(id="api", deps=["boundaries", "pruning"], fn=lambda: print("api")))
+def register_all_nodes():
+    """Register all known nodes in the execution graph."""
+
+    import tools.ci_steps.api as api
+    import tools.ci_steps.boundaries as boundaries
+    import tools.ci_steps.lint as lint
+    import tools.ci_steps.lockfile as lockfile
+    import tools.ci_steps.pruning as pruning
+
+    GRAPH.register(Node(id="lint", deps=[], fn=lint.run))
+    GRAPH.register(Node(id="lockfile", deps=["lint"], fn=lockfile.run))
+    GRAPH.register(Node(id="pruning", deps=["lockfile"], fn=pruning.run))
+    GRAPH.register(Node(id="boundaries", deps=["pruning"], fn=boundaries.run))
+    GRAPH.register(Node(id="api_purity", deps=["boundaries"], fn=api.run))
+
+    GRAPH.register(Node(id="kernel_boot", deps=["api_purity"], fn=KERNEL.boot))
+
+    print(f"Registered {len(GRAPH.nodes)} nodes in ExecutionGraph")
 
 
-def register_ci_graph_nodes():
-    CI_GRAPH.add(CINode(id="lint", deps=[], fn=lambda: 0))
-    CI_GRAPH.add(CINode(id="lockfile", deps=["lint"], fn=lambda: 0))
-    CI_GRAPH.add(CINode(id="pruning", deps=["lint"], fn=lambda: 0))
-    CI_GRAPH.add(CINode(id="boundaries", deps=["lockfile"], fn=lambda: 0))
-    CI_GRAPH.add(CINode(id="api", deps=["boundaries", "pruning"], fn=lambda: 0))
-
-
-register_ci_nodes()
-register_ci_graph_nodes()
+register_all_nodes()

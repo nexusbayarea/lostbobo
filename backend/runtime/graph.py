@@ -7,7 +7,14 @@ from typing import Any
 class Node:
     id: str
     fn: Callable[..., Any]
-    deps: list[str]
+    deps: list[str] = None
+    metadata: dict = None
+
+    def __post_init__(self):
+        if self.deps is None:
+            self.deps = []
+        if self.metadata is None:
+            self.metadata = {}
 
 
 class ExecutionGraph:
@@ -22,7 +29,8 @@ class ExecutionGraph:
     def get(self, node_id: str) -> Node:
         return self.nodes[node_id]
 
-    def topologically_sorted(self) -> list[str]:
+    def topological_sort(self) -> list[str]:
+        """Return nodes in topological execution order."""
         visited = set()
         visiting = set()
         order = []
@@ -35,17 +43,18 @@ class ExecutionGraph:
 
             visiting.add(nid)
             node = self.nodes[nid]
-            for d in node.deps:
-                visit(d)
+            for dep in node.deps:
+                visit(dep)
 
             visiting.remove(nid)
             visited.add(nid)
             order.append(nid)
 
-        for n in self.nodes:
-            visit(n)
+        for nid in self.nodes:
+            visit(nid)
 
         return order
 
 
+# Global singleton
 GRAPH = ExecutionGraph()

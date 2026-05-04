@@ -1,116 +1,61 @@
-import sys
-from pathlib import Path
+import asyncio
+import time
 
-from backend.runtime.contract import CONTRACTS
-from backend.runtime.sandbox import run_in_sandbox
-from backend.runtime.telemetry import TelemetryManager
-from backend.runtime.time_utils import now
-from backend.runtime.trace import NodeTrace, capture_trace
-from backend.runtime.trace import run_node as trace_run_node
-
-tm = TelemetryManager()
-
-TRACE_NODES: list[NodeTrace] = []
+from backend.runtime.contract import CONTRACT
+from backend.runtime.graph import GRAPH
+from backend.runtime.trace import ExecutionTrace, NodeTrace, capture_trace
 
 
-def load_manifest() -> dict:
-    path = Path("tools/ci_manifest.yml")
-    if not path.exists():
-        raise FileNotFoundError("tools/ci_manifest.yml missing")
+async def execute_node(node_id: str) -> dict:
+    """Execute a single DAG node with timing and tracing."""
+    start = time.time()
+    node = GRAPH.get(node_id)
 
-    import yaml
+    try:
+        if asyncio.iscoroutinefunction(node.fn):
+            result = await node.fn()
+        else:
+            result = node.fn()
 
-    return yaml.safe_load(path.read_text())
+        status = "success"
+        output = result if isinstance(result, dict) else {"status": "ok", "result": result}
+    except Exception as e:
+        status = "failed"
+        output = {"error": str(e)}
+        raise
+
+    duration = (time.time() - start) * 1000
+
+    return {
+        "node_id": node_id,
+        "status": status,
+        "duration_ms": duration,
+        "output": output,
+    }
 
 
-def execute_node(node: dict, capture: bool = True) -> int:
-    path = node.get("path", "")
-    if not path or not Path(path).exists():
-        print(f"[DAG] missing node: {path}")
-        return 1
+async def execute_dag() -> ExecutionTrace:
+    """Execute the full DAG with full tracing."""
+    print(f"Executing DAG under contract {CONTRACT.version}")
 
-    name = node.get("name", path)
-    print(f"[DAG] Running: {name}")
+    order = GRAPH.topological_sort()
+    trace_nodes = []
 
-    start_time = now()
-
-    input_data = node.get("inputs", {})
-
-    if capture and name:
-        output = trace_run_node(
-            name,
-            lambda **kw: run_in_sandbox(path)["returncode"],
-            input_data,
-            TRACE_NODES,
+    for node_id in order:
+        print(f"Running node: {node_id}")
+        result = await execute_node(node_id)
+        trace_nodes.append(
+            NodeTrace(
+                name=node_id,
+                input={},
+                output=result["output"],
+                status=result["status"],
+                duration_ms=result["duration_ms"],
+            )
         )
-        result_code = 0 if output.get("returncode", 1) == 0 else 1
-    else:
-        result = run_in_sandbox(path)
-        result_code = result["returncode"]
 
-    end_time = now()
+    trace = capture_trace(contract_version=CONTRACT.version, nodes=trace_nodes, edges=[], manifest_hash="current")
 
-    duration = end_time - start_time
-
-    gpu_util = 42.0
-    status = "success" if result_code == 0 else "failed"
-
-    tm.record_run(
-        project="SimHPC",
-        sim_type=name,
-        duration=duration,
-        gpu_util=gpu_util,
-        status=status,
-    )
-
-    return result_code
-
-
-...
-
-
-...
-
-
-def topological_run(manifest: dict) -> int:
-    nodes = manifest.get("nodes", {})
-    executed = set()
-
-    def execute(name: str) -> int:
-        if name in executed:
-            return 0
-
-        node = nodes.get(name, {})
-
-        for dep in node.get("depends_on", []):
-            if execute(dep) != 0:
-                return 1
-
-        rc = execute_node(node)
-        executed.add(name)
-        return rc
-
-    for node_name in nodes:
-        if execute(node_name) != 0:
-            return 1
-
-    return 0
-
-
-def save_trace(path: str = "trace_latest.json"):
-    contract = CONTRACTS.latest()
-    trace = capture_trace(contract.version, TRACE_NODES)
-    trace.save(path)
-    print(f"[DAG] Trace saved to: {path}")
-
-
-def main():
-    manifest = load_manifest()
-    result = topological_run(manifest)
-    if result == 0:
-        save_trace()
-    sys.exit(result)
-
-
-if __name__ == "__main__":
-    main()
+    trace.save("trace_latest.json")
+    print("DAG execution completed. Trace saved.")
+    return trace

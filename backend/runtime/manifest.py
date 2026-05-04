@@ -1,14 +1,26 @@
+"""
+SimHPC Execution Manifest
+=========================
+Declarative definition of all nodes in the system.
+"""
+
 MANIFEST = {
     "version": "v3.5.1",
     "nodes": {
-        "lint": {"type": "ci", "depends_on": []},
-        "lockfile": {"type": "ci", "depends_on": ["lint"]},
-        "pruning": {"type": "ci", "depends_on": ["lint"]},
-        "boundaries": {"type": "ci", "depends_on": ["lockfile"]},
-        "api": {"type": "ci", "depends_on": ["boundaries", "pruning"]},
+        "lint": {"type": "ci", "depends_on": [], "description": "Run ruff format and lint"},
+        "lockfile": {"type": "ci", "depends_on": ["lint"], "description": "Verify lockfile sync"},
+        "pruning": {"type": "ci", "depends_on": ["lockfile"], "description": "Dependency pruning check"},
+        "boundaries": {"type": "ci", "depends_on": ["pruning"], "description": "Import boundary enforcement"},
+        "api_purity": {"type": "ci", "depends_on": ["boundaries"], "description": "API purity check"},
+        "kernel_boot": {"type": "runtime", "depends_on": ["api_purity"], "description": "Kernel initialization test"},
     },
 }
 
 
-def load_manifest():
+def load_manifest() -> dict:
+    """Load the execution manifest."""
     return MANIFEST
+
+
+def get_node(name: str) -> dict:
+    return MANIFEST["nodes"].get(name, {})

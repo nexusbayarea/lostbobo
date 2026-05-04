@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Loader2 } from 'lucide-react';
+import { ArrowRight, Play, Loader2, Zap, Shield, Activity } from 'lucide-react';
 import { AnimatedMesh } from '@/components/AnimatedMesh';
 import { ConfidenceGraph } from '@/components/ConfidenceGraph';
 import { useState } from 'react';
@@ -61,9 +61,13 @@ export function Hero() {
               transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]"
             >
-              Simulation with{' '}
+              GPU-Accelerated
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                Quantified Confidence.
+                {' '}FEM Simulation
+              </span>
+              <br />
+              <span className="text-3xl sm:text-4xl lg:text-5xl">
+                with Quantified Confidence
               </span>
             </motion.h1>
 
@@ -110,19 +114,19 @@ export function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="flex items-center gap-6 pt-4"
+              className="flex flex-wrap items-center gap-6 pt-4"
             >
               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                GPU Accelerated
+                <Zap className="w-5 h-5 text-blue-500" />
+                100x faster than CPU solvers
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                No Setup Required
+                <Shield className="w-5 h-5 text-green-500" />
+                Deterministic, verifiable results
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Activity className="w-5 h-5 text-purple-500" />
+                Robust sensitivity analysis
               </div>
             </motion.div>
           </div>

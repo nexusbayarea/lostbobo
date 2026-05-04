@@ -1,74 +1,44 @@
 from collections.abc import Callable
-from typing import Any
+from pathlib import Path
 
-from backend.runtime.contract import CONTRACTS
 from backend.runtime.trace import ExecutionTrace
 
 
-def replay(
-    trace_path: str,
-    contract_version: str,
-    executor: Callable[[str, dict], Any],
-) -> list[dict[str, Any]]:
-    """
-    Replay a saved trace under the specified contract version.
+class ReplayEngine:
+    def __init__(self):
+        self.traces_dir = Path("trace_history")
+        self.traces_dir.mkdir(exist_ok=True)
 
-    Args:
-        trace_path: Path to the saved ExecutionTrace JSON file
-        contract_version: Version of contract to use for replay
-        executor: Callable that can execute a node by name with input data
+    def save_trace(self, trace: ExecutionTrace, name: str = "latest"):
+        path = self.traces_dir / f"{name}.json"
+        trace.save(str(path))
+        print(f"Trace saved: {path}")
 
-    Returns:
-        List of replay results with expected vs actual outputs
-    """
-    original = ExecutionTrace.load(trace_path)
-    contract = CONTRACTS.get(contract_version)
+    def load_trace(self, name: str = "latest") -> ExecutionTrace:
+        path = self.traces_dir / f"{name}.json"
+        if not path.exists():
+            raise FileNotFoundError(f"Trace {name} not found")
+        return ExecutionTrace.load(str(path))
 
-    if contract is None:
-        raise ValueError(f"Unknown contract version: {contract_version}")
+    def replay(self, trace_name: str, executor: Callable) -> dict:
+        """Replay a saved trace and compare results."""
+        original = self.load_trace(trace_name)
+        print(f"Replaying trace: {trace_name} ({len(original.nodes)} nodes)")
 
-    results = []
+        results = []
+        for node in original.nodes:
+            try:
+                actual = executor(node.name, node.input)
+                match = actual == node.output
+                results.append(
+                    {
+                        "node": node.name,
+                        "status": "match" if match else "diff",
+                        "expected": node.output,
+                        "actual": actual,
+                    }
+                )
+            except Exception as e:
+                results.append({"node": node.name, "status": "error", "error": str(e)})
 
-    for node in original.nodes:
-        try:
-            actual_output = executor(node.name, node.input)
-        except Exception as e:
-            actual_output = {"error": str(e)}
-
-        results.append(
-            {
-                "name": node.name,
-                "input": node.input,
-                "expected": node.output,
-                "actual": actual_output,
-                "status": node.status,
-            }
-        )
-
-    return results
-
-
-def replay_node(trace_path: str, node_name: str) -> dict[str, Any] | None:
-    """
-    Replay a specific node from a trace file.
-    """
-    original = ExecutionTrace.load(trace_path)
-
-    for node in original.nodes:
-        if node.name == node_name:
-            return {
-                "input": node.input,
-                "output": node.output,
-                "status": node.status,
-                "duration_ms": node.duration_ms,
-            }
-
-    return None
-
-
-def list_trace_nodes(trace_path: str) -> list[str]:
-    """
-    List all node names in a trace.
-    """
-    original = ExecutionTrace.load(trace_path)
-    return [node.name for node in original.nodes]
+        return {"trace": trace_name, "results": results, "perfect_replay": all(r["status"] == "match" for r in results)}

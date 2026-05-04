@@ -1,36 +1,34 @@
-from dataclasses import dataclass
+from backend.runtime.manifest import load_manifest
+from backend.runtime.optimizer import DAGOptimizer
+from backend.runtime.replay import ReplayEngine
 
-from backend.runtime.contract import CONTRACT
-from backend.runtime.execution_log import ExecutionLog
 
-
-@dataclass
 class ExecutionIntelligence:
-    log: ExecutionLog
+    def __init__(self):
+        self.replay = ReplayEngine()
+        self.optimizer = DAGOptimizer()
 
-    def analyze(self, manifest: dict):
-        """Full analysis: DAG validity, contract, replay divergence."""
-        nodes = {name: {"deps": data.get("depends_on", [])} for name, data in manifest["nodes"].items()}
+    def full_analysis(self):
+        """Run complete intelligence suite."""
+        manifest = load_manifest()
 
-        validator = self._get_validator(nodes)
-        result = validator.validate_dag(nodes)
+        optimized = self.optimizer.optimize(manifest)
+
+        replay_result = None
+        try:
+            replay_result = self.replay.replay("latest", lambda n, i: {"status": "replayed"})
+        except FileNotFoundError:
+            pass
 
         return {
-            "valid": result["valid"],
-            "contract": CONTRACT.version,
-            "nodes_analyzed": len(nodes),
-            "recommendations": self._generate_recommendations(result),
+            "manifest_version": manifest["version"],
+            "nodes": len(manifest["nodes"]),
+            "optimized_nodes": optimized["optimized_count"],
+            "replay_result": replay_result,
+            "recommendation": "Run optimizer before production"
+            if optimized["optimized_count"] < len(manifest["nodes"])
+            else "DAG is optimal",
         }
 
-    def _get_validator(self, nodes):
-        class Validator:
-            def validate_dag(self, n):
-                return {"valid": True, "missing": [], "cyclic": False}
 
-        return Validator()
-
-    def _generate_recommendations(self, result):
-        recs = []
-        if not result.get("valid"):
-            recs.append("Fix DAG dependencies")
-        return recs
+INTELLIGENCE = ExecutionIntelligence()

@@ -1,11 +1,8 @@
-from typing import Any
-
-from backend.runtime.contract import CONTRACT
-
-
 class DAGOptimizer:
-    def optimize(self, dag: dict[str, Any], trace: dict | None = None) -> dict[str, Any]:
-        """Optimize DAG: prune invalid, dead, and slow nodes."""
+    def optimize(self, manifest: dict, trace: dict | None = None) -> dict:
+        """Full optimization pipeline."""
+        dag = manifest["nodes"].copy()
+
         dag = self._prune_invalid(dag)
         dag = self._remove_dead_nodes(dag)
         dag = self._deduplicate(dag)
@@ -13,10 +10,12 @@ class DAGOptimizer:
         if trace:
             dag = self._prune_slow_nodes(dag, trace)
 
-        return dag
+        return {"nodes": dag, "optimized_count": len(dag)}
 
     def _prune_invalid(self, dag: dict) -> dict:
-        return {k: v for k, v in dag.items() if CONTRACT.is_allowed_root(v.get("path", ""))}
+        from backend.runtime.contract import CONTRACT
+
+        return {k: v for k, v in dag.items() if CONTRACT.is_allowed_root(v.get("path", k))}
 
     def _remove_dead_nodes(self, dag: dict) -> dict:
         used = set()
@@ -36,5 +35,5 @@ class DAGOptimizer:
         return result
 
     def _prune_slow_nodes(self, dag: dict, trace: dict) -> dict:
-        slow = {n for n, data in trace.get("nodes", {}).items() if data.get("duration_ms", 0) > 5000}
+        slow = {n["name"] for n in trace.get("nodes", []) if n.get("duration_ms", 0) > 8000}
         return {k: v for k, v in dag.items() if k not in slow}

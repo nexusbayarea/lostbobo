@@ -1,0 +1,60 @@
+[project]
+name = "simhpc"
+version = "3.5.1"
+description = "SimHPC — GPU-Accelerated Finite Element Simulation Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "neXusEvents", email = "engineering@simhpc.com" }]
+license = { text = "Proprietary" }
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic-settings",
+    "supabase",
+    "redis",
+    "structlog",
+    "tenacity",
+    "reportlab",
+    "pandas",
+    "numpy>=2.2.6,<2.3",
+    "pillow",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.4",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "mypy",
+]
+worker = ["celery", "gunicorn", "matplotlib"]
+gpu = ["torch", "scipy"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*", "tools*"]
+namespaces = false
+
+[tool.setuptools]
+packages = { find = { where = ["."], include = ["backend*", "tools*"] } }
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N"]
+ignore = ["E501", "UP042"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "app", "runtime", "tools", "worker"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

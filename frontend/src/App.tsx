@@ -6,7 +6,6 @@ import { Stack } from '@/sections/Stack';
 import { ValueDifferentiator } from '@/sections/ValueDifferentiator';
 import { WhoItsFor } from '@/sections/WhoItsFor';
 
-// Lazy load heavy pages
 const Dashboard = lazy(() => import('@/pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const ExperimentNotebook = lazy(() => import('@/pages/ExperimentNotebook'));
 const AlphaControlRoom = lazy(() => import('@/pages/AlphaControlRoom').then(module => ({ default: module.AlphaControlRoom })));
@@ -24,13 +23,10 @@ const SignUp = lazy(() => import('@/pages/SignUp').then(module => ({ default: mo
 const Terms = lazy(() => import('@/pages/Terms').then(module => ({ default: module.Terms })));  
 const Privacy = lazy(() => import('@/pages/Privacy').then(module => ({ default: module.Privacy })));
 const Contact = lazy(() => import('@/pages/Contact').then(module => ({ default: module.Contact })));
-const DAGDashboard = lazy(() => import('@/pages/DAGDashboard').then(module => ({ default: module.default })));
 
 import { CookieConsent } from '@/components/CookieConsent';
 import { PageLayout } from '@/components/PageLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-
-// Force rebuild timestamp: 2026-05-04
 
 function HomePage() {
   return (
@@ -53,13 +49,11 @@ const LoadingFallback = () => (
 );
 
 function App() {
-  console.log('SimHPC: App component rendering...');
   return (
     <ThemeProvider>
       <BrowserRouter>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
@@ -74,50 +68,10 @@ function App() {
             <Route path="/ccpa" element={<CCPA />} />
             <Route path="/dpa" element={<DPA />} />
             <Route path="/cookies" element={<CookiePolicy />} />
-
-            {/* Protected Dashboard Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/dag"
-              element={
-                <ProtectedRoute>
-                  <DAGDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/notebook"
-              element={
-                <ProtectedRoute>
-                  <ExperimentNotebook />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/alpha"
-              element={
-                <ProtectedRoute>
-                  <AlphaControlRoom />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin Routes */}
-            <Route
-              path="/admin/analytics"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminAnalyticsPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/notebook" element={<ProtectedRoute><ExperimentNotebook /></ProtectedRoute>} />
+            <Route path="/dashboard/alpha" element={<ProtectedRoute><AlphaControlRoom /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalyticsPage /></ProtectedRoute>} />
           </Routes>
         </Suspense>
         <CookieConsent />
@@ -125,4 +79,5 @@ function App() {
     </ThemeProvider>
   );
 }
+
 export default App;

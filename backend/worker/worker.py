@@ -23,7 +23,8 @@ async def process_job(job: Job):
     print(f"🔧 Processing job {job.id}")
     try:
         result = execute_node(job.payload)
-        print(f"✅ Job {job.id} completed: {result.get('status')}")
+        status = "success" if result == 0 else "failed"
+        print(f"✅ Job {job.id} completed: {status}")
         return result
     except Exception as e:
         print(f"❌ Job {job.id} failed: {e}")

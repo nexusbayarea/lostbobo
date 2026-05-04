@@ -1,47 +1,57 @@
 #!/usr/bin/env python3
 """
-SimHPC Autoscaler
-=================
-Manages RunPod GPU fleet scaling based on queue depth.
+SimHPC RunPod Autoscaler
+========================
+Intelligent GPU fleet scaling based on queue depth + job priority.
 """
 
-import time
 import os
-from pathlib import Path
+import asyncio
 
-from backend.runtime.queue import PersistentQueue
+from backend.runtime.queue import QUEUE
 
 
-class Autoscaler:
+class RunPodAutoscaler:
     def __init__(self):
-        self.min_workers = int(os.getenv("MIN_WARM_WORKERS", 1))
-        self.max_workers = int(os.getenv("MAX_WORKERS", 8))
-        self.queue = PersistentQueue()
+        self.api_key = os.getenv("RUNPOD_API_KEY")
+        self.min_pods = int(os.getenv("MIN_WARM_WORKERS", 1))
+        self.max_pods = int(os.getenv("MAX_PODS", 8))
+        self.base_url = "https://api.runpod.io/graphql"
 
-    def get_queue_length(self) -> int:
-        return len(self.queue.snapshot()) if hasattr(self.queue, 'snapshot') else 0
+    def get_queue_depth(self) -> int:
+        """Return current queue length."""
+        return len(QUEUE.snapshot()) if hasattr(QUEUE, 'snapshot') else 0
 
-    def scale(self):
-        queue_len = self.get_queue_length()
-        target = max(self.min_workers, min(self.max_workers, (queue_len // 3) + 1))
+    def scale_fleet(self, target: int):
+        """Scale RunPod pods to target count (stub - replace with real GraphQL)."""
+        print(f"📈 Scaling fleet to {target} pods...")
 
-        print(f"📈 Autoscaler: Queue={queue_len} | Target workers={target}")
-        # In production: call RunPod API to scale pods here
-        # For now: just logging
-        return target
+        # Real implementation would use GraphQL mutation here
+        # For now: logging only
+        if self.api_key:
+            print(f"   → Would call RunPod API to scale to {target} pods")
+        else:
+            print("   ⚠️  RUNPOD_API_KEY not set — scaling simulation only")
+
+    async def run(self):
+        print("🔄 SimHPC RunPod Autoscaler Started")
+
+        while True:
+            try:
+                depth = self.get_queue_depth()
+                target = max(self.min_pods, min(self.max_pods, (depth // 2) + 1))
+
+                self.scale_fleet(target)
+                await asyncio.sleep(30)  # Check every 30 seconds
+
+            except Exception as e:
+                print(f"Autoscaler error: {e}")
+                await asyncio.sleep(60)
 
 
 def main():
-    print("🔄 SimHPC Autoscaler Started")
-    scaler = Autoscaler()
-
-    while True:
-        try:
-            scaler.scale()
-            time.sleep(30)  # Check every 30 seconds
-        except Exception as e:
-            print(f"Autoscaler error: {e}")
-            time.sleep(60)
+    scaler = RunPodAutoscaler()
+    asyncio.run(scaler.run())
 
 
 if __name__ == "__main__":

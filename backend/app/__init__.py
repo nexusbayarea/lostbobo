@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 __all__ = ["app", "create_app"]
 
-def create_app() -> FastAPI:
+def create_app() -> "FastAPI":
     """Factory function to create the SimHPC application."""
     from .main import app
     return app

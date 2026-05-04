@@ -1,59 +1,51 @@
 #!/usr/bin/env python3
 """
-SimHPC Physics Worker
-=====================
-Background worker that consumes jobs and executes MFEM/SUNDIALS nodes.
+SimHPC Physics Worker — Full DAG Consumer
 """
 
 import asyncio
 import sys
 from pathlib import Path
 
-# Path setup
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from backend.runtime.dag_executor import execute_node
+from backend.runtime.dag_executor import execute_dag
 from backend.runtime.job import Job
-from backend.runtime.queue import FakeQueue, PersistentQueue
+from backend.runtime.kernel import KERNEL
+from backend.runtime.queue import QUEUE
 
 
 async def process_job(job: Job):
-    """Execute a single simulation job."""
-    print(f"🔧 Processing job {job.id}")
+    print(f"[Worker] Processing job {job.id} | Payload: {job.payload.get('type')}")
     try:
-        result = execute_node(job.payload)
-        status = "success" if result == 0 else "failed"
-        print(f"✅ Job {job.id} completed: {status}")
-        return result
+        if job.payload.get("type") == "dag":
+            await execute_dag()
+        else:
+            result = KERNEL.execute(job.payload)
+            print(f"[Worker] Job {job.id} result: {result.get('status')}")
+        return True
     except Exception as e:
-        print(f"❌ Job {job.id} failed: {e}")
-        raise
+        print(f"[Worker] Job {job.id} failed: {e}")
+        return False
 
 
 async def main():
-    print("🚀 SimHPC Physics Worker Started")
-
-    # Use persistent queue in production, FakeQueue for local testing
-    queue = PersistentQueue() if Path("runtime_queue.json").exists() else FakeQueue()
+    print("[Worker] SimHPC Physics Worker (DAG Mode) Started")
 
     while True:
         try:
-            job = await queue.dequeue() if hasattr(queue, "dequeue") else None
+            job = await QUEUE.dequeue() if hasattr(QUEUE, "dequeue") else None
             if not job:
                 await asyncio.sleep(1)
                 continue
 
             await process_job(job)
-            await queue.mark_success(job) if hasattr(queue, "mark_success") else None
 
         except Exception as e:
-            print(f"Worker error: {e}")
+            print(f"[Worker] Loop error: {e}")
             await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("👋 Worker shutdown")
+    asyncio.run(main())

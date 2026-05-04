@@ -2,33 +2,57 @@
 """
 SimHPC Physics Worker
 =====================
-
-Background worker for MFEM/SUNDIALS solver execution.
+Background worker that consumes jobs and executes MFEM/SUNDIALS nodes.
 """
 
+import asyncio
 import sys
 from pathlib import Path
 
-# Ensure proper import path
+# Path setup
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from backend.runtime.queue import FakeQueue, PersistentQueue
 from backend.runtime.dag_executor import execute_node
+from backend.runtime.job import Job
 
 
-def main():
+async def process_job(job: Job):
+    """Execute a single simulation job."""
+    print(f"🔧 Processing job {job.id}")
+    try:
+        result = execute_node(job.payload)
+        print(f"✅ Job {job.id} completed: {result.get('status')}")
+        return result
+    except Exception as e:
+        print(f"❌ Job {job.id} failed: {e}")
+        raise
+
+
+async def main():
     print("🚀 SimHPC Physics Worker Started")
-    # In real implementation this would consume from queue / process DAG nodes
-    # For now: placeholder for testing
-    test_node = {
-        "type": "mfem.solve",
-        "solver": "mfem",
-        "mesh": "test_mesh.vtk",
-        "params": {}
-    }
-    result = execute_node(test_node)
-    print("✅ Worker test execution:", result)
+
+    # Use persistent queue in production, FakeQueue for local testing
+    queue = PersistentQueue() if Path("runtime_queue.json").exists() else FakeQueue()
+
+    while True:
+        try:
+            job = await queue.dequeue() if hasattr(queue, 'dequeue') else None
+            if not job:
+                await asyncio.sleep(1)
+                continue
+
+            await process_job(job)
+            await queue.mark_success(job) if hasattr(queue, 'mark_success') else None
+
+        except Exception as e:
+            print(f"Worker error: {e}")
+            await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("👋 Worker shutdown")

@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  api:
+    build: ./backend
+    container_name: simhpc-api
+    ports:
+      - "8000:8000"
+    environment:
+      - SB_URL=${SB_URL}
+      - SB_SECRET_KEY=${SB_SECRET_KEY}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    container_name: simhpc-worker
+    command: python -m backend.worker.worker
+    environment:
+      - SB_URL=${SB_URL}
+      - SB_SECRET_KEY=${SB_SECRET_KEY}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  autoscaler:
+    build: ./backend
+    container_name: simhpc-autoscaler
+    command: python -m backend.runtime.autoscaler
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: simhpc-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  sim_data:

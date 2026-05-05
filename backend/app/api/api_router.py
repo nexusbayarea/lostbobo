@@ -7,6 +7,7 @@ from backend.app.api.graphrag import router as graphrag_router
 from backend.app.api.reports import router as reports_router
 from backend.app.api.routes import certificates, onboarding
 from backend.app.api.routes.alpha import router as alpha_router
+from backend.app.api.swarm import swarm_router
 
 api_router = APIRouter()
 
@@ -18,3 +19,4 @@ api_router.include_router(certificates.router, prefix="/certificates", tags=["Ve
 api_router.include_router(alpha_router, prefix="/alpha", tags=["Alpha"])
 api_router.include_router(reports_router, prefix="/reports", tags=["Reports"])
 api_router.include_router(graphrag_router, prefix="/graphrag", tags=["GraphRAG"])
+api_router.include_router(swarm_router, prefix="/swarm", tags=["Swarm"])

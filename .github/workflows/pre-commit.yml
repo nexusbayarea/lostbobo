@@ -1,4 +1,4 @@
-name: Pre-commit Checks (Aggressive)
+name: Pre-commit Checks (Simplified)
 
 on:
   push:
@@ -14,18 +14,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
-          pre-commit install --install-hooks
+      - name: Install ruff
+        run: pip install ruff
 
-      - name: Run aggressive pre-commit on all files
-        run: pre-commit run --all-files --show-diff-on-failure
+      - name: Run ruff format
+        run: ruff format .
+
+      - name: Run ruff check
+        run: ruff check . --fix

@@ -19,9 +19,10 @@ MANIFEST = {
             "description": "Three-phase GraphRAG retrieval (vector + knowledge graph expansion)",
             "metadata": {
                 "gpu": False,
-                "timeout": 30,
+                "timeout": 45,
                 "hops": 2,
                 "final_k": 10,
+                "streaming": True,
             },
         },
     },

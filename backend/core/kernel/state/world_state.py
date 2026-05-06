@@ -34,7 +34,7 @@ class WorldState:
 
     def __post_init__(self):
         if not self.state_id:
-            self.state_id = f"world_{int(datetime.utcnow().timestamp()*1000)}"
+            self.state_id = f"world_{int(datetime.utcnow().timestamp() * 1000)}"
         if not self.timestamp:
             self.timestamp = datetime.utcnow()
         if not self.entities:

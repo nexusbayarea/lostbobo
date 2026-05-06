@@ -22,9 +22,7 @@ class PromptStack:
         layers = []
 
         # Layer 1: Environment
-        world = await self.kernel.execute(
-            {"type": "WORLD_UPDATE", "payload": {}}
-        )
+        world = await self.kernel.execute({"type": "WORLD_UPDATE", "payload": {}})
         layers.append(f"ENVIRONMENT:\nCurrent world state: {world.get('entities', {})}")
 
         # Layer 2: Mode
@@ -34,14 +32,15 @@ class PromptStack:
         layers.append(f"ACTIVE GOALS:\n{user_query}")
 
         # Layer 4: Observational Memory (recent signals)
-        memory = await self.kernel.execute({
-            "type": "MEMORY_QUERY",
-            "payload": {"type": "observation", "limit": 5}
-        })
+        memory = await self.kernel.execute(
+            {"type": "MEMORY_QUERY", "payload": {"type": "observation", "limit": 5}}
+        )
         layers.append(f"RECENT OBSERVATIONS:\n{[m.get('insight') for m in memory]}")
 
         # Layer 5: Skills Available
-        skills = await self.kernel.execute({"type": "SKILL_LIST"})  # add command if needed
+        skills = await self.kernel.execute(
+            {"type": "SKILL_LIST"}
+        )  # add command if needed
         layers.append(f"AVAILABLE SKILLS:\n{[s for s in skills]}")
 
         # Layer 6: Workspace Artifacts

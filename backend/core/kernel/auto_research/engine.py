@@ -23,7 +23,7 @@ class AutoResearchEngine:
 
     async def run_research_cycle(self, target: str, research_dsl: dict[str, Any]) -> dict[str, Any]:
         """One full auto-research iteration."""
-        experiment_id = f"exp_{int(datetime.utcnow().timestamp()*1000)}"
+        experiment_id = f"exp_{int(datetime.utcnow().timestamp() * 1000)}"
 
         proposed_change = await self._propose_change(research_dsl)
 

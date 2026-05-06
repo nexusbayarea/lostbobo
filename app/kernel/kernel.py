@@ -17,12 +17,10 @@ class Kernel:
         self.services = {
             "memory": MemoryServiceMock(),
             "reconcile": ReconcileServiceMock(),
-            "world": WorldServiceMock()
+            "world": WorldServiceMock(),
         }
         self.skills = SkillsMock()
-        self.agents = {
-            "planner": PlannerAgentMock()
-        }
+        self.agents = {"planner": PlannerAgentMock()}
         # In a real system, you would initialize other subsystems here: memory, world model, etc.
         log.info("Kernel initialized")
 
@@ -42,7 +40,7 @@ class Kernel:
                 "entities": {
                     "grid_load": "normal",
                     "weather": "clear",
-                    "time": "2026-05-06T01:35:00Z"
+                    "time": "2026-05-06T01:35:00Z",
                 }
             }
         elif command_type == "MEMORY_QUERY":
@@ -51,7 +49,7 @@ class Kernel:
             limit = payload.get("limit", 5)
             return [
                 {
-                    "insight": f"Observation {i+1}: System stable",
+                    "insight": f"Observation {i + 1}: System stable",
                     "type": observation_type,
                 }
                 for i in range(min(limit, 3))
@@ -67,13 +65,13 @@ class Kernel:
 class MemoryServiceMock:
     async def record(self, payload):
         return {"status": "recorded", "payload": payload}
-    
+
     async def query(self, payload):
         observation_type = payload.get("type", "observation")
         limit = payload.get("limit", 5)
         return [
             {
-                "insight": f"Observation {i+1}: System stable",
+                "insight": f"Observation {i + 1}: System stable",
                 "type": observation_type,
             }
             for i in range(min(limit, 3))
@@ -92,7 +90,7 @@ class WorldServiceMock:
                 "grid_load": "normal",
                 "weather": "clear",
                 "time": "2026-05-06T01:35:00Z",
-                **payload
+                **payload,
             }
         }
 
@@ -103,12 +101,16 @@ class SkillsMock:
             "analysis": lambda x: {"result": "analyzed"},
             "build": lambda x: {"result": "built"},
             "optimize": lambda x: {"result": "optimized"},
-            "execute": lambda x: {"result": "executed"}
+            "execute": lambda x: {"result": "executed"},
         }
-    
+
     async def execute(self, skill_name, input_data):
         if skill_name in self.skills:
-            return {"status": "skill_executed", "skill": skill_name, "result": self.skills[skill_name](input_data)}
+            return {
+                "status": "skill_executed",
+                "skill": skill_name,
+                "result": self.skills[skill_name](input_data),
+            }
         return {"status": "skill_not_found", "skill": skill_name}
 
 

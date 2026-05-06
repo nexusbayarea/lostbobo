@@ -17,7 +17,7 @@ class ReasoningAgent(BaseAgent):
             h = Hypothesis(
                 id=str(uuid.uuid4()),
                 claim={"query": query, "variant": f"reasoning_{i}"},
-                reasoning=f"Reasoning path {i+1} for: {query}",
+                reasoning=f"Reasoning path {i + 1} for: {query}",
                 plausibility_score=0.7 + (i * 0.1),
             )
             hypotheses.append(h)

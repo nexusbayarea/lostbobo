@@ -25,7 +25,9 @@ class CommandBus:
             case "WORLD_UPDATE":
                 return await self.kernel.services["world"].update(payload)
             case "SKILL_EXECUTE":
-                return await self.kernel.skills.execute(payload["skill"], payload["input"])
+                return await self.kernel.skills.execute(
+                    payload["skill"], payload["input"]
+                )
             case "AGENT_RUN":
                 agent_name = payload["agent"]
                 return await self.kernel.agents[agent_name].run(payload["input"])

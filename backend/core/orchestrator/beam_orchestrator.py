@@ -31,7 +31,7 @@ class BeamOrchestrator:
         await self.streamer.connect()
 
         if not request_id:
-            request_id = f"req_{int(time.time()*1000)}"
+            request_id = f"req_{int(time.time() * 1000)}"
 
         beams: list[Hypothesis] = await self._generate_initial_beams(query, tenant_id)
 

@@ -23,7 +23,7 @@ class MemoryRecord:
 
     def __post_init__(self):
         if not self.id:
-            self.id = f"mem_{int(datetime.now().timestamp()*1000)}"
+            self.id = f"mem_{int(datetime.now().timestamp() * 1000)}"
         if not self.timestamp:
             self.timestamp = datetime.utcnow()
         if not self.context:

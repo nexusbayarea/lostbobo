@@ -94,7 +94,7 @@ class AutonomousSimulationAgent:
             # Fallback to direct simulation
             outputs = {"max_temp": 335.0, "plating": 0.45}
 
-        run_id = f"auto-{int(time.time()*1000)}"
+        run_id = f"auto-{int(time.time() * 1000)}"
 
         # Cache + Provenance
         await self.cache.store(plan.parameters, outputs)

@@ -17,7 +17,7 @@ class SimulationAgent(BaseAgent):
             h = Hypothesis(
                 id=str(uuid.uuid4()),
                 claim={"query": query, "variant": f"sim_{i}"},
-                reasoning=f"Simulation path {i+1}",
+                reasoning=f"Simulation path {i + 1}",
                 sim_params={"temp": 298 + i * 5, "c_rate": 1.0 + i * 0.5},
                 simulation_score=0.75 + (i * 0.08),
             )

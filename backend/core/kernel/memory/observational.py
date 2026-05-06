@@ -46,7 +46,7 @@ class Observer:
         confidence = 0.85 if "simulation" in event.type else 0.65
 
         obs = Observation(
-            id=f"obs_{int(datetime.utcnow().timestamp()*1000)}",
+            id=f"obs_{int(datetime.utcnow().timestamp() * 1000)}",
             event_ids=[event.id],
             insight=insight,
             confidence=confidence,

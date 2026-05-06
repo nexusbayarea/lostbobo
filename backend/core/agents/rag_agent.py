@@ -17,7 +17,7 @@ class RAGAgent(BaseAgent):
             h = Hypothesis(
                 id=str(uuid.uuid4()),
                 claim={"query": query, "source": ctx_item.get("id"), "variant": "rag"},
-                reasoning=f"RAG path from context {i+1}",
+                reasoning=f"RAG path from context {i + 1}",
                 rag_score=0.8 + (i * 0.05),
             )
             hypotheses.append(h)

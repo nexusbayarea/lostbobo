@@ -44,13 +44,15 @@ class WorkspaceManager:
             ws = Workspace(agent_id=agent_id)
             self.workspaces[agent_id] = ws
             # Persist initial workspace via Kernel
-            await self.kernel.execute({
-                "type": "MEMORY_RECORD",
-                "payload": {
-                    "type": "workspace_init",
-                    "content": {"agent_id": agent_id, "mode": ws.mode}
+            await self.kernel.execute(
+                {
+                    "type": "MEMORY_RECORD",
+                    "payload": {
+                        "type": "workspace_init",
+                        "content": {"agent_id": agent_id, "mode": ws.mode},
+                    },
                 }
-            })
+            )
         return self.workspaces[agent_id]
 
     async def update(self, agent_id: str, updates: Dict[str, Any]):
@@ -60,11 +62,13 @@ class WorkspaceManager:
                 setattr(ws, key, value)
         ws.last_updated = datetime.utcnow()
 
-        await self.kernel.execute({
-            "type": "MEMORY_RECORD",
-            "payload": {
-                "type": "workspace_update",
-                "content": {"agent_id": agent_id, **updates}
+        await self.kernel.execute(
+            {
+                "type": "MEMORY_RECORD",
+                "payload": {
+                    "type": "workspace_update",
+                    "content": {"agent_id": agent_id, **updates},
+                },
             }
-        })
+        )
         return ws

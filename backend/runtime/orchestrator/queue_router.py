@@ -27,7 +27,7 @@ class QueueRouter:
     async def enqueue(self, stage: str, payload: dict) -> str:
         """Enqueue work for a specific stage. Returns job_id."""
         await self.connect()
-        job_id = f"job:{stage}:{int(time.time()*1000)}"
+        job_id = f"job:{stage}:{int(time.time() * 1000)}"
 
         payload["job_id"] = job_id
         payload["stage"] = stage

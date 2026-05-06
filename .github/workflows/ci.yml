@@ -1,4 +1,4 @@
-name: Unified Kernel CI
+name: Unified Deterministic CI
 
 on:
   push:
@@ -8,14 +8,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  kernel:
+  ci:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     env:
       RUNTIME_MODE: ci
-      PYTHONPATH: ${{ github.workspace }}/backend
+      SB_URL: http://localhost:8080
+      SB_TOKEN: ci-stub-token
+      SB_SECRET_KEY: ci-stub-secret
+      SB_JWT_SECRET: ci-stub-jwt
+      SB_PUB_KEY: ci-stub-pubkey
+      SB_DATA_URL: http://localhost:8000
 
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +39,8 @@ jobs:
       - name: Smoke test CI runner
         run: python -c "import tools.run_ci; print('[SMOKE] run_ci.py imports OK')"
 
-      - name: Run Kernel CI via Makefile
-        run: make ci
+      - name: Run Full CI (stable script)
+        run: bash ci.sh
 
-      - name: Strict Validation (Read-Only Phase)
-        run: make check
+      - name: Strict Validation
+        run: ruff format --check . && ruff check .

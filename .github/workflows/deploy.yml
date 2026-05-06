@@ -2,7 +2,7 @@ name: SimHPC Alpha Deployment
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   audit:
@@ -12,8 +12,7 @@ jobs:
         working-directory: backend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,10 +25,5 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
-      - name: Full Deployment Audit via Makefile
-        run: make check
-
-      - name: Additional Worker & API Lint
-        run: |
-          ruff check backend/worker/ backend/app/api/
-          echo "✅ Deployment audit passed"
+      - name: Full Deployment Audit
+        run: bash ci.sh

@@ -11,9 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class StructuredIndex:
-    async def search(
-        self, query: str, tenant_id: str = "public", limit: int = 8
-    ) -> list[dict[str, Any]]:
+    async def search(self, query: str, tenant_id: str = "public", limit: int = 8) -> list[dict[str, Any]]:
         """Search material properties and constants."""
         sb = get_supabase_client()
         if not sb:

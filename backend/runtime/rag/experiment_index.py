@@ -11,9 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class ExperimentIndex:
-    async def search(
-        self, query: str, tenant_id: str = "public", limit: int = 8
-    ) -> list[dict[str, Any]]:
+    async def search(self, query: str, tenant_id: str = "public", limit: int = 8) -> list[dict[str, Any]]:
         """Search simulation cache and replays."""
         sb = get_supabase_client()
         if not sb:

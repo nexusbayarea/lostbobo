@@ -11,20 +11,21 @@ log = logging.getLogger(__name__)
 
 
 class DocumentIndex:
-    async def search(
-        self, query: str, tenant_id: str = "public", limit: int = 8
-    ) -> list[dict[str, Any]]:
+    async def search(self, query: str, tenant_id: str = "public", limit: int = 8) -> list[dict[str, Any]]:
         """Search document chunks."""
         sb = get_supabase_client()
         if not sb:
             return []
 
         try:
-            resp = sb.rpc("match_chunks", {
-                "query_text": query,
-                "match_count": limit,
-                "filter_tenant": tenant_id,
-            }).execute()
+            resp = sb.rpc(
+                "match_chunks",
+                {
+                    "query_text": query,
+                    "match_count": limit,
+                    "filter_tenant": tenant_id,
+                },
+            ).execute()
             return resp.data or []
         except Exception as e:
             log.warning("DocumentIndex search failed: %s", e)

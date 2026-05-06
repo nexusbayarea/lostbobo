@@ -1,4 +1,4 @@
-"""Beam Orchestrator with full Simulation Runner integration + Redis streaming."""
+"""Final Beam Orchestrator — Provenance + Certificate + Redis Streaming."""
 
 from __future__ import annotations
 
@@ -7,7 +7,9 @@ import logging
 import time
 from typing import Any
 
+from backend.core.certificate.service import CertificateService
 from backend.core.models.hypothesis import Hypothesis
+from backend.core.provenance.graph import ProvenanceGraph, ProvenanceNode
 from backend.core.redis.beam_streamer import BeamStreamer
 from backend.core.simulation.runner import SimulationRunner
 from backend.runtime.rag.router import RAGRouter
@@ -22,6 +24,8 @@ class BeamOrchestrator:
         self.rag = rag
         self.config = config
         self.streamer = BeamStreamer()
+        self.provenance = ProvenanceGraph()
+        self.certificate_service = CertificateService()
 
     async def run(self, query: str, tenant_id: str = "public", request_id: str | None = None) -> Hypothesis:
         await self.streamer.connect()
@@ -42,6 +46,19 @@ class BeamOrchestrator:
 
         winner = max(beams, key=lambda h: h.trust_score)
         winner.stage = "complete"
+
+        await self.provenance.add_node(
+            ProvenanceNode(
+                node_id=winner.id,
+                node_type="final_hypothesis",
+                data={"query": query},
+                parent_ids=[],
+                timestamp=time.time(),
+            )
+        )
+
+        await self.certificate_service.issue(winner)
+
         await self.streamer.publish_hypothesis(winner, request_id)
         return winner
 

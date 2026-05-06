@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, Any
+
+log = logging.getLogger(__name__)
 
 
 class CommandBus:
@@ -24,10 +27,12 @@ class CommandBus:
                 )
             case "WORLD_UPDATE":
                 return await self.kernel.services["world"].update(payload)
+            case "WORLD_SIMULATE":                                 # ← NEW
+                return await self.kernel.services["world"].simulate(payload)
+            case "WORLD_PROPAGATE":
+                return await self.kernel.services["world"].propagate_uncertainty(payload)
             case "SKILL_EXECUTE":
-                return await self.kernel.skills.execute(
-                    payload["skill"], payload["input"]
-                )
+                return await self.kernel.skills.execute(payload["skill"], payload["input"])
             case "AGENT_RUN":
                 agent_name = payload["agent"]
                 return await self.kernel.agents[agent_name].run(payload["input"])
@@ -38,7 +43,10 @@ class CommandBus:
             case "SAFEGUARD_GATE":
                 return await self.kernel.safeguards.gate_action(payload)
             case "MONITOR_METRIC":
-                return await self.kernel.safeguards.monitor_metric(payload["name"], payload["value"])
+                return await self.kernel.safeguards.monitor_metric(
+                    payload["name"], payload["value"]
+                )
             case _:
-                # Fallback
-                return await self.kernel.execute(command)
+                # Fallback for unknown commands
+                log.warning(f"Unknown command type: {cmd_type}")
+                return await self.kernel.execute(command)  # recursive fallback if needed

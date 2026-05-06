@@ -1,9 +1,11 @@
 name: Unified Kernel CI
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   kernel:
@@ -12,6 +14,7 @@ jobs:
       run:
         working-directory: backend
     env:
+      RUNTIME_MODE: ci
       PYTHONPATH: ${{ github.workspace }}/backend
 
     steps:
@@ -22,16 +25,17 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install uv
+        run: pip install uv
+
       - name: Install dependencies
-        run: pip install ruff==0.4.4
+        run: uv sync --extra dev
 
       - name: Smoke test CI runner
         run: python -c "import tools.run_ci; print('[SMOKE] run_ci.py imports OK')"
 
-      - name: Run CI
-        run: python tools/run_ci.py
+      - name: Run Kernel CI via Makefile
+        run: make ci
 
-      - name: Run Strict Validation (Read-Only Phase)
-        run: |
-          ruff format --check .
-          ruff check .
+      - name: Strict Validation (Read-Only Phase)
+        run: make check

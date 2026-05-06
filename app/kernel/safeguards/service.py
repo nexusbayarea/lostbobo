@@ -24,10 +24,12 @@ class SafeguardsService:
 
         # Require simulation validation for mutations
         if action.get("mutation", False):
-            sim_result = await self.kernel.execute({
-                "type": "WORLD_SIMULATE",
-                "payload": action.get("simulation_input", {})
-            })
+            sim_result = await self.kernel.execute(
+                {
+                    "type": "WORLD_SIMULATE",
+                    "payload": action.get("simulation_input", {}),
+                }
+            )
             if not sim_result.get("passed_gate", False):
                 log.warning("Action rejected by simulation gate")
                 return False

@@ -6,7 +6,7 @@ import logging
 from typing import Dict, Any
 
 from app.kernel.prompt.stack import PromptStack
-from app.kernel.safeguards.service import SafeguardsService   # ← FIXED
+from app.kernel.safeguards.service import SafeguardsService  # ← FIXED
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +24,10 @@ class Kernel:
         self.agents = {"planner": PlannerAgentMock()}
         # Initialize safeguards service
         self.safeguards = SafeguardsService(self)
+        # Initialize auto-research engine
+        from app.kernel.auto_research.engine import AutoResearchEngine
+
+        self.auto_research = AutoResearchEngine(self)
         # In a real system, you would initialize other subsystems here: memory, world model, etc.
         log.info("Kernel initialized")
 

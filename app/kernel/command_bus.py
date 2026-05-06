@@ -27,12 +27,16 @@ class CommandBus:
                 )
             case "WORLD_UPDATE":
                 return await self.kernel.services["world"].update(payload)
-            case "WORLD_SIMULATE":                                 # ← NEW
+            case "WORLD_SIMULATE":  # ← NEW
                 return await self.kernel.services["world"].simulate(payload)
             case "WORLD_PROPAGATE":
-                return await self.kernel.services["world"].propagate_uncertainty(payload)
+                return await self.kernel.services["world"].propagate_uncertainty(
+                    payload
+                )
             case "SKILL_EXECUTE":
-                return await self.kernel.skills.execute(payload["skill"], payload["input"])
+                return await self.kernel.skills.execute(
+                    payload["skill"], payload["input"]
+                )
             case "AGENT_RUN":
                 agent_name = payload["agent"]
                 return await self.kernel.agents[agent_name].run(payload["input"])
@@ -46,7 +50,13 @@ class CommandBus:
                 return await self.kernel.safeguards.monitor_metric(
                     payload["name"], payload["value"]
                 )
+            case "AUTO_RESEARCH_RUN":
+                return await self.kernel.auto_research.run_research_cycle(
+                    payload["target"], payload["dsl"]
+                )
             case _:
                 # Fallback for unknown commands
                 log.warning(f"Unknown command type: {cmd_type}")
-                return await self.kernel.execute(command)  # recursive fallback if needed
+                return await self.kernel.execute(
+                    command
+                )  # recursive fallback if needed

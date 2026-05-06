@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Ensure Rust is available
+if ! command -v cargo &> /dev/null; then
+  echo "Installing Rust..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  source "$HOME/.cargo/env"
+fi
+
+
 echo "🚀 Starting SimHPC CI Pipeline..."
 
 # Install ruff locally if not available

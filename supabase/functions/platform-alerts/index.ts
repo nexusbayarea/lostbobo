@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const USAGE_THRESHOLD = 10.00; 
+const USAGE_THRESHOLD = 10.00;
 
 serve(async (req) => {
   const supabaseAdmin = createClient(
@@ -13,7 +13,7 @@ serve(async (req) => {
 
   if (currentSpend > USAGE_THRESHOLD) {
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
-    
+
     const { data: existingAlert } = await supabaseAdmin
       .from('platform_alerts')
       .select('id')
@@ -26,8 +26,8 @@ serve(async (req) => {
         type: 'billing',
         severity: 'critical',
         message: `Usage Alert: Current burn rate is $${currentSpend.toFixed(2)}/hr, exceeding the $${USAGE_THRESHOLD} limit.`,
-        metadata: { 
-          hourly_spend: currentSpend, 
+        metadata: {
+          hourly_spend: currentSpend,
           triggered_at: new Date().toISOString()
         }
       });

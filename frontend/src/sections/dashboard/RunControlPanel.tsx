@@ -13,8 +13,8 @@ interface RunControlPanelProps {
   remainingRuns: number;
 }
 
-export function RunControlPanel({ 
-  onStartRun, 
+export function RunControlPanel({
+  onStartRun,
   onCancelRun,
   isRunning,
   numRuns: initialNumRuns,
@@ -66,13 +66,13 @@ export function RunControlPanel({
 
       {/* Method Selection */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <button 
+        <button
           onClick={() => setMethod('lhs')}
           disabled={isRunning}
           className={cn(
             "p-4 rounded-xl border-2 transition-all text-left",
-            method === 'lhs' 
-              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400" 
+            method === 'lhs'
+              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400"
               : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
           )}
         >
@@ -82,13 +82,13 @@ export function RunControlPanel({
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400 italic">Standard Robustness Analysis</span>
         </button>
-        <button 
+        <button
           onClick={() => setMethod('sobol')}
           disabled={isRunning}
           className={cn(
             "p-4 rounded-xl border-2 transition-all text-left",
-            method === 'sobol' 
-              ? "bg-purple-50 dark:bg-purple-900/20 border-purple-500 dark:border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.15)]" 
+            method === 'sobol'
+              ? "bg-purple-50 dark:bg-purple-900/20 border-purple-500 dark:border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.15)]"
               : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
           )}
         >
@@ -128,7 +128,7 @@ export function RunControlPanel({
           <div>
             <p className="text-sm font-bold text-purple-900 dark:text-purple-300">Enterprise Sensitivity Mode</p>
             <p className="text-xs text-purple-700 dark:text-purple-400 mt-0.5">
-              Sobol GSA identifies complex multi-variable interactions. 
+              Sobol GSA identifies complex multi-variable interactions.
               Estimated completion: <strong>~{Math.max(1, Math.round(requiredRuns / 8))} mins</strong> on A40 GPU.
             </p>
           </div>
@@ -139,13 +139,13 @@ export function RunControlPanel({
       <div className="flex flex-col sm:flex-row gap-4">
         {!isRunning ? (
           <div className="w-full space-y-3">
-            <button 
+            <button
               onClick={handleInitialize}
               disabled={!canAfford}
               className={cn(
                 "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-lg",
-                canAfford 
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] shadow-lg shadow-slate-900/10" 
+                canAfford
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] shadow-lg shadow-slate-900/10"
                   : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
               )}
             >

@@ -3,9 +3,9 @@ import { useSimulations } from '../../hooks/useSimulations';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { RunStatusResponse } from '../../types/simulations';
-import { 
-  Copy, Check, Activity, LayoutDashboard, 
-  Terminal, ChevronRight, Inbox, AlertCircle 
+import {
+  Copy, Check, Activity, LayoutDashboard,
+  Terminal, ChevronRight, Inbox, AlertCircle
 } from 'lucide-react';
 
 // --- Sub-Component: Defensive Copy Button ---
@@ -26,8 +26,8 @@ const CopyButton = ({ text }: { text: string | undefined | null }) => {
   if (!text) return null;
 
   return (
-    <button 
-      onClick={handleCopy} 
+    <button
+      onClick={handleCopy}
       title="Copy ID"
       className="ml-2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
     >
@@ -92,7 +92,7 @@ export const AdminAnalyticsPage = () => {
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold text-xs">HPC</div>
             <h2 className="text-xl font-bold tracking-tight">SimHPC</h2>
           </div>
-          
+
           <nav className="flex-1 space-y-1">
             <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md bg-accent text-accent-foreground text-sm font-medium">
               <LayoutDashboard size={18} /> Fleet Analytics
@@ -173,14 +173,14 @@ export const AdminAnalyticsPage = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 group">
                           {/* Visual Health Indicator */}
-                          <div 
+                          <div
                             className={`h-2 w-2 rounded-full shadow-sm transition-colors duration-500 ${
-                              isPingRecent(sim.last_ping) 
-                                ? 'bg-emerald-500 shadow-emerald-500/20' 
+                              isPingRecent(sim.last_ping)
+                                ? 'bg-emerald-500 shadow-emerald-500/20'
                                 : 'bg-rose-500 shadow-rose-500/20 animate-pulse'
-                            }`} 
+                            }`}
                           />
-                          
+
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
                               {isPingRecent(sim.last_ping) ? 'Healthy' : 'Stale'}

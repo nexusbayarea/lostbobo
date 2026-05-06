@@ -49,7 +49,7 @@ def get_dashboard():
                     <p class="text-2xl font-mono">${total_cost:.4f}</p>
                 </div>
             </div>
-            
+
             <div class="flex gap-4">
                 <a href="/admin/traction-proof" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 transition">Download Traction Proof (CSV)</a>
                 <form action="/admin/replay/full" method="post" class="inline">

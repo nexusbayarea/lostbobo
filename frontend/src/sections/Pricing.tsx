@@ -89,7 +89,7 @@ export function Pricing() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400">
-            Choose the plan that fits your simulation needs. 
+            Choose the plan that fits your simulation needs.
             Robustness Analysis included in Professional and above.
           </p>
         </motion.div>

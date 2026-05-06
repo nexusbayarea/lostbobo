@@ -77,8 +77,8 @@ export function Hero() {
               transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed"
             >
-              AI-assisted, GPU-accelerated finite element simulation with integrated 
-              robustness analysis and structured technical reporting — built for 
+              AI-assisted, GPU-accelerated finite element simulation with integrated
+              robustness analysis and structured technical reporting — built for
               engineering teams that need answers they can trust.
             </motion.p>
 
@@ -167,7 +167,7 @@ export function Hero() {
                   <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Report Generated</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                  "Model output indicates peak temperature is primarily driven by boundary heat flux variation. 
+                  "Model output indicates peak temperature is primarily driven by boundary heat flux variation.
                   System stability is sensitive to cooling efficiency..."
                 </p>
               </div>

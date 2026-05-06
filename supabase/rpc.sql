@@ -13,7 +13,7 @@ create or replace function claim_job(
     created_at timestamp
 ) language sql as $$
     UPDATE jobs
-    SET 
+    SET
         status = 'leased',
         lease_id = p_lease_id,
         lease_expires_at = now() + (p_lease_duration || ' seconds')::interval
@@ -34,7 +34,7 @@ create or replace function renew_lease(
     p_lease_duration int default 300
 ) returns boolean language sql as $$
     UPDATE jobs
-    SET 
+    SET
         lease_expires_at = now() + (p_lease_duration || ' seconds')::interval
     WHERE id = p_job_id
       AND lease_id = p_lease_id

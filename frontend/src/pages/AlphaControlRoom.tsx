@@ -21,7 +21,7 @@ export function AlphaControlRoom() {
   const { user, getToken } = useAuth();
   const { simulations, loading: simsLoading } = useSimulations(user?.id);
   const [activeTab, setActiveTab] = useState('observe');
-  
+
   const activeCount = simulations.filter(s => s.status === 'running' || s.status === 'auditing').length;
   const completedCount = simulations.filter(s => s.status === 'completed').length;
   const errorCount = simulations.filter(s => s.status === 'failed').length;
@@ -29,7 +29,7 @@ export function AlphaControlRoom() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-mono selection:bg-cyan-500/30">
       <Navigation />
-      
+
       <div className="flex-1 pt-16 flex overflow-hidden">
         <aside className="w-16 border-r border-slate-800 bg-slate-950/50 flex flex-col items-center py-6 gap-8 z-20">
           <div className="mt-4">
@@ -80,7 +80,7 @@ export function AlphaControlRoom() {
                 <span className="text-[10px] text-green-400 font-mono">99.98%</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-6 text-[10px] font-mono">
               <span className="text-slate-600 flex items-center gap-2">
                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -109,7 +109,7 @@ export function AlphaControlRoom() {
           </div>
         </div>
       </div>
-      
+
       <footer className="h-8 bg-slate-950 border-t border-slate-800/50 px-6 flex items-center justify-between text-[8px] font-mono tracking-[0.2em] uppercase text-slate-600">
          <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">

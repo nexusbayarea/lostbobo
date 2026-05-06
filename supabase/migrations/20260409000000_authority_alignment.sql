@@ -2,10 +2,10 @@
 -- Prevents race conditions with atomic increments and enables batch flush pattern
 
 -- 1. Add credits column to profiles (if not exists)
-DO $$ 
+DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
+        SELECT 1 FROM information_schema.columns
         WHERE table_name = 'profiles' AND column_name = 'credits'
     ) THEN
         ALTER TABLE public.profiles ADD COLUMN credits INT DEFAULT 10;
@@ -23,13 +23,13 @@ CREATE TABLE IF NOT EXISTS public.usage_logs (
 );
 
 -- 3. Index for fast dashboard queries
-CREATE INDEX IF NOT EXISTS idx_usage_logs_user_date 
+CREATE INDEX IF NOT EXISTS idx_usage_logs_user_date
     ON public.usage_logs(user_id, created_at DESC);
 
 -- 4. The Atomic Increment Function (Prevents Race Conditions)
 CREATE OR REPLACE FUNCTION public.decrement_usage_atomic(
-    target_user_id UUID, 
-    spend_amount INT, 
+    target_user_id UUID,
+    spend_amount INT,
     feature TEXT
 )
 RETURNS void AS $$

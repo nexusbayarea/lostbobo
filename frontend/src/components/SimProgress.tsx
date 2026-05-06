@@ -50,9 +50,9 @@ export function SimProgress({ value, status, className }: SimProgressProps) {
           {getStatusLabel().toUpperCase()}
         </Badge>
       </div>
-      
+
       <Progress value={value} className="h-2" />
-      
+
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{value}% of perturbations complete</span>
         <span>Estimated time: ~45s</span>

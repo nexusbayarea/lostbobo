@@ -1,6 +1,6 @@
 # SimHPC System Source of Truth
-> **Version**: 3.0.0 (April 11, 2026)  
-> **Authority**: PRIMARY (Overrides all other .md files)  
+> **Version**: 3.0.0 (April 11, 2026)
+> **Authority**: PRIMARY (Overrides all other .md files)
 > **Status**: ENFORCED for all AI Models and CLI Tools
 
 ---
@@ -11,7 +11,7 @@ To prevent "Layer Stacking" and CI loops, the system follows these invariants:
 
 - **Local Authority**: Images are built exclusively on the local machine using the Git SHA as a tag via `scripts/build.sh`.
 - **Zero-Build CI**: GitHub Actions (`ci-validation.yml` and `orchestrator.yml`) MUST NOT contain `docker login` or `docker build` steps.
-- **Port 8080 (LOCKED)**: The unified production endpoint is 8080. All health checks, API insights, and proxy configurations must target this port. 
+- **Port 8080 (LOCKED)**: The unified production endpoint is 8080. All health checks, API insights, and proxy configurations must target this port.
 - **UVX Isolation**: CI linting tools must run via `uvx` to prevent system-level Python environment conflicts.
 
 ---

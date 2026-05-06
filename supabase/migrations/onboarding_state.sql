@@ -27,7 +27,7 @@ CREATE POLICY "Users can insert their own onboarding state"
 
 -- Trigger for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER 
+RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public

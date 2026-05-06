@@ -27,4 +27,3 @@ Headline: Scaling the Urban Grooming Ecosystem
 **One Final Suggestion**
 
 **On Slide 9 (Competition), make sure you mention that while brands like Salt \& Stone or Native have multiple scents, they don't have a specialized Hair Tonic for athletes. This makes your "Urban Athletic" quadrant even more defensible.**
-

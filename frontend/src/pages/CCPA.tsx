@@ -9,7 +9,7 @@ export function CCPA() {
                 <p className="text-slate-600 dark:text-slate-400 mb-8">
                     Effective Date: 3/3/2026 | Last Updated: 3/3/2026
                 </p>
-                
+
                 <div className="space-y-8 text-slate-800 dark:text-slate-200">
                     <p>
                         This California Privacy Notice supplements the SimHPC Privacy Policy and applies solely to
@@ -19,7 +19,7 @@ export function CCPA() {
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">1. Categories of Personal Information We Collect</h2>
                         <p className="mb-4">In the past 12 months, SimHPC has collected the following categories of personal information:</p>
-                        
+
                         <h3 className="text-xl font-semibold mb-3 mt-4">A. Identifiers</h3>
                         <ul className="list-disc pl-6 space-y-2">
                             <li>Name</li>
@@ -121,7 +121,7 @@ export function CCPA() {
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">6. Your Rights Under California Law</h2>
                         <p className="mb-4">If you are a California resident, you have the right to:</p>
-                        
+
                         <h3 className="text-xl font-semibold mb-3 mt-4">A. Right to Know</h3>
                         <p className="mb-2">Request disclosure of:</p>
                         <ul className="list-disc pl-6 space-y-2">

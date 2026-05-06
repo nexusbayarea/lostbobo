@@ -42,7 +42,7 @@ def execute_node(node_id: str, params: dict, context: dict) -> SkillResponse:
     Standard entry point for SimHPC Gamma Modules.
     """
     logger.info(f"Skill execution started for Node: {node_id}")
-    
+
     try:
         # 1. Your Specialized Physics/Logic here
         # 2. Return the standard contract response

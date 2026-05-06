@@ -13,15 +13,15 @@ const AlphaControlRoom = lazy(() => import('@/pages/AlphaControlRoom').then(modu
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/AdminAnalyticsPage').then(module => ({ default: module.AdminAnalyticsPage })));
 const Benchmarks = lazy(() => import('@/pages/Benchmarks').then(module => ({ default: module.Benchmarks })));
 const Pricing = lazy(() => import('@/pages/Pricing').then(module => ({ default: module.Pricing })));
-const About = lazy(() => import('@/pages/About').then(module => ({ default: module.About })));  
-const Docs = lazy(() => import('@/pages/Docs').then(module => ({ default: module.Docs })));     
+const About = lazy(() => import('@/pages/About').then(module => ({ default: module.About })));
+const Docs = lazy(() => import('@/pages/Docs').then(module => ({ default: module.Docs })));
 const APIReference = lazy(() => import('@/pages').then(module => ({ default: module.APIReference })));
-const CCPA = lazy(() => import('@/pages/CCPA').then(module => ({ default: module.CCPA })));     
-const DPA = lazy(() => import('@/pages/DPA').then(module => ({ default: module.DPA })));        
+const CCPA = lazy(() => import('@/pages/CCPA').then(module => ({ default: module.CCPA })));
+const DPA = lazy(() => import('@/pages/DPA').then(module => ({ default: module.DPA })));
 const CookiePolicy = lazy(() => import('@/pages/CookiePolicy').then(module => ({ default: module.CookiePolicy })));
 const SignIn = lazy(() => import('@/pages/SignIn').then(module => ({ default: module.SignIn })));
 const SignUp = lazy(() => import('@/pages/SignUp').then(module => ({ default: module.SignUp })));
-const Terms = lazy(() => import('@/pages/Terms').then(module => ({ default: module.Terms })));  
+const Terms = lazy(() => import('@/pages/Terms').then(module => ({ default: module.Terms })));
 const Privacy = lazy(() => import('@/pages/Privacy').then(module => ({ default: module.Privacy })));
 const Contact = lazy(() => import('@/pages/Contact').then(module => ({ default: module.Contact })));
 
@@ -41,7 +41,7 @@ function HomePage() {
 }
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-background text-foreground"> 
+  <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
     <div className="flex flex-col items-center gap-4">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       <p className="text-sm font-medium animate-pulse">Loading Mission Control...</p>

@@ -8,7 +8,7 @@ export function ActiveSimulations() {
   const { user } = useAuth();
   const { simulations, loading } = useSimulations(user?.id);
 
-  const activeSims = simulations.filter(s => 
+  const activeSims = simulations.filter(s =>
     s.status === 'running' || s.status === 'auditing' || s.status === 'queued'
   ).slice(0, 5);
 

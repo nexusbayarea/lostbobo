@@ -16,7 +16,7 @@ export function SignIn() {
     e.preventDefault();
     setIsLoading(true);
     console.log('SignIn: Starting magic link process for:', email);
-    
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,

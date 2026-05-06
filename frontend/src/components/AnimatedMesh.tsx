@@ -28,11 +28,11 @@ export function AnimatedMesh() {
     const rows = 12;
     const cols = 16;
     const nodes: { x: number; y: number; baseX: number; baseY: number; phase: number }[] = [];
-    
+
     // Initialize nodes
     const cellWidth = canvas.offsetWidth / (cols - 1);
     const cellHeight = canvas.offsetHeight / (rows - 1);
-    
+
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         nodes.push({
@@ -49,14 +49,14 @@ export function AnimatedMesh() {
 
     const animate = () => {
       time += 0.008;
-      
+
       ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
       // Update node positions with gentle wave motion
       nodes.forEach((node, i) => {
         const row = Math.floor(i / cols);
         const col = i % cols;
-        
+
         // Skip edge nodes to keep mesh anchored
         if (row > 0 && row < rows - 1 && col > 0 && col < cols - 1) {
           node.x = node.baseX + Math.sin(time + node.phase) * 8;
@@ -116,7 +116,7 @@ export function AnimatedMesh() {
       nodes.forEach((node, i) => {
         const row = Math.floor(i / cols);
         const col = i % cols;
-        
+
         // Only draw some nodes for cleaner look
         if ((row + col) % 2 === 0) {
           ctx.beginPath();
@@ -135,7 +135,7 @@ export function AnimatedMesh() {
         canvas.offsetHeight * 0.3,
         canvas.offsetWidth * 0.5
       );
-      
+
       if (isDark) {
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
         gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.04)');
@@ -145,7 +145,7 @@ export function AnimatedMesh() {
         gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.03)');
         gradient.addColorStop(1, 'transparent');
       }
-      
+
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 

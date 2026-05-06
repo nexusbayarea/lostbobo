@@ -51,13 +51,13 @@ serve(async (req) => {
     if (dbError) throw dbError
 
     const activeSims = count || 0
-    
+
     // 6. Calculate the Fleet Metrics
     const activeRunPods = Math.ceil(activeSims / JOBS_PER_POD)
     const hourlySpend = (activeRunPods * RUNPOD_HOURLY_RATE).toFixed(2)
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         active_simulations: activeSims,
         active_pods: activeRunPods,
         hourly_spend_usd: hourlySpend,

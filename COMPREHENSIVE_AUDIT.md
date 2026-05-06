@@ -1,7 +1,7 @@
 # Comprehensive Audit Summary (April 2026)
 
-> **Date**: April 7, 2026  
-> **Version**: v2.5.11  
+> **Date**: April 7, 2026
+> **Version**: v2.5.11
 > **Status**: Reliability Features Added ✅
 
 ---
@@ -36,7 +36,7 @@ Edit the pod → Environment Variables → Update `ALLOWED_ORIGINS` to **exactly
 http://localhost:3000,http://localhost:5173,http://localhost:59824,http://127.0.0.1:59824,https://simhpc-nexusbayarea-projects.vercel.app,https://simhpc.nexusbayarea.com,https://simhpc.com
 ```
 
-Save → pod restarts (~60-90s).  
+Save → pod restarts (~60-90s).
 Then test: `https://40n3yh92ugakps-8000.proxy.runpod.net/api/v1/health`
 
 ### Better Long-Term Fix in `api.py` (recommended)
@@ -245,7 +245,7 @@ Worker (pure compute + publish events)
 
 # Appendix: v2.7 System Audit (April 2026)
 
-> **Version**: 2.7.0  
+> **Version**: 2.7.0
 > **Focus**: Production hardening, no legacy drift
 
 ## v2.7 Core Principles
@@ -338,4 +338,3 @@ Worker (pure compute + publish events)
 ---
 
 *End of v2.7 System Audit*
-

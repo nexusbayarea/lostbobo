@@ -38,7 +38,7 @@ const CreditDashboard = () => {
     // Real-time subscription to balance changes
     const channel = supabase
       .channel('credit-updates')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user?.id}` }, 
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user?.id}` },
       payload => {
         setBalance(payload.new.credit_balance);
       })
@@ -54,7 +54,7 @@ const CreditDashboard = () => {
       {/* 1. The Hero: Balance Card */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
         <Zap className="absolute -right-4 -top-4 w-32 h-32 text-cyan-500/10 rotate-12" />
-        
+
         <div className="flex justify-between items-start">
           <div>
             <p className="text-gray-400 text-sm font-medium uppercase tracking-wider">Available Compute Credits</p>
@@ -68,7 +68,7 @@ const CreditDashboard = () => {
             Top Up
           </button>
         </div>
-        
+
         <p className="text-gray-500 text-xs mt-6">
           Standard simulations consume 1 credit per successful run.
         </p>
@@ -80,7 +80,7 @@ const CreditDashboard = () => {
           <History size={18} className="text-cyan-400" />
           <h3 className="font-bold text-white">Credit Activity</h3>
         </div>
-        
+
         <div className="divide-y divide-gray-800">
           {ledger.length === 0 ? (
             <div className="p-8 text-center text-gray-500 italic">No transaction history found.</div>

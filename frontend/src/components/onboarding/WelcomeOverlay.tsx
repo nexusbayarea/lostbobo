@@ -16,7 +16,7 @@ export const WelcomeOverlay = () => {
   const handleClaim = async () => {
     const result = await startOnboarding();
     if (result?.success) {
-      await refreshProfile(); 
+      await refreshProfile();
       setShow(false);
     }
   };
@@ -30,7 +30,7 @@ export const WelcomeOverlay = () => {
         <p className="text-slate-600 mb-6">
           Your account has been provisioned. We've added 10 credits to your vault to get your first physics simulation running.
         </p>
-        <button 
+        <button
           onClick={handleClaim}
           disabled={isProcessing}
           className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"

@@ -26,8 +26,8 @@ export default defineConfig({
 
           // 2. State management libraries (can be separate)
           if (
-            id.includes("zustand") || 
-            id.includes("jotai") || 
+            id.includes("zustand") ||
+            id.includes("jotai") ||
             id.includes("recoil") ||
             id.includes("redux")
           ) {

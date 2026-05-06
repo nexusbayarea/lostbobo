@@ -14,7 +14,7 @@ export const isPingRecent = (lastPing: string | null | undefined, thresholdMinut
 
   const pingDate = new Date(lastPing);
   const now = new Date();
-  
+
   // Calculate difference in minutes
   const diffInMs = now.getTime() - pingDate.getTime();
   const diffInMins = diffInMs / (1000 * 60);
@@ -35,6 +35,6 @@ export const formatPing = (lastPing: string | null | undefined): string => {
   if (diffInSecs < 60) return 'JUST NOW';
   if (diffInSecs < 3600) return `${Math.floor(diffInSecs / 60)}m ago`;
   if (diffInSecs < 86400) return `${Math.floor(diffInSecs / 3600)}h ago`;
-  
+
   return pingDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
 };

@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Mail, 
-  Lock, 
-  User, 
-  ArrowRight, 
-  Check, 
-  Cpu, 
-  BarChart3, 
-  FileText, 
+import {
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Check,
+  Cpu,
+  BarChart3,
+  FileText,
   Shield,
   Loader2
 } from 'lucide-react';
@@ -47,7 +47,7 @@ export function SignUp() {
     e.preventDefault();
     setIsLoading(true);
     console.log('SignUp: Starting registration process for:', formData.email);
-    
+
     try {
       if (!formData.password || formData.password.length < 6) {
         throw new Error('Password must be at least 6 characters long');
@@ -124,7 +124,7 @@ export function SignUp() {
                 Start With a Controlled Simulation Environment — Free.
               </h1>
               <p className="text-slate-600 dark:text-slate-400 mb-8">
-                Experience GPU-accelerated finite element simulation with built-in 
+                Experience GPU-accelerated finite element simulation with built-in
                 robustness analysis and AI-generated technical summaries — at no cost.
               </p>
 

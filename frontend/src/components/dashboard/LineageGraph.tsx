@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import ReactFlow, { 
-  useNodesState, 
-  useEdgesState, 
-  Background, 
-  Controls 
+import ReactFlow, {
+  useNodesState,
+  useEdgesState,
+  Background,
+  Controls
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { supabase } from '@/lib/supabase';
@@ -25,14 +25,14 @@ const LineageGraph = ({ runId }: { runId: string }) => {
         id: trace.id,
         data: { label: `${trace.node_id}` },
         position: { x: Math.random() * 400, y: Math.random() * 400 },
-        style: { 
+        style: {
           background: '#3b82f6',
           color: '#fff',
           borderRadius: '8px'
         },
       }));
 
-      const newEdges = traces.flatMap((trace: any) => 
+      const newEdges = traces.flatMap((trace: any) =>
         (trace.deps || []).map((depId: string) => ({
           id: `e-${depId}-${trace.id}`,
           source: depId,

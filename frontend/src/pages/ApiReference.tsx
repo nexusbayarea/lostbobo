@@ -5,7 +5,7 @@ export function APIReference() {
         <PageLayout>
             <div className="pt-32 pb-20 px-6 max-w-4xl mx-auto">
                 <h1 className="text-4xl font-bold mb-6 text-slate-900 dark:text-white">SimHPC API Reference</h1>
-                
+
                 <p className="text-slate-600 dark:text-slate-400 mb-4">
                     The SimHPC API provides secure programmatic access to:
                 </p>
@@ -31,7 +31,7 @@ export function APIReference() {
                 <p className="text-slate-600 dark:text-slate-400 mb-8">All requests must use HTTPS.</p>
 
                 <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-white">Core Endpoints</h2>
-                
+
                 <h3 className="text-xl font-medium mb-2 text-slate-900 dark:text-white">Submit Simulation Job</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-2">POST /simulations</p>
                 <p className="text-slate-600 dark:text-slate-400 mb-8">Request: model_type, mesh_parameters, solver_config, robustness_sweep. Response: job_id, status</p>

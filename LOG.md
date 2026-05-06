@@ -102,3 +102,27 @@
 - **Verification:** Validated code formatting and linting with `ruff` (no-cache mode).
 - **Version Control:** Committed and successfully pushed the Claim Extractor, Orchestrator, and Trust Engine services to `main`.
 - **Status:** Claim Extractor is now live in the repository.
+
+## May 5, 2026 [04:55 PM]
+
+### Speculative RAG + Agent Swarm Orchestrator Implementation
+- **Agent Swarm Development:** Created three parallel reasoning agents:
+    - `VectorRAGAgent` (backend/runtime/agent/vector_agent.py): Fast semantic search path.
+    - `GraphRAGAgent` (backend/runtime/agent/graph_agent.py): Deep structured knowledge traversal.
+    - `SimulationRetrievalAgent` (backend/runtime/agent/sim_retrieval_agent.py): High-trust simulation grounding.
+- **Speculative Orchestrator:** Implemented `SpeculativeOrchestrator` (backend/runtime/orchestrator/speculative_orchestrator.py) with:
+    - Parallel execution of all swarm agents using `asyncio.create_task`.
+    - Real-time streaming of partial results and best-so-far updates.
+    - Early-exit logic triggered by high-confidence results (score >= 0.85).
+    - Asyncio task cancellation for slower branches to optimize total latency.
+- **Package Modernization:**
+    - Updated `backend/runtime/agent/__init__.py` and `backend/runtime/orchestrator/__init__.py` to expose new components.
+    - Refactored `pyproject.toml` to include comprehensive dependency extras (`api`, `worker`, `dev`, `gpu`).
+    - Expanded `Makefile` with canonical targets (`lock`, `format`, `dev-install`, `ci`).
+- **Dependency Management:**
+    - Resolved network connectivity issues for `uv` by unblocking outbound traffic in the firewall.
+    - Generated fresh lockfiles for all environment tiers: `requirements.api.lock`, `requirements.worker.lock`, `requirements-dev.txt`, and `requirements.gpu.lock`.
+- **Quality Assurance:**
+    - Applied project-wide `ruff` formatting and linting fixes.
+    - Verified architectural integrity via `backend/tools/run_ci.py` (All checks passed).
+- **Version Control:** Committed and pushed the implementation and lockfiles to the remote repository.

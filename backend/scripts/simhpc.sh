@@ -33,7 +33,7 @@ app.add_middleware(
 @app.get('/api/v1/simulations')
 async def sims(): return {'status': 'active'}\"\"\"
 with open(path, 'w') as f: f.write(content)"
-    
+
     # Restart the API if lsof is available
     if command -v lsof >/dev/null 2>&1; then
         kill -9 $(lsof -t -i:8080) 2>/dev/null

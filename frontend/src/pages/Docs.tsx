@@ -17,23 +17,23 @@ export function Docs() {
 
         <ScrollArea className="h-[70vh] rounded-md border border-slate-200 bg-white/50 p-8 shadow-sm">
           <div className="space-y-10">
-            
+
             {/* SUNDIALS */}
             <section id="sundials">
               <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-slate-200">SUNDIALS Integration in SimHPC</h2>
               <p className="text-lg font-medium mb-2">High-Performance Time Integration for Stiff and Nonlinear Systems</p>
               <p className="leading-relaxed mb-4">
-                SimHPC integrates the SUNDIALS suite to provide robust, scalable time integration for stiff 
-                ordinary differential equations (ODEs), differential-algebraic equations (DAEs), and nonlinear 
-                systems. This integration enables production-grade transient simulations with adaptive stepping, 
-                sensitivity analysis, and distributed memory support. The result is stable time evolution 
+                SimHPC integrates the SUNDIALS suite to provide robust, scalable time integration for stiff
+                ordinary differential equations (ODEs), differential-algebraic equations (DAEs), and nonlinear
+                systems. This integration enables production-grade transient simulations with adaptive stepping,
+                sensitivity analysis, and distributed memory support. The result is stable time evolution
                 under extreme parameter variation — without manual solver tuning.
               </p>
-              
+
               <h3 className="text-xl font-semibold mt-6 mb-2">Background</h3>
               <p className="leading-relaxed mb-4">
-                SUNDIALS (Suite of Nonlinear and Differential/Algebraic Equation Solvers) is a widely adopted 
-                open-source numerical library designed for solving stiff and non-stiff ODE systems, DAEs, 
+                SUNDIALS (Suite of Nonlinear and Differential/Algebraic Equation Solvers) is a widely adopted
+                open-source numerical library designed for solving stiff and non-stiff ODE systems, DAEs,
                 large-scale nonlinear systems, and sensitivity and adjoint problems.
               </p>
               <ul className="list-disc pl-6 space-y-2 text-slate-700 mb-4">
@@ -46,9 +46,9 @@ export function Docs() {
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Architectural Integration</h3>
               <p className="leading-relaxed mb-4">
-                Within SimHPC, MFEM assembles spatial discretizations while SUNDIALS handles temporal integration. 
-                GPU acceleration supports linear algebra kernels, and adaptive timestep control is managed dynamically. 
-                The solver layer is abstracted through a unified execution interface, allowing parameter sweeps, 
+                Within SimHPC, MFEM assembles spatial discretizations while SUNDIALS handles temporal integration.
+                GPU acceleration supports linear algebra kernels, and adaptive timestep control is managed dynamically.
+                The solver layer is abstracted through a unified execution interface, allowing parameter sweeps,
                 robustness analysis, and AI-driven stability detection without manual intervention.
               </p>
 
@@ -79,23 +79,23 @@ export function Docs() {
               <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-slate-200">MFEM Integration in SimHPC</h2>
               <p className="text-lg font-medium mb-2">High-Order Finite Element Infrastructure at Scale</p>
               <p className="leading-relaxed mb-4">
-                SimHPC integrates MFEM as its finite element backbone, enabling high-order discretization, 
-                adaptive refinement, and scalable parallel computation. This provides numerical accuracy and 
+                SimHPC integrates MFEM as its finite element backbone, enabling high-order discretization,
+                adaptive refinement, and scalable parallel computation. This provides numerical accuracy and
                 performance typically reserved for national laboratory computing environments.
               </p>
 
               <h3 className="text-xl font-semibold mt-6 mb-2">High-Order Discretization</h3>
               <p className="leading-relaxed mb-4">
-                SimHPC leverages MFEM's support for Continuous Galerkin methods, Discontinuous Galerkin 
-                formulations, Mixed finite element spaces, and Curvilinear elements. High-order elements 
-                enable reduced mesh size for equivalent accuracy, improved convergence rates, and better 
+                SimHPC leverages MFEM's support for Continuous Galerkin methods, Discontinuous Galerkin
+                formulations, Mixed finite element spaces, and Curvilinear elements. High-order elements
+                enable reduced mesh size for equivalent accuracy, improved convergence rates, and better
                 resolution of complex geometries.
               </p>
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Parallel Performance</h3>
               <p className="leading-relaxed mb-4">
-                Through MFEM, domain decomposition is MPI-native, linear systems are integrated with scalable 
-                solvers, and GPU backends accelerate matrix assembly. SimHPC automatically allocates compute 
+                Through MFEM, domain decomposition is MPI-native, linear systems are integrated with scalable
+                solvers, and GPU backends accelerate matrix assembly. SimHPC automatically allocates compute
                 resources according to problem size and robustness parameters.
               </p>
 
@@ -109,8 +109,8 @@ export function Docs() {
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Engineering Benefits</h3>
               <p className="leading-relaxed">
-                By integrating MFEM, engineers gain high-order accuracy without HPC cluster management. 
-                Mesh scaling is predictable and solver performance is benchmarkable. SimHPC removes 
+                By integrating MFEM, engineers gain high-order accuracy without HPC cluster management.
+                Mesh scaling is predictable and solver performance is benchmarkable. SimHPC removes
                 infrastructure friction while preserving numerical rigor.
               </p>
             </section>
@@ -122,8 +122,8 @@ export function Docs() {
               <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-slate-200">GLVis Visualization Pipeline</h2>
               <p className="text-lg font-medium mb-2">Interactive Finite Element Visualization in the Browser</p>
               <p className="leading-relaxed mb-4">
-                SimHPC integrates GLVis to provide interactive visualization of finite element solutions 
-                directly within a WebGL-enabled browser. This eliminates traditional post-processing 
+                SimHPC integrates GLVis to provide interactive visualization of finite element solutions
+                directly within a WebGL-enabled browser. This eliminates traditional post-processing
                 dependencies while preserving scientific visualization fidelity.
               </p>
 
@@ -140,15 +140,15 @@ export function Docs() {
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Engineering Advantages</h3>
               <p className="leading-relaxed mb-4">
-                Traditional workflows require exporting data, opening desktop visualization software, 
-                and manual post-processing. SimHPC eliminates these steps. Visualization becomes 
+                Traditional workflows require exporting data, opening desktop visualization software,
+                and manual post-processing. SimHPC eliminates these steps. Visualization becomes
                 immediate, shareable, and integrated into reporting.
               </p>
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Robustness Overlay</h3>
               <p className="leading-relaxed">
-                GLVis output is integrated with robustness analysis: stability scoring overlays, 
-                variation heatmaps, and parameter sensitivity surfaces. Visualization becomes 
+                GLVis output is integrated with robustness analysis: stability scoring overlays,
+                variation heatmaps, and parameter sensitivity surfaces. Visualization becomes
                 diagnostic — not decorative.
               </p>
             </section>
@@ -160,8 +160,8 @@ export function Docs() {
               <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-slate-200">AI Report Generator</h2>
               <p className="text-lg font-medium mb-2">Automated Robustness and Engineering Insight Synthesis</p>
               <p className="leading-relaxed mb-4">
-                The SimHPC AI Report Generator transforms raw simulation output into structured engineering 
-                reports. It analyzes parameter sweeps, stability behavior, solver convergence, and sensitivity 
+                The SimHPC AI Report Generator transforms raw simulation output into structured engineering
+                reports. It analyzes parameter sweeps, stability behavior, solver convergence, and sensitivity
                 patterns to produce concise, decision-ready documentation.
               </p>
 
@@ -174,13 +174,13 @@ export function Docs() {
                 <li>Scores stability regimes</li>
                 <li>Synthesizes structured PDF output</li>
               </ol>
-              <p className="leading-relaxed mb-4">Reports include executive summary, parameter sensitivity tables, 
+              <p className="leading-relaxed mb-4">Reports include executive summary, parameter sensitivity tables,
               stability heatmaps, solver performance metrics, and recommended parameter ranges.</p>
 
               <h3 className="text-xl font-semibold mt-6 mb-2">Deterministic Engineering Focus</h3>
               <p className="leading-relaxed mb-4">
-                Unlike generic language models, the system operates on structured numerical metadata, 
-                uses bounded engineering templates, avoids speculative language, and flags uncertainty 
+                Unlike generic language models, the system operates on structured numerical metadata,
+                uses bounded engineering templates, avoids speculative language, and flags uncertainty
                 explicitly. Reports are technical — not narrative.
               </p>
 

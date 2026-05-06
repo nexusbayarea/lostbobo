@@ -16,4 +16,3 @@
   "ports": [],
   "start_command": "supervisord -c /etc/supervisord.conf"
 }
-

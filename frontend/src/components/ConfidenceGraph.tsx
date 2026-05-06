@@ -14,7 +14,7 @@ export function ConfidenceGraph() {
       const length = (path as SVGPathElement).getTotalLength?.() || 1000;
       (path as SVGPathElement).style.strokeDasharray = `${length}`;
       (path as SVGPathElement).style.strokeDashoffset = `${length}`;
-      
+
       // Trigger animation
       setTimeout(() => {
         (path as SVGPathElement).style.transition = 'stroke-dashoffset 2s ease-out';

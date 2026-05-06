@@ -14,12 +14,12 @@ export function useSimulation() {
     setStatus('queued');
     setProgress(0);
     setResults(null);
-    
+
     try {
       const token = getToken();
       const response = await api.startRobustnessRun(config, token);
       setRunId(response.run_id);
-      
+
       poll(response.run_id);
     } catch (e: any) {
       setStatus('failed');

@@ -85,7 +85,7 @@ export function Dashboard() {
 
       setIsRunning(false);
       setCurrentStatus(finalStatus.status as any);
-      
+
       if (finalStatus.status === 'completed') {
         setCurrentRun({
           run_id: finalStatus.run_id,
@@ -425,7 +425,7 @@ export function Dashboard() {
                   </h3>
                   <JobProgress status={currentStatus} progress={progress} />
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                    Your simulation is being processed on a dedicated NVIDIA A40 GPU instance. 
+                    Your simulation is being processed on a dedicated NVIDIA A40 GPU instance.
                     Calculations are deterministic and verified against SUNDIALS solver benchmarks.
                   </p>
                 </motion.div>

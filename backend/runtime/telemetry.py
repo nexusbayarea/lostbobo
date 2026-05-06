@@ -57,7 +57,7 @@ class TelemetryManager:
             p95 = times[p95_index]
 
             stats = conn.execute("""
-                SELECT 
+                SELECT
                     COUNT(*) as total_runs,
                     AVG(gpu_util_avg) as avg_gpu,
                     SUM(cost_usd) as total_cost,

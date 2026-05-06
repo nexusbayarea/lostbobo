@@ -76,11 +76,11 @@ if (mode === "route") {
   const branch = process.argv[3] || "main";
   const dagHash = process.argv[4] || "default";
   const riskScore = parseFloat(process.argv[5] || "0.5");
-  
+
   const stateKey = getCIState({ branch, dagHash, changeRisk: riskScore });
   const action = selectAction(stateKey);
   const config = ActionConfig[action];
-  
+
   console.log(JSON.stringify({ action, stateKey, config }));
 } else if (mode === "update") {
   const input = JSON.parse(process.argv[3] || "{}");

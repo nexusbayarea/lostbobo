@@ -9,7 +9,7 @@ export function CookiePolicy() {
                 <p className="text-slate-600 dark:text-slate-400 mb-8">
                     Effective Date: 3/3/2026
                 </p>
-                
+
                 <div className="space-y-8 text-slate-800 dark:text-slate-200">
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">1. Overview</h2>
@@ -47,7 +47,7 @@ export function CookiePolicy() {
 
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">3. Types of Cookies We Use</h2>
-                        
+
                         <h3 className="text-xl font-semibold mb-3 mt-6">A. Essential Cookies (Required)</h3>
                         <p className="mb-4">These cookies are necessary for the website to function. They enable:</p>
                         <ul className="list-disc pl-6 space-y-2">

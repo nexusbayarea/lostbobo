@@ -68,13 +68,13 @@ export function JobProgress({ status, progress, className }: JobProgressProps) {
           <span className="text-xs font-mono text-slate-500">{progress}%</span>
         ) : null}
       </div>
-      
+
       <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
         <motion.div
           className={cn("h-full", config.bgColor)}
           initial={{ width: 0 }}
-          animate={{ 
-            width: `${status === 'completed' ? 100 : (status === 'failed' ? 100 : progress)}%` 
+          animate={{
+            width: `${status === 'completed' ? 100 : (status === 'failed' ? 100 : progress)}%`
           }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />

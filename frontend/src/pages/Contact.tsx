@@ -9,7 +9,7 @@ export function Contact() {
                 <p className="text-lg text-slate-600 dark:text-slate-400 mb-12">
                     Get in touch with the SimHPC team for sales, information, or support.
                 </p>
-                
+
                 <div className="grid gap-6">
                     <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-6">
                         <div className="flex items-center gap-4 mb-4">

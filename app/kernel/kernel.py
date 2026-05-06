@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Any
 
 from app.kernel.prompt.stack import PromptStack
+from app.kernel.safeguards.service import SafeguardsService   # ← FIXED
 
 log = logging.getLogger(__name__)
 

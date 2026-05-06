@@ -1,25 +1,38 @@
-"""Command Bus - handles routing of commands to appropriate handlers."""
+"""Command Bus — routes every command through the Kernel."""
 
 from __future__ import annotations
 
 from typing import Dict, Any
 
-from app.kernel.kernel import Kernel
-
 
 class CommandBus:
-    def __init__(self, kernel: Kernel):
+    def __init__(self, kernel):
         self.kernel = kernel
 
-    async def execute(self, command: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a command by routing it to the appropriate handler."""
-        command_type = command.get("type")
+    async def route(self, command: Dict[str, Any]) -> Any:
+        cmd_type = command["type"]
         payload = command.get("payload", {})
 
-        if command_type == "BUILD_PROMPT":
-            return await self.kernel.prompt_stack.build(
-                payload["agent_id"], payload["query"], payload.get("mode")
-            )
-        # For now, we also handle other commands by delegating to the kernel's execute method
-        # In a more complex system, we might have specific handlers for each command type.
-        return await self.kernel.execute(command)
+        match cmd_type:
+            case "MEMORY_RECORD":
+                return await self.kernel.services["memory"].record(payload)
+            case "MEMORY_QUERY":
+                return await self.kernel.services["memory"].query(payload)
+            case "MEMORY_RECONCILE":
+                return await self.kernel.services["reconcile"].reconcile(
+                    payload["decision_id"], payload["observed"]
+                )
+            case "WORLD_UPDATE":
+                return await self.kernel.services["world"].update(payload)
+            case "SKILL_EXECUTE":
+                return await self.kernel.skills.execute(payload["skill"], payload["input"])
+            case "AGENT_RUN":
+                agent_name = payload["agent"]
+                return await self.kernel.agents[agent_name].run(payload["input"])
+            case "BUILD_PROMPT":
+                return await self.kernel.prompt_stack.build(
+                    payload["agent_id"], payload["query"], payload.get("mode")
+                )
+            case _:
+                # Fallback
+                return await self.kernel.execute(command)

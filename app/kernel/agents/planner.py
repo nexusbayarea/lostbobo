@@ -1,5 +1,3 @@
-"""Planner Agent Example."""
-
 from app.kernel.kernel import Kernel
 
 
@@ -11,7 +9,7 @@ class PlannerAgent:
         prompt = await self.kernel.prompt_stack.build(
             agent_id="planner",
             user_query=input_data.get("query", ""),
-            mode=input_data.get("mode", "optimize")
+            mode=input_data.get("mode", "optimize"),
         )
         # Use prompt for LLM call or skill routing...
         return {"prompt_used": prompt[:200] + "...", "result": "planned"}

@@ -1,8 +1,6 @@
-"""Dynamic Prompt Stack — layered, context-aware prompting."""
-
 from __future__ import annotations
 
-from typing import Dict, Any, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.kernel.kernel import Kernel
@@ -12,20 +10,21 @@ from app.kernel.workspace.manager import WorkspaceManager
 
 
 class PromptStack:
-    def __init__(self, kernel: "Kernel"):
+    def __init__(self, kernel: Kernel):
         self.kernel = kernel
-        self.workspace_manager = WorkspaceManager(kernel)
+        self.workspace_manager = WorkspaceManager(kernel)  # assume imported
 
     async def build(self, agent_id: str, user_query: str, mode: str = None) -> str:
-        """Build layered prompt with stable prefix + dynamic context."""
         ws = await self.workspace_manager.get_or_create(agent_id)
         if mode:
             await self.workspace_manager.update(agent_id, {"mode": mode})
 
         layers = []
 
-        # Layer 1: Environment (World Model)
-        world = await self.kernel.execute({"type": "WORLD_UPDATE", "payload": {}})  # snapshot
+        # Layer 1: Environment
+        world = await self.kernel.execute(
+            {"type": "WORLD_UPDATE", "payload": {}}
+        )
         layers.append(f"ENVIRONMENT:\nCurrent world state: {world.get('entities', {})}")
 
         # Layer 2: Mode

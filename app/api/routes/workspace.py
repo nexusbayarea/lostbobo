@@ -8,7 +8,4 @@ kernel = Kernel()
 
 @router.post("/prompt")
 async def build_prompt(payload: dict):
-    return await kernel.execute({
-        "type": "BUILD_PROMPT",
-        "payload": payload
-    })
+    return await kernel.execute({"type": "BUILD_PROMPT", "payload": payload})

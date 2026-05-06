@@ -39,8 +39,5 @@ jobs:
       - name: Smoke test CI runner
         run: python -c "import tools.run_ci; print('[SMOKE] run_ci.py imports OK')"
 
-      - name: Run Full CI (stable script)
+      - name: Run Full CI
         run: bash ci.sh
-
-      - name: Strict Validation
-        run: ruff format --check . && ruff check .

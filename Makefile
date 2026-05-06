@@ -56,4 +56,23 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
-	@echo "✅ Cleanup completed"
+	@echo "✅ Cleanup completed
+
+# Kubernetes / Minikube
+minikube-start:
+	./deploy/minikube-setup.sh
+
+minikube-stop:
+	minikube stop
+
+k8s-deploy:
+	kubectl apply -f deploy/k8s/
+
+k8s-delete:
+	kubectl delete -f deploy/k8s/ --ignore-not-found=true
+
+k8s-logs:
+	kubectl logs -l app=simhpc -f
+
+k8s-dashboard:
+	minikube dashboard"

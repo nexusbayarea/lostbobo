@@ -13,6 +13,7 @@ from backend.runtime.agent.graph_agent import GraphRAGAgent
 from backend.runtime.agent.sim_retrieval_agent import SimulationRetrievalAgent
 from backend.runtime.agent.vector_agent import VectorRAGAgent
 from backend.runtime.rag.router import RAGRouter
+from backend.runtime.resilience import SwarmResilience
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ class SpeculativeOrchestrator:
         self.vector_agent = VectorRAGAgent()
         self.graph_agent = GraphRAGAgent()
         self.sim_agent = SimulationRetrievalAgent()
+        self.task_metrics: dict[str, dict] = {}
 
     # ------------------------------------------------------------------
     # Public API
@@ -76,15 +78,15 @@ class SpeculativeOrchestrator:
 
         tasks: list[asyncio.Task] = [
             asyncio.create_task(
-                self._run_agent(self.vector_agent, query, tenant_id, "vector"),
+                self._run_agent_resilient(self.vector_agent, query, tenant_id, "vector"),
                 name="agent_vector",
             ),
             asyncio.create_task(
-                self._run_agent(self.graph_agent, query, tenant_id, "graph"),
+                self._run_agent_resilient(self.graph_agent, query, tenant_id, "graph"),
                 name="agent_graph",
             ),
             asyncio.create_task(
-                self._run_agent(self.sim_agent, query, tenant_id, "simulation"),
+                self._run_agent_resilient(self.sim_agent, query, tenant_id, "simulation"),
                 name="agent_simulation",
             ),
         ]
@@ -176,28 +178,31 @@ class SpeculativeOrchestrator:
     # Internals
     # ------------------------------------------------------------------
 
-    async def _run_agent(self, agent: Any, query: str, tenant_id: str, name: str) -> AgentResult:
-        t0 = time.time()
+    async def _run_agent_resilient(self, agent: Any, query: str, tenant_id: str, name: str) -> AgentResult:
+        @SwarmResilience.retry_async(max_attempts=3)
+        @SwarmResilience.circuit_breaker(fail_max=5)
+        async def _wrapped():
+            return await agent.run(query, tenant_id)
+
         try:
-            result = await agent.run(query, tenant_id)
-            latency = (time.time() - t0) * 1000
+            result = await SwarmResilience.run_with_resilience(
+                _wrapped(), task_name=f"agent_{name}", metrics=self.task_metrics, timeout_seconds=45.0
+            )
             score = self._score(result, name)
-            log.debug("[Swarm] Agent '%s' done in %.0fms, score=%.3f", name, latency, score)
             return AgentResult(
                 agent_name=name,
                 content=result.get("content", ""),
                 score=score,
-                latency_ms=round(latency, 1),
+                latency_ms=self.task_metrics[f"agent_{name}"]["latency_ms"],
                 evidence=result.get("evidence", []),
             )
         except Exception as exc:
-            latency = (time.time() - t0) * 1000
-            log.warning("[Swarm] Agent '%s' failed in %.0fms: %s", name, latency, exc)
+            log.warning("[Swarm] Agent '%s' failed resilient execution: %s", name, exc)
             return AgentResult(
                 agent_name=name,
                 content=f"Agent failed: {exc}",
                 score=0.30,
-                latency_ms=round(latency, 1),
+                latency_ms=0.0,
             )
 
     @staticmethod

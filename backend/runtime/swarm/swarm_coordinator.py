@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any
 
 from backend.app.core.supabase import get_supabase_client
+from backend.runtime.resilience import SwarmResilience
 from backend.runtime.swarm.bayesian_aggregator import (
     AgentOutput,
     AgentRole,
@@ -46,6 +47,8 @@ class SwarmCoordinator:
         self._experiments: dict = {}
         self._swarms: dict = {}
         self._leaderboard: dict = {}
+        self.task_metrics: dict = {}
+        self.resilience = SwarmResilience()
 
     async def evaluate(self, question: ForecastingQuestion) -> dict[str, Any]:
         """End-to-end generalized forecasting lifecycle with cancellable tasks."""
@@ -55,7 +58,7 @@ class SwarmCoordinator:
         self._is_aborted = False
         self._current_tasks.clear()
 
-        try:
+        async def _run():
             dummy_outputs = [
                 AgentOutput(
                     agent_role=role,
@@ -86,9 +89,17 @@ class SwarmCoordinator:
                 "raw_agent_outputs": [o.model_dump() for o in dummy_outputs],
             }
 
+        try:
+            # Wrap in resilience
+            return await self.resilience.run_with_resilience(
+                _run(), task_name="swarm_aggregate", metrics=self.task_metrics
+            )
         except asyncio.CancelledError:
             log.warning("Swarm evaluation cancelled gracefully")
             return {"status": "cancelled", "reason": "Emergency halt requested"}
+        except Exception as e:
+            log.error("Swarm evaluation failed: %s", e)
+            return {"status": "error", "reason": str(e)}
         finally:
             for task in self._current_tasks:
                 if not task.done():

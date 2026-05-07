@@ -11,12 +11,14 @@ from backend.core.kernel.command_bus import CommandBus
 from backend.core.kernel.memory.depth import DepthAttentionRegistry
 from backend.core.kernel.memory.observational import Observer
 from backend.core.kernel.memory.reflector import Reflector
+from backend.core.kernel.plugins.loader import PluginLoader
 from backend.core.kernel.services.memory_service import KernelMemoryService
 from backend.core.kernel.services.reconciliation_service import ReconciliationService
 from backend.core.kernel.services.world_service import WorldService
 from backend.core.kernel.skills.registry import SkillRegistry
 from backend.core.kernel.state.memory_state import MemoryState
 from backend.core.kernel.state.world_state import WorldState
+from backend.core.kernel.world_brain import WorldBrain
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +56,9 @@ class Kernel:
         self.observer = Observer(self)
         self.reflector = Reflector(self)
         self.depth_registry = DepthAttentionRegistry(self)
+        self.world_brain = WorldBrain(self)
+        self.plugin_loader = PluginLoader(self.world_brain)
+        self.plugin_loader.discover_and_register()
 
         self.command_bus = CommandBus(self)
 

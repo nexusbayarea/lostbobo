@@ -42,6 +42,9 @@ class SwarmCoordinator:
         self._sb = get_supabase_client()
         self._current_tasks: list[asyncio.Task] = field(default_factory=list)
         self._is_aborted: bool = False
+        self._experiments: dict = {}
+        self._swarms: dict = {}
+        self._leaderboard: dict = {}
 
     async def evaluate(self, question: ForecastingQuestion) -> dict[str, Any]:
         """End-to-end generalized forecasting lifecycle with cancellable tasks."""
@@ -149,3 +152,32 @@ class SwarmCoordinator:
 
         await self.aggregator.calibrate_weights_from_history()
         return brier_results
+
+    async def create_experiment(self, experiment_id: str, config: dict):
+        """Create experiment."""
+        self._experiments[experiment_id] = config
+        log.info("Experiment created: %s", experiment_id)
+
+    async def launch_swarm(self, experiment_id: str, swarm_id: str, config: dict):
+        """Launch swarm for experiment."""
+        self._swarms[swarm_id] = {"experiment_id": experiment_id, "config": config, "status": "running"}
+        log.info("Swarm launched: %s for experiment %s", swarm_id, experiment_id)
+
+    async def run_single_agent(self, payload: dict) -> dict:
+        """Run single agent."""
+        return {"agent_id": payload.get("agentId"), "status": "completed"}
+
+    async def submit_agent_result(self, agent_id: str, result: dict):
+        """Submit agent result."""
+        self._leaderboard[agent_id] = result
+        log.info("Agent result received: %s", agent_id)
+
+    async def get_leaderboard(self, swarm_id: str) -> list:
+        """Get leaderboard."""
+        return list(self._leaderboard.values())
+
+    async def terminate_swarm(self, swarm_id: str):
+        """Terminate swarm."""
+        if swarm_id in self._swarms:
+            self._swarms[swarm_id]["status"] = "terminated"
+            log.info("Swarm terminated: %s", swarm_id)

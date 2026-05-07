@@ -16,6 +16,8 @@ from backend.app.api.routes.skills import router as skill_router
 from backend.app.api.swarm import swarm_router
 from backend.app.api.world_routes import router as world_router
 from backend.core.services.beam_orchestrator_service import router as orchestrator_router
+from backend.runtime.grid.api import router as grid_router
+from backend.runtime.swarm.api import router as swarm_api_router
 
 api_router = APIRouter()
 
@@ -36,3 +38,5 @@ api_router.include_router(skill_router, prefix="/skills", tags=["Skills"])
 api_router.include_router(orchestrator_router, prefix="/orchestrator", tags=["Orchestrator"])
 api_router.include_router(auto_research_router, prefix="/auto-research", tags=["AutoResearch"])
 api_router.include_router(observational_router, prefix="/observational", tags=["Observational"])
+api_router.include_router(swarm_api_router, prefix="", tags=["SwarmAPI"])
+api_router.include_router(grid_router, prefix="", tags=["ExperimentGrid"])

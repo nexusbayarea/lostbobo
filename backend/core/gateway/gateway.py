@@ -5,6 +5,7 @@ from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from backend.core.auth.models import AuthContext, Role
+from backend.core.auth.policy_engine import get_policy_engine
 from backend.core.governance.service import get_governance
 from backend.core.security.supabase import get_supabase_client
 
@@ -92,19 +93,17 @@ class SecurityGatewayMiddleware(BaseHTTPMiddleware):
 
     async def _authorize(self, request: Request, ctx: AuthContext) -> bool:
         """Contextual + Compute-aware Authorization"""
-        path = request.url.path.lower()
-
-        # Simulation protection
-        if "/simulation" in path or "/simulate" in path:
-            if not ctx.can_access_simulation(estimated_cost=50):
-                return False
-
-        # Tenant isolation enforcement
-        if ctx.tenant_id == "public" and "admin" not in [r.value for r in ctx.roles]:
-            if any(x in path for x in ["/admin", "/service", "/internal"]):
-                return False
-
-        return True
+        policy = get_policy_engine()
+        policy_result = await policy.evaluate(
+            ctx,
+            {
+                "action": "execute",
+                "resource": self._infer_operation(request),
+                "estimated_cost": 50 if "simulation" in request.url.path else 5,
+                "estimated_tokens": 800,
+            },
+        )
+        return policy_result["allowed"]
 
     def _infer_operation(self, request: Request) -> str:
         path = request.url.path.lower()

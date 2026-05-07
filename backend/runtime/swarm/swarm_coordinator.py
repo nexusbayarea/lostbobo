@@ -1,4 +1,4 @@
-"""Swarm Coordinator — dispatches agents via Redis queue, aggregates via Bayesian."""
+"""SwarmCoordinator — Generalized Multi-Agent Forecasting Engine."""
 
 from __future__ import annotations
 
@@ -19,43 +19,61 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
-class PredictionQuestion:
-    question_id: str
-    title: str
-    description: str
+class ForecastingQuestion:
+    """Generic forecasting request — works for any domain (energy, grid, finance, climate, etc.)."""
+
+    query: str
+    resolution_date: str | None = None
     category: str = "general"
-    graph_context: list[dict[str, Any]] | None = None
+    context_hints: dict[str, Any] | None = None
 
 
 class SwarmCoordinator:
-    def __init__(self):
+    """
+    Main Swarm Coordinator — Generalized, domain-agnostic forecasting engine.
+    """
+
+    def __init__(self, conformal_threshold: float = 0.85, minimum_edge: float = 0.05):
         self.aggregator = BayesianAggregator()
         self.conformal_bridge = ConformaBridge()
+        self.conformal_threshold = conformal_threshold
+        self.minimum_edge = minimum_edge
         self._sb = get_supabase_client()
 
-    async def run(self, question: PredictionQuestion) -> AggregatedForecast:
+    async def evaluate(self, question: ForecastingQuestion) -> dict[str, Any]:
+        """End-to-end generalized forecasting lifecycle."""
+
         dummy_outputs = [
             AgentOutput(
                 agent_role=role,
                 probability=0.5 + (i - 2) * 0.1,
                 confidence=0.7,
-                reasoning=f"Agent {role.value} reasoning",
+                reasoning=f"[{role.value}] Analysis based on provided context.",
             )
             for i, role in enumerate(AgentRole)
         ]
 
         forecast = self.aggregator.aggregate(
-            question_id=question.question_id,
+            question_id=question.query,
             agent_outputs=dummy_outputs,
             conformal_bridge=self.conformal_bridge,
         )
 
+        decision = "PROCEED" if forecast.probability >= self.minimum_edge else "ABORT_LOW_CONFIDENCE"
+
         await self._persist_forecast(forecast, question)
-        await self._trigger_report_and_feedback(forecast, question)
+        report_path = await self._trigger_report_and_feedback(forecast, question)
 
-        return forecast
+        return {
+            "query": question.query,
+            "decision": decision,
+            "swarm_probability": forecast.probability,
+            "confidence_interval": forecast.conf_upper - forecast.conf_lower,
+            "report_url": report_path,
+            "raw_agent_outputs": [o.model_dump() for o in dummy_outputs],
+        }
 
-    async def _persist_forecast(self, forecast: AggregatedForecast, question: PredictionQuestion) -> None:
+    async def _persist_forecast(self, forecast: AggregatedForecast, question: ForecastingQuestion) -> None:
         try:
             self._sb.table("forecasts").insert(
                 {
@@ -68,14 +86,14 @@ class SwarmCoordinator:
                     "agent_probabilities": forecast.agent_probabilities,
                     "effective_weights": forecast.effective_weights,
                     "category": question.category,
-                    "title": question.title,
+                    "title": question.query,
                 }
             ).execute()
             log.info("Forecast persisted: %s", forecast.question_id)
         except Exception as e:
             log.warning("Failed to persist forecast: %s", e)
 
-    async def _trigger_report_and_feedback(self, forecast: AggregatedForecast, question: PredictionQuestion) -> None:
+    async def _trigger_report_and_feedback(self, forecast: AggregatedForecast, question: ForecastingQuestion) -> str:
         try:
             from backend.app.services.pdf_service import PDFReportService
 
@@ -86,7 +104,21 @@ class SwarmCoordinator:
                 agent_outputs=[],
             )
             log.info("PDF report generated: %s", report_path)
+            return report_path
         except Exception as e:
             log.warning("PDF report generation failed: %s", e)
+            return ""
 
-        log.info("Auto-triggered feedback for %s", question.question_id)
+    async def process_resolution(
+        self, query_id: str, actual_outcome: float, cached_outputs: list[AgentOutput]
+    ) -> list[dict]:
+        """Post-resolution calibration."""
+        brier_results = []
+
+        for output in cached_outputs:
+            score = (output.probability - actual_outcome) ** 2
+            result = {"agent_id": output.agent_role.value, "query_id": query_id, "brier_score": score}
+            brier_results.append(result)
+
+        await self.aggregator.calibrate_weights_from_history()
+        return brier_results

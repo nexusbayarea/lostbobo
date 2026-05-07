@@ -10,9 +10,11 @@ from backend.core.kernel.kernel import get_kernel
 
 log = logging.getLogger(__name__)
 
+
 @dataclass
 class ResourceCost:
     """Weighted cost per operation"""
+
     retrieval: int = 1
     embedding: int = 2
     llm_generation: int = 10
@@ -26,13 +28,14 @@ class ComputeGovernance:
     Centralized rate limiting + governance on CPU node.
     Uses Redis for distributed token buckets + sliding windows.
     """
+
     def __init__(self):
         self.redis = redis.from_url("redis://localhost:6379", decode_responses=True)
         self.cost = ResourceCost()
         self.default_limits = {
             "user_request_rpm": 20,
             "user_request_rph": 200,
-            "token_budget_hourly": 500_000,      # tokens
+            "token_budget_hourly": 500_000,  # tokens
             "max_stream_seconds": 60,
             "max_concurrent_simulations": 2,
             "max_queue_depth": 20,
@@ -48,8 +51,7 @@ class ComputeGovernance:
         key_prefix = f"gov:{tenant_id}:{user_id}"
 
         # A) Basic request rate limiter
-        if not await self._check_rate_limit(f"{key_prefix}:requests", 
-                                          self.default_limits["user_request_rpm"], 60):
+        if not await self._check_rate_limit(f"{key_prefix}:requests", self.default_limits["user_request_rpm"], 60):
             return {"allowed": False, "reason": "rate_limit_requests"}
 
         # B) Token budget limiter
@@ -133,6 +135,7 @@ class ComputeGovernance:
 
 # Singleton
 _governance: Optional[ComputeGovernance] = None
+
 
 def get_governance() -> ComputeGovernance:
     global _governance

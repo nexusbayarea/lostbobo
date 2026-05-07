@@ -25,7 +25,11 @@ class AutoResearchEngine:
         """One full auto-research iteration."""
         experiment_id = f"exp_{int(datetime.utcnow().timestamp() * 1000)}"
 
-        proposed_change = await self._propose_change(research_dsl)
+        prior_context = await self.kernel.execute(
+            {"type": "DEPTH_QUERY", "payload": {"query": research_dsl.get("objective", ""), "top_k": 6}}
+        )
+
+        proposed_change = await self._propose_change(research_dsl, prior_context)
 
         experiment_result = await self.kernel.execute(
             {
@@ -40,7 +44,6 @@ class AutoResearchEngine:
         score = compute_score(experiment_result)
         accepted = run_simulation_gate(experiment_result) and score > research_dsl.get("baseline_score", 0)
 
-        # Monitor with safeguards
         await self.kernel.execute({"type": "MONITOR_METRIC", "payload": {"name": "research_score", "value": score}})
 
         record = ExperimentRecord(
@@ -54,7 +57,23 @@ class AutoResearchEngine:
         )
         await self.memory.log(record)
 
-        # Feed result into Observational Memory
+        await self.kernel.execute(
+            {
+                "type": "DEPTH_STORE",
+                "payload": {
+                    "layer": "auto_research",
+                    "state": {
+                        "experiment_id": experiment_id,
+                        "target": target,
+                        "change": proposed_change,
+                        "score": score,
+                        "accepted": accepted,
+                    },
+                    "metadata": {"research_dsl": research_dsl},
+                },
+            }
+        )
+
         event = Event(
             id=f"evt_{experiment_id}",
             type="experiment_result",
@@ -64,7 +83,6 @@ class AutoResearchEngine:
         )
         observation = await self.kernel.observer.observe(event)
 
-        # Trigger reflection if high confidence
         if observation.confidence > 0.75:
             await self.kernel.reflector.reflect([observation])
 
@@ -78,7 +96,7 @@ class AutoResearchEngine:
             "result": experiment_result,
         }
 
-    async def _propose_change(self, research_dsl: dict[str, Any]) -> dict[str, Any]:
+    async def _propose_change(self, research_dsl: dict[str, Any], prior_context: list | None = None) -> dict[str, Any]:
         """Controlled mutation within DSL-defined search space."""
         return {
             "parameter": "batch_size",

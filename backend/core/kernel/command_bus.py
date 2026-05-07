@@ -36,4 +36,8 @@ class CommandBus:
             return await self.kernel.observer.observe(payload["event"])
         if cmd_type == "REFLECT":
             return await self.kernel.reflector.reflect(payload["observations"])
+        if cmd_type == "DEPTH_STORE":
+            return await self.kernel.depth_registry.store(payload["layer"], payload["state"], payload.get("metadata"))
+        if cmd_type == "DEPTH_QUERY":
+            return await self.kernel.depth_registry.query(payload["query"], payload.get("top_k", 8))
         raise ValueError(f"Unknown command type: {cmd_type}")

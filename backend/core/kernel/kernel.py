@@ -8,6 +8,7 @@ from typing import Any
 from backend.core.kernel.agents.planner import PlannerAgent
 from backend.core.kernel.auto_research.engine import AutoResearchEngine
 from backend.core.kernel.command_bus import CommandBus
+from backend.core.kernel.memory.depth import DepthAttentionRegistry
 from backend.core.kernel.memory.observational import Observer
 from backend.core.kernel.memory.reflector import Reflector
 from backend.core.kernel.services.memory_service import KernelMemoryService
@@ -52,6 +53,7 @@ class Kernel:
         self.auto_research = AutoResearchEngine(self)
         self.observer = Observer(self)
         self.reflector = Reflector(self)
+        self.depth_registry = DepthAttentionRegistry(self)
 
         self.command_bus = CommandBus(self)
 

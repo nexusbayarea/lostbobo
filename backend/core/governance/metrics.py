@@ -7,6 +7,12 @@ governance_requests = Counter(
 
 governance_blocked = Counter("governance_blocked_total", "Requests blocked by governance", ["reason", "operation"])
 
+governance_secrets_status = Gauge(
+    "governance_secrets_status",
+    "Governance secrets validation status from Infisical (1 = healthy, 0 = degraded)",
+    ["status"],
+)
+
 token_usage = Counter("governance_token_usage_total", "Tokens consumed under governance", ["tenant_id", "operation"])
 
 simulation_queue_depth = Gauge("simulation_queue_depth", "Current simulation queue depth by priority", ["priority"])

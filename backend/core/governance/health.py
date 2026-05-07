@@ -5,6 +5,7 @@ Startup + Runtime Health Check for Governance Secrets (Infisical)
 import logging
 
 from backend.core.governance.config import get_governance_settings
+from backend.core.governance.metrics import governance_secrets_status
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +32,10 @@ async def validate_governance_secrets() -> dict:
             missing.append(key)
 
     status = "healthy" if not missing else "degraded"
+    value = 1 if not missing else 0
+
+    # Export to Prometheus
+    governance_secrets_status.labels(status=status).set(value)
 
     if missing:
         log.error(f"❌ Missing governance secrets in Infisical: {missing}")

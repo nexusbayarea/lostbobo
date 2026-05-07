@@ -1,0 +1,20 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: physics-engine-chaos
+  namespace: simhpc
+spec:
+  entry: physics-stress
+  templates:
+    - name: physics-stress
+      templateType: StressChaos
+      templateSpec:
+        mode: one
+        selector:
+          labelSelectors:
+            app: simhpc-physics
+        stressors:
+          cpu:
+            workers: 4
+            load: 80
+        duration: "45s"

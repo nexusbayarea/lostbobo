@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.api_router import api_router
-from backend.core.gateway.gateway import GovernanceMiddleware
+from backend.core.gateway.gateway import SecurityGatewayMiddleware
 from backend.core.governance.health import validate_governance_secrets
 from backend.core.governance.metrics import metrics_app
 from backend.core.governance.simulation_worker import start_simulation_worker
@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    log.info("Starting SimHPC with Infisical-backed governance...")
+    log.info("Starting SimHPC with Security/Governance Gateway...")
     infisical_jit_inject()
     await validate_governance_secrets()
     await start_simulation_worker()
@@ -38,7 +38,7 @@ app.add_middleware(
     CORSMiddleware, allow_origins=[FRONTEND_URL], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
-app.add_middleware(GovernanceMiddleware)
+app.add_middleware(SecurityGatewayMiddleware)
 
 # --- ROUTER INTEGRATION ---
 app.include_router(api_router, prefix="/api/v1")

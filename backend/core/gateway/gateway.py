@@ -1,112 +1,120 @@
-"""
-Central Handshake/Gateway Layer — Enforces Compute Governance
-Called on EVERY incoming request
-"""
-
-from __future__ import annotations
-
 import logging
-import time
-from typing import Any
+import uuid
 
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from backend.core.auth.models import AuthContext, Role
 from backend.core.governance.service import get_governance
-from backend.core.kernel.kernel import get_kernel
+from backend.core.security.supabase import get_supabase_client
 
 log = logging.getLogger(__name__)
 
 
-class GovernanceMiddleware(BaseHTTPMiddleware):
+class SecurityGatewayMiddleware(BaseHTTPMiddleware):
     """
-    Enforces rate limiting, token budget, simulation throttling,
-    and agent recursion protection on every request.
+    Full control plane: AuthN → Tenant → AuthZ → Governance
     """
 
     async def dispatch(self, request: Request, call_next):
-        start_time = time.time()
+        request_id = str(uuid.uuid4())
+        request.state.request_id = request_id
 
-        # Skip health checks and static routes
-        if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json"]:
+        # Skip public routes
+        if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json", "/metrics"]:
             return await call_next(request)
 
         try:
-            # Extract context from headers / JWT / query
-            tenant_id = request.headers.get("x-tenant-id", "public")
-            user_id = request.headers.get("x-user-id") or "anonymous"
-            operation = self._infer_operation(request)
+            # 1. Authentication (AuthN)
+            auth_context = await self._authenticate(request)
 
-            # Estimate tokens (simple heuristic for now)
-            body = await self._get_body_if_json(request)
-            estimated_tokens = len(body.get("query", "")) // 4 + 200 if body else 400
+            # Attach to request state for downstream use
+            request.state.auth = auth_context
+            request.state.tenant_id = auth_context.tenant_id
 
-            # Governance Check
+            # 2. Authorization (AuthZ) + Policy Check
+            if not await self._authorize(request, auth_context):
+                raise HTTPException(status_code=403, detail="Forbidden by policy")
+
+            # 3. Governance Check (Rate limits, tokens, simulation throttle, etc.)
             gov = get_governance()
-            result = await gov.check(
+            gov_result = await gov.check(
                 {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "operation": operation,
-                    "estimated_tokens": estimated_tokens,
+                    "tenant_id": auth_context.tenant_id,
+                    "user_id": auth_context.user_id,
+                    "operation": self._infer_operation(request),
+                    "estimated_tokens": self._estimate_tokens(request),
                     "agent_hops": int(request.headers.get("x-agent-hops", 0)),
-                    "path": request.url.path,
                 }
             )
 
-            if not result["allowed"]:
-                log.warning(f"Governance blocked: {result['reason']} | user={user_id}")
+            if not gov_result["allowed"]:
                 raise HTTPException(
-                    status_code=429,
-                    detail={"error": "compute_governance_violation", "reason": result["reason"], "retry_after": 60},
+                    status_code=429, detail={"error": "compute_governance_violation", "reason": gov_result["reason"]}
                 )
 
-            # Proceed with request
+            # Proceed
             response = await call_next(request)
-
-            # Record actual usage
-            duration = time.time() - start_time
-            await self._record_usage(tenant_id, user_id, operation, duration)
-
             return response
 
-        except HTTPException:
-            raise
+        except HTTPException as e:
+            raise e
         except Exception as e:
-            log.error(f"Gateway middleware error: {e}")
-            raise HTTPException(status_code=500, detail="Internal governance error") from e
+            log.error(f"Security gateway failed: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Security layer error") from e
+
+    async def _authenticate(self, request: Request) -> AuthContext:
+        """JWT + Supabase AuthN"""
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing token")
+
+        supabase = get_supabase_client()
+        try:
+            # Validate JWT via Supabase
+            user = supabase.auth.get_user(token)
+            if not user or not user.user:
+                raise HTTPException(status_code=401, detail="Invalid token")
+
+            # Build context
+            roles = [Role(role) for role in user.user.user_metadata.get("roles", ["viewer"])]
+            tenant_id = user.user.user_metadata.get("tenant_id", "public")
+
+            return AuthContext(
+                user_id=user.user.id,
+                tenant_id=tenant_id,
+                roles=roles,
+                agent_id=request.headers.get("x-agent-id"),
+                request_id=request.state.request_id,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=401, detail="Authentication failed") from e
+
+    async def _authorize(self, request: Request, ctx: AuthContext) -> bool:
+        """Contextual + Compute-aware Authorization"""
+        path = request.url.path.lower()
+
+        # Simulation protection
+        if "/simulation" in path or "/simulate" in path:
+            if not ctx.can_access_simulation(estimated_cost=50):
+                return False
+
+        # Tenant isolation enforcement
+        if ctx.tenant_id == "public" and "admin" not in [r.value for r in ctx.roles]:
+            if any(x in path for x in ["/admin", "/service", "/internal"]):
+                return False
+
+        return True
 
     def _infer_operation(self, request: Request) -> str:
         path = request.url.path.lower()
-        if "/stream" in path or "stream" in request.query_params:
+        if "/stream" in path:
             return "stream"
-        if "/simulate" in path or "/simulation" in path:
+        if "/simulate" in path:
             return "simulation"
         if "/agent" in path:
             return "agent"
-        if "/llm" in path or request.method == "POST":
-            return "llm"
-        return "retrieval"
+        return "llm" if request.method == "POST" else "retrieval"
 
-    async def _get_body_if_json(self, request: Request) -> dict[str, Any]:
-        try:
-            if request.headers.get("content-type", "").startswith("application/json"):
-                return await request.json()
-        except Exception:
-            pass
-        return {}
-
-    async def _record_usage(self, tenant_id: str, user_id: str, operation: str, duration: float):
-        """Optional: persist usage metrics"""
-        await get_kernel().execute(
-            {
-                "type": "MEMORY_RECORD",
-                "payload": {
-                    "type": "usage",
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "operation": operation,
-                    "duration_ms": int(duration * 1000),
-                },
-            }
-        )
+    def _estimate_tokens(self, request: Request) -> int:
+        return 800

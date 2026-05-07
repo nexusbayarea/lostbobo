@@ -95,7 +95,7 @@
 - [x] GenAI Fallback Strategy (fallback.py + Orchestrator integration + CI Verified) - CI Passed
 
 ## May 07, 2026 [04:21 PM]
-- [x] Fallback Test Suite (pytest-asyncio + mocker + 100% coverage) - CI Passed
+- [x] Deep Unit Tests for Fallback Logic (tests/runtime/test_fallback.py + test_speculative_orchestrator.py + test_claim_extractor.py) - CI Passed
 
 ---
 *Note: This log is automatically generated based on the current filesystem and development history.*

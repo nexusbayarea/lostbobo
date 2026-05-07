@@ -1,0 +1,49 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: hybrid-rag-physics-chaos
+  namespace: simhpc
+spec:
+  engineState: active
+  annotationCheck: 'false'
+  appinfo:
+    appns: simhpc
+    applabel: "app in (simhpc-rag, simhpc-physics)"
+    appkind: deployment
+  chaosServiceAccount: litmus
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '10'
+    - name: cpu-stress
+      spec:
+        components:
+          env:
+            - name: CPU_CORES
+              value: '2'
+  probes:
+    - name: rag-health-probe
+      type: httpProbe
+      httpProbe/inputs:
+        url: http://simhpc-rag-service:8000/health
+        method: GET
+      mode: Continuous
+      runProperties:
+        probeTimeout: 5
+        interval: 2
+        retry: 3
+    - name: physics-metric-probe
+      type: prometheusProbe
+      prometheusProbe/inputs:
+        endpoint: http://prometheus:9090
+        query: "swarm_retry_count > 0"
+      mode: Edge
+      runProperties:
+        probeTimeout: 5
+        interval: 2
+        retry: 3

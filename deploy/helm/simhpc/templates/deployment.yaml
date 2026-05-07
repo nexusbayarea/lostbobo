@@ -25,5 +25,9 @@ spec:
           env:
             - name: RUNTIME_MODE
               value: {{ .Values.env.RUNTIME_MODE }}
+            - name: REDIS_HOST
+              value: {{ include "simhpc.fullname" . }}-redis-master
+            - name: REDIS_PORT
+              value: "6379"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

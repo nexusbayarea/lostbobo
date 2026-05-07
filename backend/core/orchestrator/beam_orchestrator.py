@@ -1,5 +1,3 @@
-"""Final Beam Orchestrator — Provenance + Certificate + Redis Streaming."""
-
 from __future__ import annotations
 
 import asyncio
@@ -12,6 +10,7 @@ from backend.core.models.hypothesis import Hypothesis
 from backend.core.provenance.graph import ProvenanceGraph, ProvenanceNode
 from backend.core.redis.beam_streamer import BeamStreamer
 from backend.core.simulation.runner import SimulationRunner
+from backend.physics.validation.library import PhysicsValidator
 from backend.runtime.rag.router import RAGRouter
 
 log = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ class BeamOrchestrator:
         self.streamer = BeamStreamer()
         self.provenance = ProvenanceGraph()
         self.certificate_service = CertificateService()
+        self.validator = PhysicsValidator()
 
     async def run(self, query: str, tenant_id: str = "public", request_id: str | None = None) -> Hypothesis:
         from backend.core.kernel.kernel import get_kernel
@@ -40,7 +40,7 @@ class BeamOrchestrator:
                     "operation": "llm",
                     "estimated_tokens": 800,  # adjust dynamically
                     "tenant_id": tenant_id,
-                    "user_id": "current_user",  # Placeholder, actual user_id should be retrieved
+                    "user_id": "current_user",
                 },
             }
         )
@@ -64,11 +64,19 @@ class BeamOrchestrator:
         winner = max(beams, key=lambda h: h.trust_score)
         winner.stage = "complete"
 
+        # NEW: Physics Validation
+        sim_result = await self.sim_runner.run(winner)
+        winner = sim_result.hypothesis
+        val = self.validator.validate(winner, sim_result.data)
+        if val.passed:
+            winner.trust_score = min(0.98, winner.trust_score * 1.15)
+            winner.stage = "physics_validated"
+
         await self.provenance.add_node(
             ProvenanceNode(
                 node_id=winner.id,
                 node_type="final_hypothesis",
-                data={"query": query},
+                data={"query": query, "validation": val.__dict__},
                 parent_ids=[],
                 timestamp=time.time(),
             )

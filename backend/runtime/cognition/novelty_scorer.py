@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -10,47 +11,81 @@ log = structlog.get_logger(__name__)
 
 
 class NoveltyScorer:
-    """Measures semantic + structural novelty to detect stagnation / loops."""
+    """Advanced multi-dimensional entropy and novelty monitoring."""
 
     def __init__(self, kernel: Kernel):
         self.kernel = kernel
         self.supabase = SupabaseJobStore()
 
-    async def compute(self, payload: dict[str, Any]) -> float:
-        """Returns novelty score in [0.0, 1.0]. Low score = likely loop / stagnation."""
-        agent_results = payload["agent_results"]
-        job_id = payload["job_id"]
+    async def compute(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Returns comprehensive novelty + entropy report."""
+        job_id = payload.get("job_id")
+        agent_results = payload.get("agent_results", {})
+        fused_context = payload.get("fused_context", {})
+        is_reflection = payload.get("is_reflection_step", False)
 
-        # 1. Semantic novelty (mocked embedding distance)
-        current_embedding = np.random.rand(128)  # Mock
-        previous_states = await self.supabase.get_previous_cognition_embeddings(job_id, limit=10)
+        scores = {}
 
-        if previous_states:
-            distances = [np.dot(current_embedding, prev) for prev in previous_states]
-            semantic_novelty = 1.0 - max(distances) if distances else 1.0
+        # 1. Semantic Entropy (embedding diversity)
+        current_text = str(agent_results) + str(fused_context)
+        current_emb = await self.kernel.services["embedding"].embed(current_text)
+        recent_embs = await self.supabase.get_previous_cognition_embeddings(job_id, limit=15)
+
+        if recent_embs:
+            similarities = [np.dot(current_emb, prev) for prev in recent_embs]
+            semantic_novelty = 1.0 - np.mean(similarities)
+            semantic_entropy = -np.mean([p * np.log(p + 1e-9) for p in similarities])
         else:
             semantic_novelty = 1.0
+            semantic_entropy = 1.0
 
-        # 2. Structural novelty (graph branching)
+        scores["semantic_novelty"] = round(float(semantic_novelty), 4)
+        scores["semantic_entropy"] = round(float(semantic_entropy), 4)
+
+        # 2. Structural Entropy
         graph_stats = await self.kernel.services["execution_graph"].get_stats(job_id)
-        structural_novelty = min(1.0, graph_stats.get("new_nodes", 1) / max(graph_stats.get("total_nodes", 1), 1))
+        total_nodes = graph_stats.get("total_nodes", 1)
+        new_nodes = graph_stats.get("new_nodes", 0)
+        structural_novelty = min(1.0, new_nodes / total_nodes)
 
-        # 3. Trust-weighted information gain
-        trust_scores = [r.get("trust_score", 0.0) for r in agent_results.values()]
-        trust_gain = sum(trust_scores) / max(len(trust_scores), 1)
+        scores["structural_novelty"] = round(float(structural_novelty), 4)
 
-        # Combined novelty score
-        novelty_score = semantic_novelty * 0.5 + structural_novelty * 0.3 + trust_gain * 0.2
+        # 3. Temporal Entropy
+        temporal_novelty = await self._compute_temporal_novelty(job_id)
+        scores["temporal_novelty"] = round(float(temporal_novelty), 4)
 
+        # 4. Confidence Entropy
+        trust_scores = [r.get("trust_score", 0.5) for r in agent_results.values()]
+        confidence_entropy = np.var(trust_scores) if trust_scores else 0.0
+        scores["confidence_entropy"] = round(float(confidence_entropy), 4)
+
+        # 5. Reflection Spiral Penalty
+        reflection_penalty = 0.35 if is_reflection and semantic_novelty < 0.3 else 0.0
+
+        novelty_score = (
+            semantic_novelty * 0.35
+            + structural_novelty * 0.25
+            + temporal_novelty * 0.20
+            + (1.0 - confidence_entropy) * 0.20
+            - reflection_penalty
+        )
+        novelty_score = max(0.0, min(1.0, float(novelty_score)))
+
+        scores["composite_novelty"] = round(float(novelty_score), 4)
+        scores["overall_risk"] = "HIGH" if novelty_score < 0.35 else "MEDIUM" if novelty_score < 0.6 else "LOW"
+
+        # Persist to Supabase
         await self.supabase.record_event(
-            "novelty_scored",
-            {
-                "job_id": job_id,
-                "novelty_score": novelty_score,
-                "semantic": semantic_novelty,
-                "structural": structural_novelty,
-            },
+            "novelty_scored", {"job_id": job_id, **scores, "timestamp": datetime.now().isoformat()}
         )
 
-        log.info("novelty scored", score=novelty_score, job_id=job_id)
-        return float(novelty_score)
+        return scores
+
+    async def _compute_temporal_novelty(self, job_id: str) -> float:
+        """Measures rate of change in recent cognition nodes."""
+        history = await self.supabase.get_execution_history(job_id, limit=30)
+        if len(history) < 5:
+            return 1.0
+        recent_ops = [n.get("operation") for n in history[-15:]]
+        unique_ops = len(set(recent_ops))
+        return min(1.0, float(unique_ops / 8.0))

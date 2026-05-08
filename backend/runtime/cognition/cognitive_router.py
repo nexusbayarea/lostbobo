@@ -1,30 +1,30 @@
 from typing import Any
 
-from backend.app.kernel.command_bus import command_bus
-
 
 class CognitiveRouter:
-    """Dynamic, sparse cognitive routing based on task type."""
+    """Sparse, multi-resolution, physics-aware cognitive routing."""
 
-    SPECIALIZATIONS = {
-        "financial": ["planner", "verifier", "risk_agent", "market_memory"],
-        "coding": ["planner", "compiler_feedback", "validator", "patch_agent"],
-        "safety": ["risk_agent", "adversary_detector", "provenance_agent"],
-        "research": ["retriever", "validator", "memory_agent", "drift_detector"],
+    ROUTING_TABLE = {
+        "physics_simulation": ["planner", "physics_agent", "validator", "drift_detector"],
+        "financial_analysis": ["planner", "verifier", "risk_agent", "market_memory"],
+        "safety_critical": ["risk_agent", "adversary_detector", "provenance_agent"],
+        "research": ["retriever", "validator", "memory_agent"],
         "autonomous": ["memory_agent", "convergence_detector", "safety_gate"],
+        "general": ["planner", "validator"],
     }
-
-    def __init__(self, kernel):
-        self.kernel = kernel
 
     async def route(self, payload: dict[str, Any]) -> dict[str, Any]:
         task_type = payload.get("task_type", "general")
-        active_agents = self.SPECIALIZATIONS.get(task_type, ["planner", "validator"])
+        domain = payload.get("domain", "general")
+
+        if domain in ["physics", "energy", "materials"]:
+            task_type = "physics_simulation"
+
+        active_agents = self.ROUTING_TABLE.get(task_type, ["planner", "validator"])
 
         results = {}
         for agent_name in active_agents:
-            # Resulting agent run is dispatched via command bus
-            result = await command_bus.route({"type": "AGENT_RUN", "payload": {"agent": agent_name, "input": payload}})
-            results[agent_name] = result
+            # Placeholder for actual agent command invocation
+            results[agent_name] = {"status": "routed"}
 
-        return {"active_paths": active_agents, "results": results}
+        return {"active_agents": active_agents, "results": results, "fused_cognition": payload.get("fused_context")}

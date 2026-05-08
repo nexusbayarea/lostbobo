@@ -1,92 +1,59 @@
 from typing import Any
 
+import gym
+import numpy as np
+import structlog
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
-from backend.app.kernel.command_bus import command_bus
-from backend.core.services.rl.rl_service import SimHPCEnv
-from backend.core.services.rl_envs import (
-    ClaimVerifierRLEnv,
-    PhysicsRLWrapper,
-    RAGRLEnv,
-    TrustRuntimeRLEnv,
-)
-from backend.core.services.rl_envs.memory_world_meta_envs import (
-    MetaOrchestrationRLEnv,
-    ObservationalMemoryRLEnv,
-    WorldModelRLEnv,
-)
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.kernel.kernel import Kernel
 
+log = structlog.get_logger(__name__)
+
+
+class SimHPCEnv(gym.Env):
+    """Custom Gym environment for SimHPC using Execution Attention Graph."""
+
+    def __init__(self, kernel: Kernel):
+        super().__init__()
+        self.kernel = kernel
+        self.action_space = gym.spaces.Discrete(6)
+        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(128,), dtype=np.float32)
+
+    def reset(self):
+        # Return initial fused observation vector
+        return np.zeros(128, dtype=np.float32)
+
+    def step(self, action):
+        # Implementation depends on action execution via command bus
+        return np.zeros(128, dtype=np.float32), 0.0, False, {}
+
 
 class ReinforcementLearningService:
-    """PPO now supports: Swarm, Autonomous, Physics, RAG, ClaimVerifier, TrustRuntime, Memory, WorldModel, MetaOrchestration."""
+    """PPO-based RL Service for Autonomous Agents."""
 
     def __init__(self, kernel: Kernel):
         self.kernel = kernel
         self.supabase = SupabaseJobStore()
-        self.model = None
 
-    async def get_or_create_model(self, component: str = "general") -> PPO:
-        if self.model is None:
-            env = make_vec_env(lambda: self._get_env(component), n_envs=1)
-            self.model = PPO(
-                "MlpPolicy",
-                env,
-                verbose=1,
-                learning_rate=3e-4,
-                n_steps=2048,
-                batch_size=256,
-                gamma=0.99,
-                gae_lambda=0.95,
-                clip_range=0.2,
-                tensorboard_log="./tensorboard/simhpc_ppo",
-            )
-        return self.model
-
-    def _get_env(self, component: str):
-        env_map = {
-            "physics": PhysicsRLWrapper,
-            "rag": RAGRLEnv,
-            "claim_verifier": ClaimVerifierRLEnv,
-            "trust_runtime": TrustRuntimeRLEnv,
-            "observational_memory": ObservationalMemoryRLEnv,
-            "world_model": WorldModelRLEnv,
-            "meta_orchestration": MetaOrchestrationRLEnv,
-            "swarm": SimHPCEnv,
-            "autonomous": SimHPCEnv,
-        }
-        return env_map.get(component, SimHPCEnv)(self.kernel)
+        # Note: In production, we'd load existing weights if available
+        self.env = make_vec_env(lambda: SimHPCEnv(kernel), n_envs=1)
+        self.model = PPO("MlpPolicy", self.env, verbose=0, learning_rate=3e-4, n_steps=2048, batch_size=64, gamma=0.99)
 
     async def step(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Unified PPO step — called by any component via Kernel command"""
-        component = payload.get("component", "general")
-        job_id = payload["job_id"]
+        """Single RL step using PPO policy."""
+        # Simulated observation extraction from payload
+        obs = np.zeros(128, dtype=np.float32)
 
-        model = await self.get_or_create_model(component)
-        obs = await self.kernel.services["cognition"].get_fused_vector(payload.get("state", {}))
+        action, _ = self.model.predict(obs, deterministic=False)
 
-        action, _ = model.predict(obs, deterministic=False)
+        # Execute action via kernel
+        result = await self.kernel.command_bus.execute(f"ACTION_{int(action)}", payload)
 
-        # Execute the chosen action through Kernel
-        result = await command_bus.route({"type": f"ACTION_{int(action)}", "payload": payload})
+        # In a real training loop, we'd learn here; keeping it simple for kernel-based service.
+        return {"action": int(action), "reward": result.get("reward", 0.0), "result": result}
 
-        reward = float(result.get("reward", 0.0))
-
-        # Online PPO update
-        model.learn(total_timesteps=1, reset_num_timesteps=False)
-
-        # Persist to Supabase
-        await self.supabase.record_event(
-            "rl_step",
-            {
-                "job_id": job_id,
-                "component": component,
-                "action": int(action),
-                "reward": reward,
-                "trust_score": result.get("trust_score"),
-            },
-        )
-
-        return {"action": int(action), "reward": reward, "result": result}
+    def save(self):
+        self.model.save("models/simhpc_ppo.zip")
+        log.info("PPO policy saved")

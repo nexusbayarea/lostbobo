@@ -1,12 +1,15 @@
 import os
+
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.semconv.resource import ResourceAttributes
+
 from backend.core.kernel.kernel import Kernel
 from backend.core.supabase_job_store import SupabaseJobStore
+
 
 class TracingService:
     """Kernel-centered OpenTelemetry tracing service."""
@@ -15,11 +18,13 @@ class TracingService:
         self.kernel = kernel
         self.supabase = SupabaseJobStore()
 
-        resource = Resource.create({
-            ResourceAttributes.SERVICE_NAME: "simhpc",
-            ResourceAttributes.SERVICE_VERSION: "0.4.0",
-            ResourceAttributes.DEPLOYMENT_ENVIRONMENT: os.getenv("ENV", "production"),
-        })
+        resource = Resource.create(
+            {
+                ResourceAttributes.SERVICE_NAME: "simhpc",
+                ResourceAttributes.SERVICE_VERSION: "0.4.0",
+                ResourceAttributes.DEPLOYMENT_ENVIRONMENT: os.getenv("ENV", "production"),
+            }
+        )
 
         provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)

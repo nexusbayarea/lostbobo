@@ -1,0 +1,54 @@
+groups:
+- name: jaeger-tracing-alerts
+  rules:
+
+  - alert: HighTraceErrorRate
+    expr: |
+      rate(jaeger_spans_total{result="error"}[5m]) / rate(jaeger_spans_total[5m]) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+      category: tracing
+    annotations:
+      summary: "CRITICAL: High trace error rate (>5%)"
+      description: "Error spans detected in Trust Runtime / Swarm flows"
+
+  - alert: SlowTrustVerification
+    expr: |
+      histogram_quantile(0.95, sum(rate(jaeger_span_duration_seconds_bucket{service_name="simhpc", operation_name=~"trust.*"}[5m])) by (le)) > 4.0
+    for: 3m
+    labels:
+      severity: critical
+      category: trust
+    annotations:
+      summary: "CRITICAL: Trust Runtime verification > 4s P95"
+
+  - alert: HighGenAIFallbackInTraces
+    expr: |
+      sum(rate(jaeger_spans_total{operation_name=~"trust.*fallback"}[5m])) > 15
+    for: 4m
+    labels:
+      severity: warning
+      category: resilience
+    annotations:
+      summary: "High GenAI fallback rate in traces"
+
+  - alert: LongPhysicsSimulationTrace
+    expr: |
+      histogram_quantile(0.99, sum(rate(jaeger_span_duration_seconds_bucket{operation_name=~"physics.*"}[5m])) by (le)) > 15
+    for: 2m
+    labels:
+      severity: critical
+      category: physics
+    annotations:
+      summary: "CRITICAL: Physics simulation spans exceeding 15s (P99)"
+
+  - alert: ChaosImpactOnTraces
+    expr: |
+      rate(jaeger_spans_total{operation_name=~"chaos.*"}[5m]) > 8 and rate(swarm_task_completion_rate[5m]) < 0.92
+    for: 5m
+    labels:
+      severity: info
+      category: chaos
+    annotations:
+      summary: "Chaos experiments impacting trace health"

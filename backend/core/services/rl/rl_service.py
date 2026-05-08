@@ -11,12 +11,17 @@ from backend.core.services.rl_envs import (
     RAGRLEnv,
     TrustRuntimeRLEnv,
 )
+from backend.core.services.rl_envs.memory_world_meta_envs import (
+    MetaOrchestrationRLEnv,
+    ObservationalMemoryRLEnv,
+    WorldModelRLEnv,
+)
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.kernel.kernel import Kernel
 
 
 class ReinforcementLearningService:
-    """PPO now supports: Swarm, Autonomous, Physics, RAG, ClaimVerifier, TrustRuntime."""
+    """PPO now supports: Swarm, Autonomous, Physics, RAG, ClaimVerifier, TrustRuntime, Memory, WorldModel, MetaOrchestration."""
 
     def __init__(self, kernel: Kernel):
         self.kernel = kernel
@@ -46,6 +51,9 @@ class ReinforcementLearningService:
             "rag": RAGRLEnv,
             "claim_verifier": ClaimVerifierRLEnv,
             "trust_runtime": TrustRuntimeRLEnv,
+            "observational_memory": ObservationalMemoryRLEnv,
+            "world_model": WorldModelRLEnv,
+            "meta_orchestration": MetaOrchestrationRLEnv,
             "swarm": SimHPCEnv,
             "autonomous": SimHPCEnv,
         }
@@ -69,6 +77,7 @@ class ReinforcementLearningService:
         # Online PPO update
         model.learn(total_timesteps=1, reset_num_timesteps=False)
 
+        # Persist to Supabase
         await self.supabase.record_event(
             "rl_step",
             {

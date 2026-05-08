@@ -3240,7 +3240,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp", specifier = ">=1.41.1" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.62b1" },
     { name = "opentelemetry-instrumentation-requests", specifier = ">=0.62b1" },
-    { name = "opentelemetry-sdk", specifier = ">=1.41.1" },
+    { name = "opentelemetry-sdk", specifier = "==1.41.1" },
     { name = "pandas", marker = "extra == 'worker'" },
     { name = "pillow", marker = "extra == 'api'", specifier = ">=10.0.0" },
     { name = "pillow", marker = "extra == 'worker'" },

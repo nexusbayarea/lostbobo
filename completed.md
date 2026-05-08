@@ -258,3 +258,6 @@
 
 ## May 08, 2026 [03:51 PM]
 - [x] Simulation Certificate System (Hardware attestation, formal verification signatures, immutable Supabase registry, Kernel-centered issuance/verification) - CI Passed
+
+## May 08, 2026 [04:02 PM]
+- [x] Core Intelligence Flywheel Layer (Welford statistics, privacy-safe prior aggregation, post-run reinforcement hooks, velocity/leaderboard API) - CI Passed

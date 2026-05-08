@@ -6,30 +6,30 @@ policies:
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 4h
+    routes:
+      # Critical Security & Governance
+      - matchers:
+          - severity = critical
+          - category =~ "security|governance"
+        receiver: pagerduty-critical
+        group_interval: 1m
+        repeat_interval: 10m
 
-    # Critical Security & Governance
-    - matchers:
-        - severity = critical
-        - category =~ "security|governance"
-      receiver: pagerduty-critical
-      group_interval: 1m
-      repeat_interval: 10m
+      # Chaos & Resilience
+      - matchers:
+          - category =~ "chaos|resilience"
+        receiver: slack-engineering
+        mute_timings:
+          - "maintenance-window"
 
-    # Chaos & Resilience
-    - matchers:
-        - category =~ "chaos|resilience"
-      receiver: slack-engineering
-      mute_timings:
-        - "maintenance-window"
+      # Load + Performance
+      - matchers:
+          - category =~ "load|performance"
+        receiver: slack-engineering
+        group_interval: 10m
 
-    # Load + Performance
-    - matchers:
-        - category =~ "load|performance"
-      receiver: slack-engineering
-      group_interval: 10m
-
-    # High GenAI Fallback & Physics Failures
-    - matchers:
-        - alertname =~ "CriticalGenAIFallbackRate|CriticalPhysicsFailureRate"
-      receiver: slack-engineering
-      continue: true  # also send to email
+      # High GenAI Fallback & Physics Failures
+      - matchers:
+          - alertname =~ "CriticalGenAIFallbackRate|CriticalPhysicsFailureRate"
+        receiver: slack-engineering
+        continue: true  # also send to email

@@ -31,6 +31,8 @@ class GlobalCognitiveState:
 
 
 class MultiResolutionCognition:
+    """Maintains both high-resolution local and long-horizon global cognition."""
+
     def __init__(self, kernel: Kernel):
         self.kernel = kernel
         self.supabase = SupabaseJobStore()
@@ -52,15 +54,19 @@ class MultiResolutionCognition:
             world_model_summary=await self.kernel.services["world_model"].get_summary(),
             trust_history=await self.kernel.services["trust"].get_history_summary(),
             agent_reputation=await self.kernel.services["safety"].get_agent_reputation(),
-            historical_failures=await self.supabase.get_historical_failures(limit=20),
+            historical_failures=await self.supabase.get_historical_failures(limit=30),
             risk_telemetry=await self.kernel.services["safety"].get_risk_telemetry(),
-            global_novelty_score=await self.kernel.services["cognition"].compute_novelty({}),
+            global_novelty_score=await self.kernel.services["novelty_scorer"].compute_current_score(),
         )
 
     async def fuse_states(self, local: LocalCognitiveState, global_state: GlobalCognitiveState) -> dict[str, Any]:
+        """Rich fused context for agents."""
         fused = {
             "local": local.__dict__,
             "global": global_state.__dict__,
+            "attention_context": await self.kernel.services["execution_graph"].attend(
+                query=local.current_step, job_id=local.task_id, top_k=6
+            ),
         }
         await self.supabase.record_event("cognition_fusion", fused)
         return fused

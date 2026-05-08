@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 from typing import Any
 
+import gymnasium as gym
 import numpy as np
 import structlog
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
 
 from backend.app.kernel.command_bus import command_bus
 from backend.core.supabase_job_store import SupabaseJobStore
@@ -21,84 +24,59 @@ class RLStep:
     metadata: dict[str, Any]
 
 
+class SimHPCEnv(gym.Env):
+    """Custom Gym environment using Execution Attention Graph as observation space."""
+
+    def __init__(self, kernel: Kernel):
+        super().__init__()
+        self.kernel = kernel
+        self.action_space = gym.spaces.Discrete(6)
+        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(128,), dtype=np.float32)
+
+    def reset(self, *, seed=None, options=None):
+        super().reset(seed=seed)
+        # Placeholder for real fused vector
+        return np.zeros(128, dtype=np.float32), {}
+
+    def step(self, action: int):
+        # Dispatch via command bus
+        action_name = ["reason", "tool_call", "reflect", "verify", "simulate", "halt"][action]
+        result = self.kernel.command_bus.route_sync({"type": f"ACTION_{action_name.upper()}", "payload": {}})
+        reward = float(result.get("reward", 0.0))
+        done = result.get("done", False)
+        obs = np.zeros(128, dtype=np.float32)
+        return obs, reward, done, False, {}
+
+
 class ReinforcementLearningService:
     """Kernel-centered RL for agent policy learning and simulation optimization."""
 
     def __init__(self, kernel: Kernel):
         self.kernel = kernel
         self.supabase = SupabaseJobStore()
-        # Q-table: state_hash → action → Q-value
-        self.policy: dict[str, dict[str, float]] = {}
+        self.env = make_vec_env(lambda: SimHPCEnv(kernel), n_envs=1)
+        self.model = PPO(
+            "MlpPolicy",
+            self.env,
+            verbose=1,
+            learning_rate=3e-4,
+            n_steps=2048,
+            batch_size=64,
+            gamma=0.99,
+            gae_lambda=0.95,
+            clip_range=0.2,
+        )
 
     async def step(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Single RL step."""
-        job_id = payload["job_id"]
-        current_state = payload["state"]
+        """Single step using current PPO policy"""
+        # Get fused vector from cognition service
+        obs = await self.kernel.services["cognition"].get_fused_vector(payload.get("state", {}))
+        action, _ = self.model.predict(obs, deterministic=False)
 
-        state_hash = await self.kernel.services["state_hasher"].hash(current_state)
+        # Execute
+        result = await command_bus.route({"type": "AGENT_RUN", "payload": {"agent": "autonomous", "input": payload}})
 
-        # Select action
-        action = self._select_action(state_hash, payload.get("available_actions", []))
+        return {"action": int(action), "reward": result.get("reward", 0.0), "next_state": result}
 
-        # Execute action via Kernel
-        action_result = await command_bus.route({"type": f"ACTION_{action.upper()}", "payload": payload})
-
-        # Compute reward
-        reward = await self._compute_reward(payload, action_result, action)
-
-        next_state_hash = await self.kernel.services["state_hasher"].hash(action_result)
-
-        # Store trajectory
-        step_data = RLStep(
-            state_hash=state_hash,
-            action=action,
-            reward=reward,
-            next_state_hash=next_state_hash,
-            done=payload.get("done", False),
-            metadata=action_result,
-        )
-        await self.supabase.record_event("rl_step", {"job_id": job_id, "step": step_data.__dict__})
-
-        # Update policy
-        await self._update_policy(state_hash, action, reward, next_state_hash)
-
-        return {
-            "action": action,
-            "reward": reward,
-            "next_state": action_result,
-            "q_value": self.policy.get(state_hash, {}).get(action, 0.0),
-        }
-
-    def _select_action(self, state_hash: str, available_actions: list[str]) -> str:
-        if not available_actions:
-            return "default"
-        if np.random.rand() < 0.1:
-            return np.random.choice(available_actions)
-        q_values = self.policy.get(state_hash, {})
-        if not q_values:
-            return np.random.choice(available_actions)
-        return max(q_values, key=q_values.get)
-
-    async def _compute_reward(self, payload: dict[str, Any], result: dict[str, Any], action: str) -> float:
-        reward = 0.0
-        trust_score = result.get("trust_score", 0.0)
-        reward += trust_score * 0.4
-        reward += result.get("novelty_score", 0.5) * 0.25
-        if "physics" in payload.get("domain", ""):
-            reward += result.get("validation_passed", False) * 0.2
-        if result.get("safety_passed", True):
-            reward += 0.15
-        if result.get("loop_detected", False):
-            reward -= 1.0
-        return float(np.clip(reward, -1.0, 1.0))
-
-    async def _update_policy(self, state_hash: str, action: str, reward: float, next_state_hash: str):
-        if state_hash not in self.policy:
-            self.policy[state_hash] = {}
-        if action not in self.policy[state_hash]:
-            self.policy[state_hash][action] = 0.0
-        current_q = self.policy[state_hash][action]
-        next_max_q = max(self.policy.get(next_state_hash, {}).values(), default=0.0)
-        self.policy[state_hash][action] = current_q + 0.1 * (reward + 0.95 * next_max_q - current_q)
-        if len(self.policy) % 50 == 0:
-            await self.supabase.save_rl_policy_snapshot(self.policy)
+    def save_policy(self):
+        self.model.save("models/simhpc_ppo.zip")

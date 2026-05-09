@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
@@ -117,8 +119,26 @@ async def compare_models(a: str, b: str):
     return await registry.compare_models(a, b)
 
 
+@router.get("/models")
+async def list_models():
+    from backend.ml.registry import ModelRegistry
+
+    registry = ModelRegistry()
+    versions = await registry.list_versions()
+    return {"versions": [asdict(v) for v in versions]}
+
+
+@router.post("/models/{version_id}/activate")
+async def activate_model(version_id: str):
+    from backend.ml.registry import ModelRegistry
+
+    registry = ModelRegistry()
+    success = await registry.set_active_version(version_id)
+    return {"success": success, "active_version": version_id}
+
+
 @router.post("/infer")
-async def run_physics_inference(request: InferenceRequest):
+async def run_physics_inference(request: InferenceRequest, version: str | None = None):
     try:
         model_source = ModelSource(request.prefer_model)
     except ValueError as e:
@@ -133,7 +153,7 @@ async def run_physics_inference(request: InferenceRequest):
         prefer_model=model_source,
     )
 
-    response = await api.infer(inference_req)
+    response = await api.infer(inference_req, version_id=version)
     kernel = _Kernel()
     await kernel.execute(
         LogAuditCommand(

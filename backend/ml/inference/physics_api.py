@@ -51,7 +51,15 @@ class PhysicsInferenceAPI:
         self._model_cache: dict[str, Any] = {}
         self._inference_log: list[dict[str, Any]] = []
 
-    async def infer(self, request: PhysicsInferenceRequest) -> PhysicsInferenceResponse:
+    async def infer(self, request: PhysicsInferenceRequest, version_id: str | None = None) -> PhysicsInferenceResponse:
+        if version_id:
+            from backend.ml.registry import ModelRegistry
+
+            registry = ModelRegistry()
+            version = await registry.get_version(version_id)
+            if version:
+                self._simhpc_model_path = f"./simhpc_model_checkpoints/{version_id}"
+
         start = time.time()
 
         if request.prefer_model == ModelSource.SIMHPC_FINE_TUNED:

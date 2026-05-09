@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -51,40 +52,139 @@ class ModelBenchmark:
         return asdict(self)
 
 
+@dataclass
+class ModelVersion:
+    """Full model version record with provenance."""
+
+    version_id: str
+    semver: str
+    base_model: str
+    created_at: str
+    trained_on_runs: int
+    training_data_hash: str
+    lora_config: dict[str, Any]
+    benchmark: ModelBenchmark
+    overall_score: float
+    status: str = "ACTIVE"
+    notes: str = ""
+    deployed_at: str | None = None
+    deployed_by: str = "system"
+
+
 class ModelRegistry:
-    def __init__(self, registry_dir: str = "./simhpc_model_registry"):
+    def __init__(self, registry_dir: str = "./model_registry"):
         self.registry_dir = Path(registry_dir)
         self.registry_dir.mkdir(parents=True, exist_ok=True)
         self._db = get_supabase_client()
         self._models: list[ModelBenchmark] = []
+        self._versions: dict[str, ModelVersion] = {}
 
-    async def register_model(self, benchmark: ModelBenchmark) -> dict[str, Any]:
-        model_dir = self.registry_dir / benchmark.model_id
-        model_dir.mkdir(parents=True, exist_ok=True)
+    async def register_version(
+        self,
+        benchmark: ModelBenchmark,
+        lora_config: dict[str, Any],
+        training_data_hash: str | None = None,
+        notes: str = "",
+    ) -> ModelVersion:
+        """Register a new model version with full provenance."""
+        version_id = f"v{datetime.now(UTC).strftime('%Y%m%d')}-{self._get_version_count() + 1:03d}"
+        semver = f"0.{self._get_version_count() + 1}.0"
 
-        with open(model_dir / "benchmark.json", "w") as f:
-            json.dump(benchmark.to_dict(), f, indent=2)
+        if not training_data_hash:
+            training_data_hash = "pending"
+
+        version = ModelVersion(
+            version_id=version_id,
+            semver=semver,
+            base_model=benchmark.base_model,
+            created_at=datetime.now(UTC).isoformat(),
+            trained_on_runs=benchmark.trained_on_runs,
+            training_data_hash=training_data_hash,
+            lora_config=lora_config,
+            benchmark=benchmark,
+            overall_score=benchmark.get_overall_score(),
+            notes=notes,
+        )
+
+        version_dir = self.registry_dir / version_id
+        version_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(version_dir / "version.json", "w") as f:
+            json.dump(asdict(version), f, indent=2)
 
         if self._db:
-            self._db.table("model_registry").insert(
+            self._db.table("model_versions").upsert(
                 {
-                    "model_id": benchmark.model_id,
-                    "version": benchmark.version,
-                    "created_at": benchmark.created_at,
-                    "benchmark_data": benchmark.to_dict(),
-                    "overall_score": benchmark.get_overall_score(),
-                    "trained_on_runs": benchmark.trained_on_runs,
-                }
+                    "version_id": version.version_id,
+                    "semver": version.semver,
+                    "created_at": version.created_at,
+                    "benchmark_data": asdict(benchmark),
+                    "overall_score": version.overall_score,
+                    "training_data_hash": version.training_data_hash,
+                    "status": version.status,
+                    "notes": version.notes,
+                },
+                on_conflict="version_id",
             ).execute()
 
-        self._models.append(benchmark)
+        self._versions[version_id] = version
+        return version
 
-        return {
-            "status": "REGISTERED",
-            "model_id": benchmark.model_id,
-            "overall_score": benchmark.get_overall_score(),
-            "mean_accuracy": benchmark.mean_accuracy,
-        }
+    async def get_version(self, version_id: str) -> ModelVersion | None:
+        """Load specific model version."""
+        if version_id in self._versions:
+            return self._versions[version_id]
+
+        if self._db:
+            result = self._db.table("model_versions").select("*").eq("version_id", version_id).single().execute()
+            if result.data:
+                return ModelVersion(**result.data[0])
+
+        return None
+
+    async def get_active_version(self) -> ModelVersion | None:
+        """Get the current active version."""
+        if self._db:
+            result = (
+                self._db.table("model_versions")
+                .select("*")
+                .eq("status", "ACTIVE")
+                .order("overall_score", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                return ModelVersion(**result.data[0])
+        return None
+
+    async def list_versions(self, limit: int = 20) -> list[ModelVersion]:
+        """List all versions with performance trend."""
+        if self._db:
+            result = self._db.table("model_versions").select("*").order("created_at", desc=True).limit(limit).execute()
+            return [ModelVersion(**row) for row in (result.data or [])]
+        return list(self._versions.values())
+
+    async def set_active_version(self, version_id: str) -> bool:
+        """Mark a version as active (archive all others)."""
+        if not self._db:
+            return False
+        self._db.table("model_versions").update({"status": "ARCHIVED"}).neq("version_id", version_id).execute()
+        self._db.table("model_versions").update({"status": "ACTIVE"}).eq("version_id", version_id).execute()
+        return True
+
+    def _get_version_count(self) -> int:
+        if self._db:
+            result = self._db.table("model_versions").select("version_id", count="exact").execute()
+            return result.count or 0
+        return len(self._versions)
+
+    async def compute_training_data_hash(self, data_dir: str) -> str:
+        """Deterministic SHA256 hash of training dataset for reproducibility."""
+        hasher = hashlib.sha256()
+        path = Path(data_dir)
+        for file in sorted(path.glob("*.jsonl")):
+            hasher.update(file.read_bytes())
+        return hasher.hexdigest()
 
     async def get_latest_model(self) -> ModelBenchmark | None:
         if not self._models:

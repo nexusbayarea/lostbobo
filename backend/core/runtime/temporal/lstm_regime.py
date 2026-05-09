@@ -63,6 +63,20 @@ class LSTMRegimeEngine:
     def engine(cls) -> LSTMRegimeEngine:
         return cls()
 
+    async def optimize_hyperparameters(self, n_trials: int = 30) -> dict[str, Any]:
+        from backend.core.runtime.temporal.lstm_optimization import LSTMHyperparameterOptimizer
+
+        optimizer = LSTMHyperparameterOptimizer()
+        result = await optimizer.optimize(n_trials=n_trials)
+
+        # Rebuild best model
+        self._model = LSTMRegimeForecaster(
+            hidden_size=result["best_params"]["hidden_size"],
+            num_layers=result["best_params"]["num_layers"],
+            dropout=result["best_params"]["dropout"],
+        )
+        return result
+
     async def forecast(self, history: list[dict[str, Any]], horizon_hours: int = 6) -> RegimeForecast:
         """Generate LSTM-based regime forecast."""
         with trace_context("regime.forecast.lstm"):

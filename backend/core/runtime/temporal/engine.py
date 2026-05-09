@@ -11,14 +11,15 @@ if TYPE_CHECKING:
 
 
 class RegimeDetector:
-    def detect(self, state: WorldState) -> str:
+    def detect(self, state: "WorldState") -> str:
         if not state.entities:
             return "normal"
-        total_unc = sum(e.uncertainty for e in state.entities.values())
-        entropy = total_unc / max(1, len(state.entities))
-        if entropy > 0.65:
+        uncertainties = [e.uncertainty for e in state.entities.values()]
+        avg_uncertainty = sum(uncertainties) / len(uncertainties)
+        volatility = max(uncertainties) if uncertainties else 0.0
+        if volatility > 0.7 or avg_uncertainty > 0.6:
             return "disruption"
-        if entropy > 0.35:
+        if volatility > 0.4 or avg_uncertainty > 0.35:
             return "panic"
         return "normal"
 
@@ -33,38 +34,51 @@ class TemporalEngine:
         return cls._instance
 
     @classmethod
-    def temporal(cls) -> TemporalEngine:
+    def temporal(cls) -> "TemporalEngine":
         return cls()
 
-    async def propagate(self, state: WorldState, event: SimHPCEvent) -> WorldState:
+    async def propagate(self, state: "WorldState", event: "SimHPCEvent") -> "WorldState":
         from backend.core.services.observability_service import observability
+        from backend.core.services.tracing import tracer
 
-        obs = observability()
-        obs.increment("temporal_propagations_total")
+        with tracer.start_as_current_span(
+            "temporal.propagate",
+            attributes={"event_type": event.event_type},
+        ):
+            obs = observability()
+            obs.increment("temporal_propagations_total")
 
-        new_state = state.model_copy(deep=True)
-        now = event.timestamp
+            new_state = state.model_copy(deep=True)
+            now = event.timestamp
 
-        for _key, ent in list(new_state.entities.items()):
-            age = now - ent.last_updated
-            decay_factor = math.exp(-age / max(1.0, ent.half_life_s))
-            if isinstance(ent.value, int | float):
-                ent.value = ent.value * decay_factor
-            ent.uncertainty = min(1.0, ent.uncertainty + (1.0 - decay_factor) * 0.3)
+            for _key, ent in list(new_state.entities.items()):
+                age = now - ent.last_updated
+                if age > 0:
+                    decay = math.exp(-age / max(1.0, ent.half_life_s))
+                    if isinstance(ent.value, int | float):
+                        ent.value = ent.value * decay
+                    ent.uncertainty = min(1.0, ent.uncertainty * (2.0 - decay))
+                    ent.last_updated = now
 
-        new_regime = self._regime_detector.detect(new_state)
-        if new_regime != new_state.regime:
-            obs.increment("regime_shifts_total", {"from": new_state.regime, "to": new_regime})
-            new_state.regime = new_regime
-            if new_regime == "panic":
-                for ent in new_state.entities.values():
-                    ent.half_life_s *= 0.6
+            new_regime = self._regime_detector.detect(new_state)
+            if new_regime != new_state.regime:
+                obs.increment("regime_shifts_total", {"from": new_state.regime, "to": new_regime})
+                new_state.regime = new_regime
+                if new_regime in ("panic", "disruption"):
+                    for ent in new_state.entities.values():
+                        ent.half_life_s = max(300.0, ent.half_life_s * 0.5)
 
-        new_state = await self._propagate_uncertainty(new_state, event)
+            new_state = await self._propagate_uncertainty(new_state, event)
 
-        return new_state
+            obs.gauge(
+                "current_regime_entropy",
+                sum(e.uncertainty for e in new_state.entities.values()),
+            )
+            return new_state
 
-    async def _propagate_uncertainty(self, state: WorldState, event: SimHPCEvent) -> WorldState:
+    async def _propagate_uncertainty(
+        self, state: "WorldState", event: "SimHPCEvent"
+    ) -> "WorldState":
         from backend.core.world_model.service import world_model_service
 
         try:

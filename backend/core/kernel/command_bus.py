@@ -61,9 +61,13 @@ class CommandBus:
             evt = SimHPCEvent.model_validate(payload["event"])
             return await StateRegistryService.registry().mutate(evt)
         if cmd_type == "TEMPORAL_PROPAGATE":
-            from backend.core.runtime.temporal.engine import temporal_engine
+            from backend.core.runtime.event_fabric.schema import SimHPCEvent
+            from backend.core.runtime.temporal.engine import TemporalEngine
+            from backend.core.world_model.schema import WorldState
 
-            return await temporal_engine().propagate(payload["state"], payload["event"])
+            state = WorldState.model_validate(payload["state"])
+            event = SimHPCEvent.model_validate(payload["event"])
+            return await TemporalEngine.temporal().propagate(state, event)
         if cmd_type == "ENTITY_GRAPH_ADD_EDGE":
             from backend.core.runtime.entity_graph.schema import RelationshipEdge
             from backend.core.runtime.entity_graph.service import EntityGraphService

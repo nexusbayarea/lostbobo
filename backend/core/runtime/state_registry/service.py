@@ -54,6 +54,12 @@ class StateRegistryService:
                 self._pending_mutations.append(event)
                 return self._current_state
 
+            from backend.core.runtime.formalization.invariants import InvariantRegistry
+
+            if not await InvariantRegistry.invariants().enforce(self._current_state, event):
+                obs.increment("state_mutations_rejected_total")
+                return self._current_state
+
             new_state = self._current_state.apply_event(event)
             new_state = await temporal_engine().propagate(new_state, event)
             self._current_state = new_state

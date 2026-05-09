@@ -1,15 +1,15 @@
 from __future__ import annotations
+
 import hashlib
 import json
 import time
-from typing import Dict, List, Any, Optional
 
+from backend.core.certificates import seal_result  # existing SHA-256 + Bulletproofs-style chaining
+from backend.core.runtime.entity_graph.service import EntityGraphService
+from backend.core.runtime.event_fabric.log import EventLogService
+from backend.core.runtime.event_fabric.schema import SimHPCEvent
 from backend.core.services.observability_service import observability
 from backend.core.tracing import trace_context
-from backend.core.runtime.entity_graph.service import EntityGraphService
-from backend.core.runtime.state_registry.service import StateRegistryService
-from backend.core.runtime.event_fabric.schema import SimHPCEvent
-from backend.core.certificates import seal_result  # existing SHA-256 + Bulletproofs-style chaining
 
 
 class ZKGraphProver:
@@ -23,17 +23,17 @@ class ZKGraphProver:
         return cls._instance
 
     @classmethod
-    def zk(cls) -> "ZKGraphProver":
+    def zk(cls) -> ZKGraphProver:
         return cls()
 
-    async def prove_path_exists(self, source_id: str, target_id: str, max_hops: int = 5) -> Dict:
+    async def prove_path_exists(self, source_id: str, target_id: str, max_hops: int = 5) -> dict:
         """ZK proof: There exists a causal path from source to target (without revealing path)."""
         with trace_context("zk.prove.path_exists") as span:
             obs = observability()
             obs.increment("zk_proof_generations_total", tags={"type": "path"})
 
             # Build private witness (path) — never leaves this scope
-            graph = await EntityGraphService.graph().get_graph_snapshot()
+            await EntityGraphService.graph().get_graph_snapshot()
             # ... internal path finding (BFS with temporal filters) ...
 
             # Groth16 / Bulletproofs-style proof (using existing crypto primitives)
@@ -69,15 +69,15 @@ class ZKGraphProver:
             span.set_attribute("statement", "path_exists")
             return sealed_proof
 
-    async def prove_centrality_above(self, entity_id: str, threshold: float) -> Dict:
+    async def prove_centrality_above(self, entity_id: str, threshold: float) -> dict:
         """ZK proof: This entity's temporal PageRank > threshold (without revealing score)."""
         ...
 
-    async def prove_no_negative_cycles(self) -> Dict:
+    async def prove_no_negative_cycles(self) -> dict:
         """ZK proof of graph acyclicity / weight integrity under decay."""
         ...
 
-    def _generate_zk_proof(self, public_inputs: Dict, private_witness: Dict) -> Dict:
+    def _generate_zk_proof(self, public_inputs: dict, private_witness: dict) -> dict:
         """Stub for Groth16 / Bulletproofs / Halo2 backend (extendable)."""
         # In production: use snarkjs, gnark, or existing Bulletproofs implementation from security layer
         return {
@@ -87,11 +87,11 @@ class ZKGraphProver:
             "protocol": "groth16",
         }
 
-    def _get_verification_key(self) -> Dict:
+    def _get_verification_key(self) -> dict:
         """Stub for verification key retrieval."""
         return {"key": "..."}
 
-    def verify(self, proof: Dict) -> bool:
+    def verify(self, proof: dict) -> bool:
         """Public verification — anyone can check without private data."""
         # ...
         return True

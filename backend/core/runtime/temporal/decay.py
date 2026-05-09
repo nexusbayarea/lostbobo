@@ -4,7 +4,7 @@ import math
 import time
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from backend.core.probability.prediction import Prediction
 from backend.core.runtime.event_fabric.schema import SimHPCEvent
@@ -13,89 +13,92 @@ from backend.core.services.observability_service import observability
 from backend.core.tracing import trace_context
 
 
-class DecayConfig(BaseModel):
-    """Configurable decay parameters per entity/signal type."""
+class DecayProfile(BaseModel):
+    """Per-regime decay configuration."""
 
-    half_life_s: float = 86400.0  # 24 hours default
-    regime_multiplier: dict[str, float] = Field(
-        default_factory=lambda: {
-            "normal": 1.0,
-            "panic": 0.6,  # faster decay in panic
-            "disruption": 0.3,  # very fast decay
-        }
-    )
-    uncertainty_growth_factor: float = 0.3  # uncertainty increases as signal decays
+    half_life_s: float
+    uncertainty_growth: float = 0.3
+    acceleration_factor: float = 1.0  # >1.0 = faster decay
 
 
-class TemporalDecayEngine:
-    """Centralized temporal decay engine."""
+class RegimeAwareDecayEngine:
+    """Central engine with dynamic regime-aware acceleration."""
 
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._profiles: dict[str, DecayProfile] = {
+                "normal": DecayProfile(half_life_s=86400.0, acceleration_factor=1.0),
+                "panic": DecayProfile(half_life_s=14400.0, acceleration_factor=2.5),
+                "disruption": DecayProfile(half_life_s=3600.0, acceleration_factor=4.0),
+            }
         return cls._instance
 
     @classmethod
-    def decay(cls) -> TemporalDecayEngine:
+    def decay(cls) -> RegimeAwareDecayEngine:
         return cls()
 
-    def apply_decay(
+    def apply(
         self,
         value: Any,
         uncertainty: float,
-        half_life_s: float,
+        base_half_life: float,
         last_updated: float,
         current_time: float,
         regime: str = "normal",
     ) -> tuple[Any, float]:
-        """Apply exponential decay with regime awareness."""
+        """Apply regime-aware exponential decay."""
         if not isinstance(value, (int, float)):
-            return value, uncertainty  # non-numeric values unchanged
+            return value, uncertainty
 
         age = current_time - last_updated
         if age <= 0:
             return value, uncertainty
 
-        decay_factor = math.exp(-age / half_life_s)
+        profile = self._profiles.get(regime, self._profiles["normal"])
 
-        # Regime-aware acceleration
-        multiplier = DecayConfig().regime_multiplier.get(regime, 1.0)
-        effective_decay = decay_factor**multiplier
+        # Effective half-life = base / regime acceleration
+        effective_half_life = base_half_life / profile.acceleration_factor
 
-        decayed_value = value * effective_decay
+        decay_factor = math.exp(-age / effective_half_life)
+        decayed_value = value * decay_factor
 
-        # Uncertainty grows as signal decays
-        new_uncertainty = min(
-            1.0,
-            uncertainty + (1.0 - effective_decay) * DecayConfig().uncertainty_growth_factor,
-        )
+        # Uncertainty grows faster in chaotic regimes
+        uncertainty_boost = profile.uncertainty_growth * (1.0 - decay_factor)
+        new_uncertainty = min(1.0, uncertainty + uncertainty_boost)
 
         return decayed_value, new_uncertainty
 
     async def propagate(self, state: WorldState, event: SimHPCEvent) -> WorldState:
-        """Apply decay to entire WorldState + Entity Graph."""
-        with trace_context("temporal.decay.propagate"):
+        """Apply regime-aware decay across entire state."""
+        with trace_context("temporal.decay.regime_aware"):
             obs = observability()
-            obs.increment("temporal_decay_applications_total")
+            obs.increment("regime_aware_decay_total")
 
             new_state = state.model_copy(deep=True)
             now = event.timestamp or time.time()
+            regime = new_state.regime
 
             for _key, ent in new_state.entities.items():
                 if hasattr(ent, "prediction") and isinstance(ent.prediction, Prediction):
-                    # Decay the Prediction object
-                    decayed_value, new_unc = self.apply_decay(
+                    decayed_value, new_unc = self.apply(
                         ent.prediction.value,
                         ent.prediction.uncertainty,
                         getattr(ent, "half_life_s", 86400.0),
                         ent.last_updated,
                         now,
-                        new_state.regime,
+                        regime,
                     )
                     ent.prediction.value = decayed_value
                     ent.prediction.uncertainty = new_unc
                     ent.last_updated = now
+
+            # Log acceleration effect
+            obs.gauge(
+                "current_decay_acceleration",
+                self._profiles.get(regime, self._profiles["normal"]).acceleration_factor,
+            )
 
             return new_state

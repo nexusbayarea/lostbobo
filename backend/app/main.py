@@ -22,6 +22,16 @@ async def lifespan(app: FastAPI):
     infisical_jit_inject()
     await validate_governance_secrets()
     await start_simulation_worker()
+
+    from backend.ml.training.exporter import TrainingDataExporter
+
+    exporter = TrainingDataExporter()
+    stats = await exporter.get_dataset_stats()
+    if stats.get("ready_for_training"):
+        log.info("ML training data ready — consider running export")
+    else:
+        log.info(f"ML accumulating data: {stats.get('total_qualified_runs', 0)} qualified runs")
+
     yield
     # Shutdown
     log.info("Shutting down...")

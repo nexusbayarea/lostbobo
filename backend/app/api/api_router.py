@@ -7,6 +7,7 @@ from backend.app.api.auth import router as auth_router
 from backend.app.api.dag import router as dag_router
 from backend.app.api.endpoints.simulations import router as simulations_router
 from backend.app.api.graphrag import router as graphrag_router
+from backend.app.api.ml import router as ml_router
 from backend.app.api.reports import router as reports_router
 from backend.app.api.routes import certificates, onboarding
 from backend.app.api.routes.alpha import router as alpha_router
@@ -44,3 +45,4 @@ api_router.include_router(governance_router, prefix="/governance", tags=["Govern
 api_router.include_router(swarm_api_router, prefix="", tags=["SwarmAPI"])
 api_router.include_router(grid_router, prefix="", tags=["ExperimentGrid"])
 api_router.include_router(discovery_router, prefix="/api/v1", tags=["DiscoveryGraph"])
+api_router.include_router(ml_router, prefix="/api/v1/ml", tags=["ML"])

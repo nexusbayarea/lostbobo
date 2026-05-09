@@ -50,7 +50,7 @@ async def get_dataset_stats(domain: str | None = None):
 @router.post("/export")
 async def trigger_export(request: ExportRequest, background_tasks: BackgroundTasks):
     thresholds = (
-        QualityThresholds.production() if request.quality_level == "production" else QualityThresholds.production()
+        QualityThresholds.production() if request.quality_level == "production" else QualityThresholds.permissive()
     )
     exporter = TrainingDataExporter(thresholds=thresholds)
 
@@ -84,6 +84,8 @@ async def trigger_training(request: TrainRequest, background_tasks: BackgroundTa
             pipeline = FinetuningPipeline(config)
             await pipeline.prepare_training_data()
             await pipeline.train()
+            checkpoint = await pipeline.save_checkpoint()
+            print(f"[ML Training] Completed: {checkpoint}")
         except Exception as e:
             print(f"[ML Training] Failed: {e}")
 

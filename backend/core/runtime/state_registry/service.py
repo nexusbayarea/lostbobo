@@ -48,7 +48,7 @@ class StateRegistryService:
             attributes={"event_type": event.event_type},
         ):
             obs = observability()
-            obs.increment("state_mutations_total")
+            obs.increment("state_mutations_total", {"regime": self._current_state.regime})
 
             if not EventLogService.event_log()._is_causally_ready(event):
                 self._pending_mutations.append(event)
@@ -62,7 +62,7 @@ class StateRegistryService:
                 try:
                     self._supabase.table("world_states").insert(
                         {
-                            **new_state.model_dump(),
+                            **new_state.model_dump(mode="json"),
                             "snapshot_at": time.time(),
                         }
                     ).execute()
@@ -83,8 +83,8 @@ class StateRegistryService:
                 else:
                     obs_handler(state)
             except Exception as exc:
-                log.warning("Observer error: %s", exc)
-                observability().increment("observer_errors_total")
+                log.warning("Observer notification error: %s", exc)
+                observability().increment("observer_notification_errors")
 
     async def _drain_pending(self) -> None:
         still_pending = []
@@ -96,6 +96,10 @@ class StateRegistryService:
         self._pending_mutations = still_pending
 
     async def observe(self, handler: Callable) -> None:
+        self._observers.append(handler)
+
+    def register_observer(self, handler: Callable) -> None:
+        """Plugins call this during initialization (sync)."""
         self._observers.append(handler)
 
     async def get_current(self) -> WorldState:  # noqa: F821

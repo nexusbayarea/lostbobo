@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS world_states (
     entities         JSONB NOT NULL DEFAULT '{}',
     uncertainty      JSONB NOT NULL DEFAULT '{}',
     provenance       JSONB NOT NULL DEFAULT '{}',
-    pending_events   JSONB NOT NULL DEFAULT '[]',
     snapshot_at      DOUBLE PRECISION NOT NULL
 );
 
@@ -25,7 +24,13 @@ CREATE INDEX IF NOT EXISTS idx_world_states_ts ON world_states (timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_world_states_causal ON world_states (causal_id);
 
 ALTER TABLE world_states ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "world_states_append" ON world_states FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "world_states_append_only" ON world_states FOR INSERT WITH CHECK (true);
 CREATE POLICY IF NOT EXISTS "world_states_read" ON world_states FOR SELECT USING (true);
 
 GRANT SELECT, INSERT ON world_states TO anon, authenticated, service_role;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS latest_world_state AS
+SELECT * FROM world_states ORDER BY timestamp DESC LIMIT 1;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_latest_state ON latest_world_state (true)
+WHERE true;

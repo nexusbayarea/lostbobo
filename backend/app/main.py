@@ -23,6 +23,13 @@ async def lifespan(app: FastAPI):
     await validate_governance_secrets()
     await start_simulation_worker()
 
+    from backend.core.services.observability_service import observability
+    from backend.core.services.tracing import setup_tracing
+
+    setup_tracing("simhpc")
+    observability()
+    log.info("Observability + OpenTelemetry initialized")
+
     from backend.ml.training.exporter import TrainingDataExporter
 
     exporter = TrainingDataExporter()

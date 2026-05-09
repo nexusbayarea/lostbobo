@@ -8,6 +8,7 @@ from typing import Any
 
 from backend.app.core.supabase import get_supabase_client
 from backend.core.services.observability_service import observability
+from backend.core.services.tracing import tracer
 
 
 class ModelSource(str, Enum):
@@ -52,37 +53,55 @@ class PhysicsInferenceAPI:
         self._inference_log: list[dict[str, Any]] = []
 
     async def infer(self, request: PhysicsInferenceRequest, version_id: str | None = None) -> PhysicsInferenceResponse:
-        if version_id:
-            from backend.ml.registry import ModelRegistry
+        with tracer.start_as_current_span(
+            "physics.inference",
+            attributes={
+                "task_type": request.task_type,
+                "domain": request.domain,
+                "solver": request.solver,
+                "prefer_model": request.prefer_model.value,
+                "prompt_length": len(request.prompt),
+            },
+        ) as span:
+            if version_id:
+                from backend.ml.registry import ModelRegistry
 
-            registry = ModelRegistry()
-            version = await registry.get_version(version_id)
-            if version:
-                self._simhpc_model_path = f"./simhpc_model_checkpoints/{version_id}"
+                registry = ModelRegistry()
+                version = await registry.get_version(version_id)
+                if version:
+                    self._simhpc_model_path = f"./simhpc_model_checkpoints/{version_id}"
 
-        start = time.time()
+            start = time.time()
 
-        if request.prefer_model == ModelSource.SIMHPC_FINE_TUNED:
-            response = await self._infer_fine_tuned(request)
-            if response is None:
-                response = await self._infer_fallback(request)
-                response.fallback_used = True
-        elif request.prefer_model == ModelSource.FALLBACK_LLM:
-            response = await self._infer_fallback(request)
-        else:
-            ft_response = await self._infer_fine_tuned(request)
-            fb_response = await self._infer_fallback(request)
-            response = self._rank_responses(ft_response, fb_response)
+            if request.prefer_model == ModelSource.SIMHPC_FINE_TUNED:
+                with tracer.start_as_current_span("physics.inference.fine_tuned"):
+                    response = await self._infer_fine_tuned(request)
+                if response is None:
+                    with tracer.start_as_current_span("physics.inference.fallback"):
+                        response = await self._infer_fallback(request)
+                        response.fallback_used = True
+            elif request.prefer_model == ModelSource.FALLBACK_LLM:
+                with tracer.start_as_current_span("physics.inference.fallback"):
+                    response = await self._infer_fallback(request)
+            else:
+                with tracer.start_as_current_span("physics.inference.fine_tuned"):
+                    ft_response = await self._infer_fine_tuned(request)
+                with tracer.start_as_current_span("physics.inference.fallback"):
+                    fb_response = await self._infer_fallback(request)
+                response = self._rank_responses(ft_response, fb_response)
 
-        response.latency_ms = (time.time() - start) * 1000
-        await self._log_inference(request, response)
+            latency = (time.time() - start) * 1000
+            response.latency_ms = latency
+            span.set_attribute("model_used", response.model_used)
+            span.set_attribute("fallback_used", response.fallback_used)
 
-        observability().increment(
-            "ml_inference_total", {"model_used": response.model_used, "task_type": request.task_type}
-        )
-        observability().observe("ml_inference_latency_ms", response.latency_ms, {"model_used": response.model_used})
+            observability().increment(
+                "ml_inference_total", {"model_used": response.model_used, "task_type": request.task_type}
+            )
+            observability().observe("ml_inference_latency_ms", latency, {"model_used": response.model_used})
 
-        return response
+            await self._log_inference(request, response)
+            return response
 
     async def _infer_fine_tuned(self, request: PhysicsInferenceRequest) -> PhysicsInferenceResponse | None:
         if not self._model_loaded("simhpc_fine_tuned"):

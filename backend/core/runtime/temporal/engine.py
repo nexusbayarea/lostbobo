@@ -48,7 +48,7 @@ class TemporalEngine:
         for _key, ent in list(new_state.entities.items()):
             age = now - ent.last_updated
             decay_factor = math.exp(-age / max(1.0, ent.half_life_s))
-            if isinstance(ent.value, (int, float)):
+            if isinstance(ent.value, int | float):
                 ent.value = ent.value * decay_factor
             ent.uncertainty = min(1.0, ent.uncertainty + (1.0 - decay_factor) * 0.3)
 

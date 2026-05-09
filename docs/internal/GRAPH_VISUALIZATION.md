@@ -11,7 +11,7 @@ As of May 2026, the Entity Graph and WorldState possess production-grade, real-t
 ## Frontend Components
 ### 1. `EntityGraphVisualizer.tsx`
 - **Technology**: ReactFlow + React Query.
-- **Features**: 
+- **Features**:
     - Live updates (8s interval).
     - Temporal decay visualization (node opacity maps to 1 - uncertainty).
     - Causal hierarchical layout via `dagre`.

@@ -1,4 +1,4 @@
-﻿# SimHPC Completed Implementation Log
+# SimHPC Completed Implementation Log
 > **Status**: Local-only file. DO NOT PUSH.
 > **Date**: May 6, 2026
 
@@ -292,3 +292,6 @@
 
 ## May 09, 2026 [02:30 AM]
 - [x] Plugin SDK Finalization & Graphs & UI Layer (PluginBase contract, Auto-discovery Registry, Minimal World-State UI) - CI Passed
+
+## May 09, 2026 [09:00 AM]
+- [x] Entity Graph Core Promotion (Full Kernel integration, Schema v2, Temporal Engine binding) - [May 9]

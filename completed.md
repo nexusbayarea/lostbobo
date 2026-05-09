@@ -273,3 +273,6 @@
 
 ## May 08, 2026 [04:27 PM]
 - [x] Flywheel Leaderboard Scoring Engine (Weighted performance/reproducibility/novelty logic, integration with Supabase, automated background discovery refresh) - CI Passed
+
+## May 08, 2026 [05:03 PM]
+- [x] Certificate-Driven Leaderboard Scoring (Tier-priority multipliers [Tier 3: 3.0x], automatic discovery population, real-time sync with simulation runs) - CI Passed

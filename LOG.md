@@ -624,5 +624,3 @@
 - **World state API** (`backend/app/api/world_state.py`): `GET /api/v1/world-state/current`, `GET /api/v1/world-state/replay?at_ts=`, `GET /api/v1/world-state/graph`, `GET /api/v1/world-state/stream` (SSE with 30s keepalive). Registered at `/api/v1` prefix.
 - **Frontend** (`frontend/src/components/WorldStateGraph.tsx`): Live entity graph (node buttons with opacity = uncertainty), regime + entropy gauges, top uncertainty panel, causal event stream, SSE stream via `EventSource`, replay slider. 15s polling with range input, manual refresh.
 - **Migration** (`supabase/migrations/20260508_temporal_entity_graph.sql`): Adds `regime` to `world_states`, `evidence_event_ids` to `knowledge_graph_edges`, relation-weight index, `plugin_registrations` audit table with RLS.
-
-

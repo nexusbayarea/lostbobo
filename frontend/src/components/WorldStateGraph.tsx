@@ -29,8 +29,8 @@ export default function WorldStateGraph() {
 
   return (
     <div className="h-[700px] border rounded-xl overflow-hidden relative">
-      <ReactFlow 
-        nodes={nodes} 
+      <ReactFlow
+        nodes={nodes}
         edges={edges}
         fitView
         nodesDraggable={true}

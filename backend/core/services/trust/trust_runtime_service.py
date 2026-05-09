@@ -4,8 +4,8 @@ from typing import Any
 import structlog
 
 from backend.core.extractor.claim_extractor import ClaimExtractor
-from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.kernel.kernel import Kernel
+from backend.core.supabase_job_store import SupabaseJobStore
 from backend.security.leak_detection.detector import LeakageDetector
 from backend.security.prompt_guard.guard import PromptGuard
 from backend.security.verification.claim_verifier import ClaimVerifier

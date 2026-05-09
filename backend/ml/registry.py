@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -176,10 +176,10 @@ def create_mock_benchmark(version: str, trained_on_runs: int) -> ModelBenchmark:
         model_id=f"simhpc-physics-{version}",
         version=version,
         base_model="phi-3-mini",
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         trained_on_runs=trained_on_runs,
         training_domains=["structural", "thermal", "ev_battery"],
-        benchmark_date=datetime.now(timezone.utc).isoformat(),
+        benchmark_date=datetime.now(UTC).isoformat(),
         hypothesis_verification=BenchmarkTask(
             task_name="Hypothesis Verification",
             examples_count=500,

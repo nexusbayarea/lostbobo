@@ -3,8 +3,6 @@ import logging
 
 import redis.asyncio as redis
 
-from backend.core.kernel.kernel import Kernel
-
 log = logging.getLogger(__name__)
 
 
@@ -34,7 +32,9 @@ class SimulationPriorityWorker:
 
     async def _launch_simulation(self, hypothesis_id: str):
         """Send to SimHPC / A40"""
-        await get_kernel().execute(
+        from backend.core.kernel.kernel import Kernel
+
+        await Kernel().execute(
             {"type": "WORLD_SIMULATE", "payload": {"hypothesis_id": hypothesis_id, "source": "priority_worker"}}
         )
 

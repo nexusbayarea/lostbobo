@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass
+from datetime import UTC
 from enum import Enum
 from typing import Any
 
@@ -199,10 +199,10 @@ class PhysicsInferenceAPI:
         return 0
 
     async def _log_inference(self, request: PhysicsInferenceRequest, response: PhysicsInferenceResponse) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "task_type": request.task_type,
             "domain": request.domain,
             "model_used": response.model_used,

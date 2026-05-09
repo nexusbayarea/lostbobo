@@ -4,9 +4,9 @@ from typing import Any
 import numpy as np
 import structlog
 
+from backend.core.kernel.kernel import Kernel
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.world_model.schema import Uncertainty, WorldState
-from backend.core.kernel.kernel import Kernel
 
 log = structlog.get_logger(__name__)
 

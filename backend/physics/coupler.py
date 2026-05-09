@@ -36,7 +36,6 @@ class MultiPhysicsCoupler:
         }
 
         conservation_error = self._check_conservation(coupled)
-        from backend.core.kernel.kernel import Kernel
 
         await Kernel().execute(
             {

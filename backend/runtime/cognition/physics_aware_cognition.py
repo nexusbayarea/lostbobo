@@ -1,7 +1,7 @@
 from typing import Any
 
-from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.kernel.kernel import Kernel
+from backend.core.supabase_job_store import SupabaseJobStore
 
 
 class PhysicsAwareCognition:

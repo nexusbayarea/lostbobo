@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from backend.ml.training.exporter import TrainingDataExporter, QualityThresholds
+from backend.ml.training.exporter import QualityThresholds, TrainingDataExporter
 
 
 @dataclass

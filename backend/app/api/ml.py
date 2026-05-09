@@ -1,25 +1,23 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Any, Optional
 
-from backend.ml.training.exporter import TrainingDataExporter, QualityThresholds
-from backend.ml.training.finetuner import FinetuningPipeline, FineTuningConfig
+from backend.core.kernel.commands.compliance_commands import LogAuditCommand
+from backend.core.kernel.kernel import Kernel as _Kernel
 from backend.ml.inference.physics_api import (
-    get_physics_inference_api,
-    PhysicsInferenceRequest,
-    PhysicsInferenceResponse,
     ModelSource,
+    PhysicsInferenceRequest,
+    get_physics_inference_api,
 )
 from backend.ml.registry import get_model_status
-from backend.core.kernel.kernel import Kernel as _Kernel
-from backend.core.kernel.commands.compliance_commands import LogAuditCommand
+from backend.ml.training.exporter import QualityThresholds, TrainingDataExporter
+from backend.ml.training.finetuner import FineTuningConfig, FinetuningPipeline
 
 router = APIRouter(prefix="/ml", tags=["ml"])
 
 
 class ExportRequest(BaseModel):
     quality_level: str = "production"
-    domain: Optional[str] = None
+    domain: str | None = None
     max_examples: int = 100_000
     format: str = "openai"
 
@@ -43,7 +41,7 @@ class InferenceRequest(BaseModel):
 
 
 @router.get("/dataset/stats")
-async def get_dataset_stats(domain: Optional[str] = None):
+async def get_dataset_stats(domain: str | None = None):
     exporter = TrainingDataExporter()
     stats = await exporter.get_dataset_stats(domain=domain)
     return {"status": "ok", "data": stats}
@@ -121,8 +119,8 @@ async def compare_models(a: str, b: str):
 async def run_physics_inference(request: InferenceRequest):
     try:
         model_source = ModelSource(request.prefer_model)
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid model: {request.prefer_model}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid model: {request.prefer_model}") from e
 
     api = get_physics_inference_api()
     inference_req = PhysicsInferenceRequest(

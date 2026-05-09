@@ -2,9 +2,9 @@ from typing import Any
 
 import structlog
 
+from backend.core.kernel.kernel import Kernel
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.kernel.abi.plugin import PhysicsPlugin
-from backend.core.kernel.kernel import Kernel
 
 log = structlog.get_logger(__name__)
 

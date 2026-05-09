@@ -5,10 +5,10 @@ import json
 import logging
 import random
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from backend.app.core.supabase import get_supabase_client
 from backend.core.services.observability_service import observability
@@ -28,7 +28,7 @@ class QualityThresholds:
     max_drift_detected: bool = True
 
     @classmethod
-    def production(cls) -> "QualityThresholds":
+    def production(cls) -> QualityThresholds:
         return cls(
             min_trust_score=0.80,
             max_brier_score=0.15,
@@ -40,7 +40,7 @@ class QualityThresholds:
         )
 
     @classmethod
-    def permissive(cls) -> "QualityThresholds":
+    def permissive(cls) -> QualityThresholds:
         return cls(
             min_trust_score=0.50,
             max_brier_score=0.30,
@@ -166,8 +166,8 @@ class ExampleConstructor:
                 param_lines.append(f"  - **{k}:** {v:.6g} (nominal)")
 
         completion = (
-            f"Based on verified simulation data for this domain and solver:\n\n"
-            f"**Recommended Parameters:**\n"
+            "Based on verified simulation data for this domain and solver:\n\n"
+            "**Recommended Parameters:**\n"
             + "\n".join(param_lines)
             + f"\n\n**Sampling Strategy:** {run.get('in_perturbation_method', 'latin_hypercube')} "
             f"with {run.get('in_num_runs', 20)} runs recommended.\n"
@@ -394,7 +394,7 @@ class TrainingDataExporter:
             stats[split_name] = {"path": str(path), "count": len(split_data), "by_type": count_by_type}
 
         meta = {
-            "export_timestamp": datetime.now(timezone.utc).isoformat(),
+            "export_timestamp": datetime.now(UTC).isoformat(),
             "format": format,
             "thresholds": {
                 "min_trust_score": self._thresholds.min_trust_score,

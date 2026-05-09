@@ -83,7 +83,7 @@ async def should_export_training_data() -> bool:
 
 async def trigger_background_export(output_dir: str = "./training_data") -> bool:
     try:
-        from backend.ml.training.exporter import TrainingDataExporter, QualityThresholds
+        from backend.ml.training.exporter import QualityThresholds, TrainingDataExporter
 
         exporter = TrainingDataExporter(thresholds=QualityThresholds.production())
         await exporter.export(output_dir=output_dir)

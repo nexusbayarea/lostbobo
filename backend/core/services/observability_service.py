@@ -5,7 +5,7 @@ Supports Prometheus metrics, structured logging, and OpenTelemetry.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, Info
 
@@ -88,7 +88,7 @@ class ObservabilityService:
 
         logger.info("✅ ObservabilityService initialized (Prometheus metrics ready)")
 
-    def increment(self, metric_name: str, labels: Dict[str, str] | None = None, value: int = 1):
+    def increment(self, metric_name: str, labels: dict[str, str] | None = None, value: int = 1):
         if metric_name not in self._metrics:
             logger.warning(f"Unknown metric: {metric_name}")
             return
@@ -101,7 +101,7 @@ class ObservabilityService:
         else:
             logger.warning(f"Cannot increment non-counter metric: {metric_name}")
 
-    def gauge(self, metric_name: str, value: float, labels: Dict[str, str] | None = None):
+    def gauge(self, metric_name: str, value: float, labels: dict[str, str] | None = None):
         if metric_name not in self._metrics:
             return
         metric = self._metrics[metric_name]
@@ -111,7 +111,7 @@ class ObservabilityService:
             else:
                 metric.set(value)
 
-    def observe(self, metric_name: str, value: float, labels: Dict[str, str] | None = None):
+    def observe(self, metric_name: str, value: float, labels: dict[str, str] | None = None):
         if metric_name not in self._metrics:
             return
         metric = self._metrics[metric_name]
@@ -121,11 +121,11 @@ class ObservabilityService:
             else:
                 metric.observe(value)
 
-    def info(self, metric_name: str, labels: Dict[str, str]):
+    def info(self, metric_name: str, labels: dict[str, str]):
         if metric_name in self._metrics and isinstance(self._metrics[metric_name], Info):
             self._metrics[metric_name].info(labels)
 
-    def start_span(self, name: str, attributes: Dict[str, Any] | None = None):
+    def start_span(self, name: str, attributes: dict[str, Any] | None = None):
         """Start a traced OpenTelemetry span."""
         return tracer.start_as_current_span(name, attributes=attributes or {})
 

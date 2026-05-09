@@ -3,8 +3,8 @@ from typing import Any
 import structlog
 
 from backend.core.kernel.command_bus import command_bus
-from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.kernel.kernel import Kernel
+from backend.core.supabase_job_store import SupabaseJobStore
 from backend.runtime.cognition.cognitive_router import CognitiveRouter
 from backend.runtime.cognition.execution_attention_graph import ExecutionNode
 from backend.runtime.cognition.multi_res_cognition import MultiResolutionCognition

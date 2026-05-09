@@ -6,8 +6,8 @@ import structlog
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
-from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.kernel.kernel import Kernel
+from backend.core.supabase_job_store import SupabaseJobStore
 
 log = structlog.get_logger(__name__)
 

@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from backend.core.kernel.kernel import Kernel
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.world_model.schema import Uncertainty, WorldState
-from backend.core.kernel.kernel import Kernel
 
 
 @dataclass

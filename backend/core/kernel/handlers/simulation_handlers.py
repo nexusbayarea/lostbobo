@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from backend.app.core.supabase import get_supabase_client
 from backend.core.kernel.commands.simulation_commands import (
     CancelSimulationCommand,
     GetSimulationStatusCommand,
@@ -9,7 +10,6 @@ from backend.core.kernel.commands.simulation_commands import (
 )
 from backend.core.kernel.kernel import Kernel as _Kernel
 from backend.core.services.observability_service import observability
-from backend.app.core.supabase import get_supabase_client
 from backend.core.world_model.service import world_model_service
 from backend.physics.engine import physics_engine
 from backend.runtime.flywheel.hooks import post_run_hook, pre_run_hook

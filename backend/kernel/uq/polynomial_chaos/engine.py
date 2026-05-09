@@ -4,7 +4,7 @@ import numpy as np
 import structlog
 
 from backend.core.supabase_job_store import SupabaseJobStore
-from backend.kernel.kernel import Kernel
+from backend.core.kernel.kernel import Kernel
 
 log = structlog.get_logger(__name__)
 

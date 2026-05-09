@@ -1,5 +1,9 @@
 from typing import Any
 
+from backend.core.services.observability_service import observability
+
+_flywheel: "FlywheelEngine | None" = None
+
 
 class FlywheelEngine:
     """Welford-based online statistics for aggregation."""
@@ -18,14 +22,27 @@ class FlywheelEngine:
             delta = v - s["mean"][k]
             s["mean"][k] += delta / s["count"]
             delta2 = v - s["mean"][k]
-            s["m2"][k] += delta * delta2
+            s["m2"][k] = s["m2"].get(k, 0.0) + delta * delta2
+
+        observability().increment("flywheel_runs_ingested_total", {"domain": domain})
 
     def get_prior(self, domain: str, solver: str) -> dict[str, Any]:
         key = f"{domain}:{solver}"
         if key not in self.stats:
             return {}
         s = self.stats[key]
-        return {
+        prior = {
             "mean": s["mean"],
-            "variance": s["m2"] / (s["count"] - 1) if s["count"] > 1 else {k: 0.0 for k in s["mean"]},
+            "variance": {k: s["m2"].get(k, 0.0) / (s["count"] - 1) if s["count"] > 1 else 0.0 for k in s["mean"]},
         }
+        if s["mean"]:
+            avg_confidence = sum(s["mean"].values()) / len(s["mean"])
+            observability().gauge("flywheel_prior_confidence_avg", avg_confidence)
+        return prior
+
+
+def get_flywheel() -> FlywheelEngine:
+    global _flywheel
+    if _flywheel is None:
+        _flywheel = FlywheelEngine()
+    return _flywheel

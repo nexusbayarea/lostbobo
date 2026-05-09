@@ -1,6 +1,6 @@
 from typing import Any
 
-from backend.kernel.kernel import Kernel
+from backend.core.kernel.kernel import Kernel
 
 
 class ResearchDirector:

@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from backend.core.kernel.commands.flywheel_commands import GetFlywheelSnapshotCommand
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel as _Kernel
 from backend.runtime.flywheel.engine import get_flywheel
 
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class FlywheelScheduler:
     def __init__(self):
-        self._kernel = get_kernel()
+        self._kernel = _Kernel()
         self._task: asyncio.Task | None = None
         self._is_running = False
 
@@ -44,14 +44,12 @@ class FlywheelScheduler:
             await asyncio.sleep(300)  # 5 minutes
 
     async def _run_decay_and_refresh(self):
-        """Apply decay + refresh leaderboard + log snapshot."""
+        from backend.runtime.flywheel.hooks import should_export_training_data, trigger_background_export
+
         flywheel = get_flywheel()
-
-        # Apply global decay
         flywheel._apply_global_decay()
-        await flywheel._persist_priors("global", "all")  # persist decay changes
+        await flywheel._persist_priors("global", "all")
 
-        # Log snapshot
         snapshot_cmd = GetFlywheelSnapshotCommand()
         snapshot = await self._kernel.execute(snapshot_cmd)
 
@@ -62,7 +60,9 @@ class FlywheelScheduler:
             f"Moat: {snapshot.get('moat_score', 0):.1%}"
         )
 
-        # observability.gauge("flywheel_mean_confidence", snapshot["mean_prior_confidence"])
+        if await should_export_training_data():
+            logger.info("[Flywheel Scheduler] >=1000 qualified runs — triggering training data export")
+            await trigger_background_export()
 
 
 # Singleton

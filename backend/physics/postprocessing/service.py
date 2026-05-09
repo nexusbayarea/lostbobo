@@ -1,4 +1,4 @@
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel
 from backend.core.models.hypothesis import Hypothesis
 
 
@@ -17,7 +17,7 @@ class PostProcessingService:
             },
         }
 
-        await get_kernel().execute(
+        await Kernel().execute(
             {
                 "type": "MEMORY_RECORD",
                 "payload": {"type": "postprocessing", "content": report, "parent_id": hypothesis.id},

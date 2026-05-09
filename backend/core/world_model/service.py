@@ -6,7 +6,7 @@ import structlog
 
 from backend.core.supabase_job_store import SupabaseJobStore
 from backend.core.world_model.schema import Uncertainty, WorldState
-from backend.kernel.kernel import Kernel
+from backend.core.kernel.kernel import Kernel
 
 log = structlog.get_logger(__name__)
 
@@ -110,3 +110,23 @@ class WorldModelService:
     async def check_contradiction(self, claim: str, previous_state: dict[str, Any]) -> bool:
         """Temporal contradiction detection using MC samples."""
         return False
+
+    async def update_from_config(self, config: dict[str, Any], run_id: str) -> dict[str, Any]:
+        """Update world model from simulation config."""
+        await self.evolve(
+            None, {"entities": config.get("parameters", {}), "tenant_id": config.get("tenant_id", "default")}
+        )
+        return {"status": "updated", "run_id": run_id}
+
+
+_world_model_service: WorldModelService | None = None
+
+
+def get_world_model_service() -> WorldModelService:
+    global _world_model_service
+    if _world_model_service is None:
+        _world_model_service = WorldModelService(Kernel())
+    return _world_model_service
+
+
+world_model_service = get_world_model_service()

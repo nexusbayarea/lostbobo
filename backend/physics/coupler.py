@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel
 from backend.core.models.hypothesis import Hypothesis
 
 
@@ -36,8 +36,9 @@ class MultiPhysicsCoupler:
         }
 
         conservation_error = self._check_conservation(coupled)
+        from backend.core.kernel.kernel import Kernel
 
-        await get_kernel().execute(
+        await Kernel().execute(
             {
                 "type": "PROVENANCE_ADD",
                 "payload": {

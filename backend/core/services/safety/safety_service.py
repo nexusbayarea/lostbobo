@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 
 from backend.core.supabase_job_store import SupabaseJobStore
-from backend.kernel.kernel import Kernel
+from backend.core.kernel.kernel import Kernel
 from backend.runtime.safety.budget_manager import RetryBudgetManager
 from backend.runtime.safety.execution_graph import ExecutionGraphEngine
 from backend.runtime.safety.memory_trust import MemoryTrustWeights

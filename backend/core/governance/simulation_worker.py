@@ -3,7 +3,7 @@ import logging
 
 import redis.asyncio as redis
 
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel
 
 log = logging.getLogger(__name__)
 

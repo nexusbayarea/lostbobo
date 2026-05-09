@@ -5,7 +5,7 @@ from backend.core.kernel.commands.flywheel_commands import (
     GetPriorsCommand,
     IngestRunCommand,
 )
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel
 
 
 @dataclass
@@ -25,7 +25,7 @@ async def pre_run_hook(
     tenant_id: str,
     min_confidence: float = 0.15,
 ) -> tuple[dict[str, Any], PriorInjectionResult]:
-    kernel = get_kernel()
+    kernel = Kernel()
     cmd = GetPriorsCommand(
         domain=config.get("domain", "structural"),
         solver=config.get("solver", "MFEM"),
@@ -35,7 +35,6 @@ async def pre_run_hook(
 
     await kernel.execute(cmd)
 
-    # Injection logic
     result = PriorInjectionResult(applied_priors={}, confidence_scores={})
     return config, result
 
@@ -48,7 +47,7 @@ async def post_run_hook(
     opt_in_global_pool: bool = True,
     auto_certify: bool = True,
 ) -> PostRunIngestionResult:
-    kernel = get_kernel()
+    kernel = Kernel()
 
     certified = auto_certify and result.get("convergence_achieved", False) and result.get("trust_score", 0) >= 0.7
 
@@ -69,3 +68,25 @@ async def post_run_hook(
     await kernel.execute(ingest_cmd)
 
     return PostRunIngestionResult(priors_updated=True, certificate_triggered=certified)
+
+
+async def should_export_training_data() -> bool:
+    try:
+        from backend.ml.training.exporter import TrainingDataExporter
+
+        exporter = TrainingDataExporter()
+        stats = await exporter.get_dataset_stats()
+        return stats.get("total_qualified_runs", 0) >= 1000
+    except Exception:
+        return False
+
+
+async def trigger_background_export(output_dir: str = "./training_data") -> bool:
+    try:
+        from backend.ml.training.exporter import TrainingDataExporter, QualityThresholds
+
+        exporter = TrainingDataExporter(thresholds=QualityThresholds.production())
+        await exporter.export(output_dir=output_dir)
+        return True
+    except Exception:
+        return False

@@ -7,9 +7,9 @@ from backend.core.kernel.commands.simulation_commands import (
     GetSimulationStatusCommand,
     RunSimulationCommand,
 )
-from backend.core.kernel.kernel import get_kernel
+from backend.core.kernel.kernel import Kernel as _Kernel
 from backend.core.services.observability_service import observability
-from backend.core.supabase import get_supabase_client
+from backend.app.core.supabase import get_supabase_client
 from backend.core.world_model.service import world_model_service
 from backend.physics.engine import physics_engine
 from backend.runtime.flywheel.hooks import post_run_hook, pre_run_hook
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_run_simulation(cmd: RunSimulationCommand) -> dict[str, Any]:
     """Main simulation execution handler."""
-    kernel = get_kernel()
+    kernel = _Kernel()
     db = get_supabase_client()
 
     run_id = cmd.run_id
@@ -50,7 +50,7 @@ async def handle_run_simulation(cmd: RunSimulationCommand) -> dict[str, Any]:
             .execute()
         )
 
-        observability.increment("simulations_started_total", {"tenant_id": tenant_id})
+        observability().increment("simulations_started_total", {"tenant_id": tenant_id})
 
         await world_model_service.update_from_config(enriched_config, run_id)
 
@@ -67,7 +67,6 @@ async def handle_run_simulation(cmd: RunSimulationCommand) -> dict[str, Any]:
             config=enriched_config,
         )
 
-        # Auto-issue certificate if qualified
         if post_result.certificate_triggered:
             from backend.core.kernel.commands.certificate_commands import IssueCertificateCommand
 
@@ -93,7 +92,7 @@ async def handle_run_simulation(cmd: RunSimulationCommand) -> dict[str, Any]:
             .execute()
         )
 
-        observability.increment("simulations_completed_total", {"tenant_id": tenant_id})
+        observability().increment("simulations_completed_total", {"tenant_id": tenant_id})
 
         return {
             "run_id": run_id,
@@ -106,7 +105,7 @@ async def handle_run_simulation(cmd: RunSimulationCommand) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"❌ Simulation {run_id} failed", exc_info=True)
-        observability.increment("simulations_failed_total", {"tenant_id": tenant_id})
+        observability().increment("simulations_failed_total", {"tenant_id": tenant_id})
         try:
             await post_run_hook(run_id, tenant_id, {"convergence_achieved": False, "trust_score": 0.0}, config)
         except Exception:

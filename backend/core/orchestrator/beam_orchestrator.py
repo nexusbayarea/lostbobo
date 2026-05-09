@@ -28,9 +28,9 @@ class BeamOrchestrator:
         self.validator = PhysicsValidator()
 
     async def run(self, query: str, tenant_id: str = "public", request_id: str | None = None) -> Hypothesis:
-        from backend.core.kernel.kernel import get_kernel
+        from backend.core.kernel.kernel import Kernel
 
-        kernel = get_kernel()
+        kernel = Kernel()
 
         # Pre-flight governance check
         await kernel.execute(

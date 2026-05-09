@@ -1,7 +1,7 @@
 import gymnasium as gym
 import numpy as np
 
-from backend.kernel.kernel import Kernel
+from backend.core.kernel.kernel import Kernel
 
 
 class PhysicsRLWrapper(gym.Env):

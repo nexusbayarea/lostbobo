@@ -9,7 +9,6 @@ from backend.core.runtime.formalization.invariants import InvariantRegistry
 from backend.core.runtime.formalization.state_machine import RuntimeState, RuntimeStateMachine
 from backend.core.runtime.state_registry.service import StateRegistryService
 from backend.core.runtime.temporal.engine import TemporalEngine
-from backend.core.services.observability_service import observability
 from backend.core.systems.boundary import ErrorBoundaryService
 from backend.core.systems.chaos_service import ChaosService
 from backend.core.systems.resource_governance import ResourceGovernor

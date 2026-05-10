@@ -705,9 +705,15 @@
 - **Metrics:** `federated_local_train_total`, `federated_aggregations_total`, `federated_rounds_total`.
 - **Git:** Committed and pushed to main.
 
-## May 9, 2026 [06:17 PM]
+## May 9, 2026 [06:18 PM]
 
 ### Homomorphic Encryption — Privacy-Preserving Core Primitive
+- **HomomorphicEngine** (`backend/core/runtime/homomorphic/engine.py`): Paillier additive HE with 2048-bit keys. `encrypt_graph_snapshot()` encrypts Entity Graph node values, uncertainties, and edge weights. `homomorphic_aggregate()` performs encrypted sum/avg/max/min without full decryption.
+- **EncryptedSnapshot:** Stored in `he_snapshots` Supabase table with ciphertexts per node/edge.
+- **Public key ring:** `get_public_key_ring()` exports public key safely for client-side encryption.
+- **Composable:** Works with Federated Learning (encrypted local updates) and zk-SNARKs (proofs over ciphertexts).
+- **Graceful fallback:** Stores plaintext when `phe` library unavailable.
+- **Git:** Committed and pushed to main.
 - **HomomorphicEngine** (`backend/core/runtime/homomorphic/engine.py`): Paillier additive HE with 2048-bit keys. `encrypt_graph_snapshot()` encrypts Entity Graph node values, uncertainties, and edge weights. `homomorphic_aggregate()` performs encrypted sum/avg/max/min without full decryption.
 - **EncryptedSnapshot:** Stored in `he_snapshots` Supabase table with ciphertexts per node/edge.
 - **Public key ring:** `get_public_key_ring()` exports public key safely for client-side encryption.

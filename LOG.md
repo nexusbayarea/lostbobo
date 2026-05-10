@@ -673,3 +673,11 @@
 - **AdvancedGPUBinPacker:** All 4 heuristics with SLA-aware best fit as default. Defense → isolated bins only, Enterprise → dedicated.
 - **Fractional GPU:** Workload tracking via `gpu_fraction` in capacity metadata enables mixed workloads on shared capacity.
 - **Git:** Committed and pushed to main.
+
+### Dynamic Heuristic Selection — Context-Aware Bin Packing Intelligence
+- **DynamicHeuristicSelector** (`backend/core/hardware/bin_packing_dynamic.py`): Singleton with `HeuristicPerformanceRecord` tracking success rate and recency per heuristic.
+- **Decision tree:** Defense → SLA_AWARE, high utilization (>85%) → BEST_FIT, large jobs (>4 GPU) → FIRST_FIT, realtime → SLA_AWARE, sparse bins → FIRST_FIT.
+- **Online learning:** `record_outcome()` updates after every packing attempt — exponential moving average of success rate with recency weighting.
+- **dynamic_pack()** wrapper: selection + pack + outcome recording in one call.
+- **Performance summary:** `get_performance_summary()` exposes per-heuristic metrics for observability.
+- **Git:** Committed and pushed to main.

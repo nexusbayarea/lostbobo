@@ -1,7 +1,7 @@
-import asyncio
 import unittest
 from unittest.mock import MagicMock
-from backend.core.hardware.isolation import GPUIsolationManager, GPUIsolationLevel
+
+from backend.core.hardware.isolation import GPUIsolationLevel, GPUIsolationManager
 
 
 class TestGPUIsolation(unittest.IsolatedAsyncioTestCase):

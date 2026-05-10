@@ -101,8 +101,8 @@ class GPUIsolationManager:
                 pass
         else:
             try:
-                from backend.core.runtime.anomaly.engine import AnomalyEvent
                 from backend.core.runtime.alerting.engine import RealTimeAlertingSystem
+                from backend.core.runtime.anomaly.engine import AnomalyEvent
 
                 await RealTimeAlertingSystem.alerts().trigger(
                     AnomalyEvent(

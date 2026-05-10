@@ -9,12 +9,12 @@ from backend.core.hardware.economics import (
     ResourceEconomicsRuntime,
     get_economics_engine,
 )
-from backend.core.hardware.fractional import FractionalAllocation, FractionalGPUScheduler, get_fractional_scheduler
 from backend.core.hardware.forecasting import (
     DemandForecaster,
     PredictiveCapacityForecaster,
     get_capacity_forecaster,
 )
+from backend.core.hardware.fractional import FractionalAllocation, FractionalGPUScheduler, get_fractional_scheduler
 from backend.core.hardware.isolation import (
     GPUIsolationConfig,
     GPUIsolationLevel,

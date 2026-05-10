@@ -94,10 +94,11 @@ class ProbabilityEngine:
             ]
             + [Provenance(source="bmc_ensemble", weight=1.0)],
             metadata={
-                "engine_version": "v2_simplified_uncertainty_volatility",
+                "engine_version": "v2_uncertainty_volatility_correlation",
                 "disagreement": breakdown["disagreement"],
                 "graph_hops": graph_context.get("hop_count", 0),
                 "volatility_factor": breakdown.get("volatility", 0.0),
+                "correlation_bonus": breakdown.get("correlation", 0.0),
                 "regime": regime,
                 "uncertainty_breakdown": breakdown,
             },
@@ -136,6 +137,7 @@ class ProbabilityEngine:
         complexity_factor = min(0.18, graph_hops * 0.04)
 
         volatility_factor = 0.0
+        correlation_bonus = 0.0
         if signals and len(signals) >= 3:
             values = [s.value for s in signals[-20:]]
             if len(values) > 1:
@@ -143,6 +145,11 @@ class ProbabilityEngine:
                     import numpy
 
                     volatility_factor = min(0.25, float(numpy.std(values)) * 1.8)
+                    if len(values) >= 3:
+                        mean_val = sum(values) / len(values)
+                        deviations = [v - mean_val for v in values]
+                        correlation_proxy = -abs(sum(deviations) / len(deviations))
+                        correlation_bonus = max(0.0, min(0.22, correlation_proxy * 1.1))
                 except Exception:
                     pass
 
@@ -150,7 +157,13 @@ class ProbabilityEngine:
             regime, 1.4
         )
 
-        total = base + disagreement_factor + complexity_factor + volatility_factor
+        total = (
+            base
+            + disagreement_factor
+            + complexity_factor
+            + volatility_factor
+            - correlation_bonus
+        )
         uncertainty = total * regime_multiplier
         uncertainty = max(0.15, min(0.72, uncertainty))
 
@@ -159,6 +172,7 @@ class ProbabilityEngine:
             "disagreement": disagreement_factor,
             "complexity": complexity_factor,
             "volatility": volatility_factor,
+            "correlation": correlation_bonus,
             "regime_mult": regime_multiplier,
         }
         return uncertainty, breakdown

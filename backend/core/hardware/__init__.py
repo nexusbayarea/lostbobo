@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from backend.core.hardware.economics import (
+    CostModel,
+    EconomicScore,
+    NodeEconomics,
+    ResourceEconomicsRuntime,
+    get_economics_engine,
+)
 from backend.core.hardware.placement import PlacementEngine, PlacementPolicy
 from backend.hardware.providers import (
     GPUNode,
@@ -26,8 +33,11 @@ from backend.hardware.scheduler import (
 from backend.hardware.sla import SLATier
 
 __all__ = [
+    "CostModel",
+    "EconomicScore",
     "GPUType",
     "IsolationLevel",
+    "NodeEconomics",
     "NodeStatus",
     "ProviderHealth",
     "ProviderInterface",
@@ -43,4 +53,6 @@ __all__ = [
     "SLATier",
     "PlacementEngine",
     "PlacementPolicy",
+    "ResourceEconomicsRuntime",
+    "get_economics_engine",
 ]

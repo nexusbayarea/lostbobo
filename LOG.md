@@ -660,4 +660,9 @@
 - **PlacementEngine** (`backend/core/hardware/placement.py`): Policy-driven selection — `LOWEST_COST`, `LOWEST_LATENCY`, `ISOLATED`, `HIGH_UTILIZATION`, `ENERGY_EFFICIENT`. Defense tier auto-routes to isolated policy. Ranked candidate scoring.
 - **AttestationService** (`backend/core/hardware/attestation.py`): Immutable execution proof with TTL-based expiration. `ATTESTED | EXPIRED | REVOKED` status lifecycle. Verification against `hardware_attestations` table.
 - **Integration:** All modules wired through `backend/core/hardware/__init__.py` for consistent imports.
+
+### GPU Bin Packing — Hardware Moat Optimization Primitive
+- **GPUBinPacker** (`backend/core/hardware/bin_packing.py`): First-fit decreasing bin packing with `GPUBin` model. Fractional GPU support — multiple lightweight workloads (agent swarms, Monte Carlo, inference) share a single GPU. SLA-aware packing: Defense → isolated bins only, Enterprise → dedicated. ITAR isolation enforcement during bin selection. Economic optimization via lowest-cost viable bin ranking.
+- **Fractional scheduling:** `pack_fractional()` assigns `gpu_fraction` (0.0–1.0) per workload, enabling mixed workloads on shared capacity.
+- **Utilization metrics:** `calculate_utilization()` returns total/used/wasted/optimized bin counts for capacity planning.
 - **Git:** Committed and pushed to main.

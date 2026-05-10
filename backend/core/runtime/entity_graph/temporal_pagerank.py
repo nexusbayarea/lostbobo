@@ -1,12 +1,13 @@
 # backend/core/runtime/entity_graph/temporal_pagerank.py
 from __future__ import annotations
-from typing import Dict, List, Any
+
 from datetime import datetime
+from typing import Any
+
 import networkx as nx
 import numpy as np
 
 from backend.core.runtime.entity_graph.service import EntityGraphService
-from backend.core.runtime.temporal.engine import TemporalEngine
 from backend.core.services.observability_service import observability
 from backend.core.tracing import trace_context
 
@@ -15,17 +16,17 @@ class TemporalPageRank:
     """Multiple temporal PageRank variants."""
 
     @classmethod
-    def rank(cls) -> "TemporalPageRank":
+    def rank(cls) -> TemporalPageRank:
         return cls()
 
     async def compute(
         self,
-        variant: str = "decayed",   # decayed | windowed | streaming | regime_aware
+        variant: str = "decayed",  # decayed | windowed | streaming | regime_aware
         start_entity_id: str | None = None,
         time_window_days: int = 30,
         damping: float = 0.85,
         top_k: int = 50,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Compute temporal PageRank with chosen variant."""
         with trace_context(f"temporal_pagerank.{variant}") as span:
             observability().increment(f"temporal_pagerank_{variant}_computations")
@@ -43,14 +44,16 @@ class TemporalPageRank:
             results = []
             for node_id, score in scores.items():
                 node = next((n for n in graph_data["nodes"] if n["id"] == node_id), {})
-                results.append({
-                    "node_id": node_id,
-                    "entity_id": node.get("entity_id"),
-                    "node_type": node.get("node_type"),
-                    "score": round(score, 6),
-                    "label": f"{node.get('node_type', 'node')} • {node.get('entity_id', '')[:8]}",
-                    "metadata": node.get("metadata", {})
-                })
+                results.append(
+                    {
+                        "node_id": node_id,
+                        "entity_id": node.get("entity_id"),
+                        "node_type": node.get("node_type"),
+                        "score": round(score, 6),
+                        "label": f"{node.get('node_type', 'node')} • {node.get('entity_id', '')[:8]}",
+                        "metadata": node.get("metadata", {}),
+                    }
+                )
 
             results.sort(key=lambda x: x["score"], reverse=True)
 
@@ -59,7 +62,7 @@ class TemporalPageRank:
 
             return results[:top_k]
 
-    def _build_temporal_graph(self, graph_data: Dict[str, Any], variant: str) -> nx.DiGraph:
+    def _build_temporal_graph(self, graph_data: dict[str, Any], variant: str) -> nx.DiGraph:
         g = nx.DiGraph()
         now = datetime.utcnow().timestamp()
 
@@ -72,7 +75,7 @@ class TemporalPageRank:
 
             if variant == "decayed":
                 age_days = (now - ts) / 86400
-                decay = np.exp(-0.05 * age_days)          # exponential decay
+                decay = np.exp(-0.05 * age_days)  # exponential decay
                 weight *= decay
 
             elif variant == "windowed":
@@ -91,7 +94,4 @@ class TemporalPageRank:
     async def _get_temporal_subgraph(self, start_id: str | None, days: int):
         """Fetch time-bounded subgraph."""
         # This implementation requires get_temporal_subgraph to exist in EntityGraphService
-        return await EntityGraphService.graph().get_temporal_subgraph(
-            start_entity_id=start_id,
-            days_back=days
-        )
+        return await EntityGraphService.graph().get_temporal_subgraph(start_entity_id=start_id, days_back=days)

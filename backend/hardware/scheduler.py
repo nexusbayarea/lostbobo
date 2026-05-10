@@ -12,8 +12,9 @@ Routes every simulation job to the optimal GPU node based on:
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from backend.app.core.supabase import get_supabase_client
 from backend.hardware.providers import (
@@ -39,6 +40,7 @@ class SchedulingRequest:
     region_preference: str = "us-east-1"
     max_cost_usd: float | None = None
     reservation_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

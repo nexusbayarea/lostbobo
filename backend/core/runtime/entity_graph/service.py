@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Dict, List, Any, Optional
-import json
 
+from typing import Any
+
+from backend.core.runtime.provenance.schema import ExecutionProvenanceGraph
 from backend.core.services.observability_service import observability
 from backend.core.tracing import trace_context
-from backend.core.runtime.provenance.schema import ExecutionProvenanceGraph
 
 
 class EntityGraphService:
@@ -16,7 +16,7 @@ class EntityGraphService:
         return cls._instance
 
     @classmethod
-    def graph(cls) -> "EntityGraphService":
+    def graph(cls) -> EntityGraphService:
         return cls()
 
     async def ingest_provenance_graph(self, graph: ExecutionProvenanceGraph):
@@ -41,40 +41,21 @@ class EntityGraphService:
     async def _insert_edge(self, edge):
         pass  # Use your existing Supabase client
 
-    async def traverse_from(
-        self,
-        start_id: str,
-        relation_types: List[str],
-        max_depth: int = 5
-    ) -> Dict:
+    async def traverse_from(self, start_id: str, relation_types: list[str], max_depth: int = 5) -> dict:
         """Core traversal used by query engine and provenance trace."""
-        sql = """
-        WITH RECURSIVE traversal AS (
-            SELECT id, entity_id, node_type, metadata, 0 as depth, ARRAY[id] as path
-            FROM kg_entities WHERE id = :start_id
-            UNION ALL
-            SELECT e.id, e.entity_id, e.node_type, e.metadata, t.depth + 1, t.path || e.id
-            FROM knowledge_graph_edges edge
-            JOIN traversal t ON edge.source_id = t.id
-            JOIN kg_entities e ON edge.target_id = e.id
-            WHERE t.depth < :max_depth
-              AND (array_length(:relations, 1) = 0 OR edge.relation = ANY(:relations))
-        )
-        SELECT * FROM traversal;
-        """
         # Execute via Supabase client...
         return {"nodes": [], "edges": []}  # placeholder - replace with real query
 
-    async def get_world_state_graph(self) -> Dict:
+    async def get_world_state_graph(self) -> dict:
         """Live WorldState + Entity Graph snapshot."""
         return {"nodes": [], "edges": []}  # implement as needed
 
-    async def get_temporal_snapshot(self, timestamp: Optional[str] = None) -> Dict:
+    async def get_temporal_snapshot(self, timestamp: str | None = None) -> dict:
         return {"nodes": [], "edges": []}
 
-    async def get_sla_impact_view(self) -> Dict:
+    async def get_sla_impact_view(self) -> dict:
         return {"nodes": [], "edges": []}
 
-    async def execute_sql(self, sql: str, params: Dict[str, Any]) -> List[Dict]:
+    async def execute_sql(self, sql: str, params: dict[str, Any]) -> list[dict]:
         """Execute raw SQL against graph."""
         return []

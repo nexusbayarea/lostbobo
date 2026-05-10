@@ -18,7 +18,7 @@ from backend.app.api.routes.discovery import router as discovery_router
 from backend.app.api.routes.memory import router as memory_router
 from backend.app.api.routes.observational import router as observational_router
 from backend.app.api.routes.skills import router as skill_router
-from backend.app.api.swarm import swarm_router
+from backend.app.api.sla_monitor import router as sla_monitor_router
 from backend.app.api.webhooks.alerts import router as webhook_router
 from backend.app.api.world_routes import router as world_router
 from backend.app.api.world_state import router as world_state_router
@@ -37,7 +37,7 @@ api_router.include_router(certificates.router, prefix="/certificates", tags=["Ve
 api_router.include_router(alpha_router, prefix="/alpha", tags=["Alpha"])
 api_router.include_router(reports_router, prefix="/reports", tags=["Reports"])
 api_router.include_router(graphrag_router, prefix="/graphrag", tags=["GraphRAG"])
-api_router.include_router(swarm_router, prefix="/swarm", tags=["Swarm"])
+api_router.include_router(sla_monitor_router, prefix="/sla", tags=["SLAMonitoring"])
 api_router.include_router(memory_router, prefix="/memory", tags=["Memory"])
 api_router.include_router(agent_router, prefix="/agents", tags=["Agents"])
 api_router.include_router(world_router, prefix="/world_model", tags=["WorldModel"])
@@ -54,3 +54,4 @@ api_router.include_router(webhook_router, prefix="/api/v1", tags=["AlertWebhooks
 api_router.include_router(world_state_router, prefix="/api/v1", tags=["WorldState"])
 api_router.include_router(graph_viz_router, prefix="/api/v1", tags=["Visualization"])
 api_router.include_router(hardware_router, prefix="/api/v1", tags=["Hardware"])
+api_router.include_router(sla_monitor_router, prefix="/sla", tags=["SLAMonitoring"])

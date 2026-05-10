@@ -1,6 +1,7 @@
 # backend/app/api/lineage.py
-from fastapi import APIRouter
+from typing import Any
 
+from fastapi import APIRouter
 from backend.app.core.supabase import get_supabase_client
 
 router = APIRouter(prefix="/lineage", tags=["Lineage"])
@@ -34,8 +35,9 @@ async def list_executions(limit: int = 50):
 
     # Finalize stats
     summary = []
-    for eid, data in executions.items():
+    for _eid, data in executions.items():
         data["source_types"] = list(data["source_types"])
         summary.append(data)
 
     return summary[:limit]
+

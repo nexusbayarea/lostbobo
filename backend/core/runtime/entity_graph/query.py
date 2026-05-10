@@ -45,16 +45,16 @@ class AdvancedGraphQueryEngine:
         """BFS-style traversal from a starting node with all filters."""
         sql = """
         WITH RECURSIVE graph_traversal AS (
-            SELECT 
-                id, entity_id, node_type, metadata, 
+            SELECT
+                id, entity_id, node_type, metadata,
                 0 as depth, ARRAY[id] as path, created_at
-            FROM kg_entities 
+            FROM kg_entities
             WHERE entity_id = :start_entity_id
 
             UNION ALL
 
-            SELECT 
-                e.id, e.entity_id, e.node_type, e.metadata, 
+            SELECT
+                e.id, e.entity_id, e.node_type, e.metadata,
                 t.depth + 1, t.path || e.id, e.created_at
             FROM knowledge_graph_edges edge
             JOIN graph_traversal t ON edge.source_id = t.id
@@ -65,11 +65,11 @@ class AdvancedGraphQueryEngine:
         )
         SELECT * FROM graph_traversal
         WHERE (CARDINALITY(:node_types) = 0 OR node_type = ANY(:node_types))
-        ORDER BY 
-            CASE 
-                WHEN :order_by = 'influence' THEN (metadata->>'influence_score')::float 
-                WHEN :order_by = 'recency' THEN created_at 
-                ELSE depth 
+        ORDER BY
+            CASE
+                WHEN :order_by = 'influence' THEN (metadata->>'influence_score')::float
+                WHEN :order_by = 'recency' THEN created_at
+                ELSE depth
             END DESC
         LIMIT :limit;
         """

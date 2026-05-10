@@ -49,12 +49,7 @@ class GraphPageRank:
                 g.add_edge(edge["source_id"], edge["target_id"], weight=weight)
 
             # 3. Run PageRank
-            pagerank_scores = nx.pagerank(
-                g,
-                alpha=damping_factor,
-                max_iter=iterations,
-                tol=1e-6
-            )
+            pagerank_scores = nx.pagerank(g, alpha=damping_factor, max_iter=iterations, tol=1e-6)
 
             # 4. Enrich results
             results = []

@@ -1,8 +1,8 @@
 // frontend/src/components/ExecutionGraphVisualizer.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import ReactFlow, { 
-  Node, Edge, Controls, MiniMap, Background, 
-  useNodesState, useEdgesState 
+import ReactFlow, {
+  Node, Edge, Controls, MiniMap, Background,
+  useNodesState, useEdgesState
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -29,10 +29,10 @@ export default function ExecutionGraphVisualizer({ runId }: { runId?: string }) 
   const loadGraph = useCallback(async () => {
     setLoading(true);
     try {
-      const url = runId 
+      const url = runId
         ? `/api/graph/provenance/${runId}?depth=5`
         : '/api/graph/world-state';
-      
+
       const res = await fetch(url);
       const data = await res.json();
 
@@ -40,9 +40,9 @@ export default function ExecutionGraphVisualizer({ runId }: { runId?: string }) 
         id: n.id,
         type: n.node_type || 'execution',
         position: { x: i * 180, y: i * 80 },
-        data: { 
+        data: {
           label: `${n.node_type?.toUpperCase()} • ${n.entity_id?.slice(0,8)}`,
-          ...n 
+          ...n
         },
       }));
 
@@ -71,7 +71,7 @@ export default function ExecutionGraphVisualizer({ runId }: { runId?: string }) 
   return (
     <div className="h-[720px] w-full border border-gray-300 rounded-2xl overflow-hidden bg-gray-50">
       {loading && <div className="absolute inset-0 flex items-center justify-center">Loading Graph...</div>}
-      
+
       <ReactFlow
         nodes={nodes}
         edges={edges}

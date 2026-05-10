@@ -2,6 +2,7 @@
 from typing import Any
 
 from fastapi import APIRouter
+
 from backend.app.core.supabase import get_supabase_client
 
 router = APIRouter(prefix="/lineage", tags=["Lineage"])
@@ -40,4 +41,3 @@ async def list_executions(limit: int = 50):
         summary.append(data)
 
     return summary[:limit]
-

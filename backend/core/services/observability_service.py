@@ -83,6 +83,16 @@ class ObservabilityService:
             "simhpc_anomaly_detected_total", "Anomalies", ["type", "severity"]
         )
         self._metrics["anomaly_scans_total"] = Counter("anomaly_scans_total", "Total anomaly scans run")
+        self._metrics["anomaly_isolation_forest_detected"] = Counter(
+            "anomaly_isolation_forest_detected", "Isolation Forest anomalies", ["node_id"]
+        )
+        self._metrics["anomaly_autoencoder_mse"] = Counter(
+            "anomaly_autoencoder_mse", "Autoencoder anomalies", ["node_id"]
+        )
+        self._metrics["anomaly_lstm_temporal"] = Counter(
+            "anomaly_lstm_temporal", "LSTM temporal anomalies", ["node_id"]
+        )
+        self._metrics["ensemble_anomalies_total"] = Counter("ensemble_anomalies_total", "Total ensemble anomalies")
 
         self._metrics["build_info"] = Info("simhpc_build_info", "Build info")
         self._metrics["build_info"].info({"version": "0.5.0", "kernel": "true"})

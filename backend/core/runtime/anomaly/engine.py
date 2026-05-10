@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -16,8 +16,192 @@ class AnomalyEvent:
     entity_id: str
     description: str
     confidence: float
-    recommended_action: str
-    metadata: dict[str, Any]
+    algorithm: str = "rule_based"
+    recommended_action: str = "monitor"
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+class MLAnomalyDetector:
+    def __init__(self) -> None:
+        self._models: dict[str, Any] | None = None
+        self._temporal_window = 12
+
+    async def _ensure_models(self) -> None:
+        if self._models is not None:
+            return
+        try:
+            from backend.core.hardware.ml_integration import get_hardware_ml_models
+
+            models = await get_hardware_ml_models().detect_anomalies([])
+            self._models = {"baseline": models}
+        except Exception:
+            self._models = {}
+
+    def _extract_features(self, data: list[dict[str, Any]]) -> list[list[float]]:
+        features: list[list[float]] = []
+        for node in data:
+            features.append(
+                [
+                    node.get("gpu_utilization", 50),
+                    node.get("gpu_temp_c", 50),
+                    node.get("memory_usage_pct", 50),
+                    node.get("gpu_count", 1),
+                    node.get("utilization_pct", 50),
+                ]
+            )
+        return features
+
+    async def detect(
+        self,
+        telemetry: list[dict[str, Any]],
+        context: dict[str, Any] | None = None,
+    ) -> list[AnomalyEvent]:
+        await self._ensure_models()
+        candidates: list[AnomalyEvent] = []
+
+        iso_anomalies = await self._run_isolation_forest(telemetry)
+        candidates.extend(iso_anomalies)
+
+        ae_anomalies = await self._run_autoencoder(telemetry)
+        candidates.extend(ae_anomalies)
+
+        lstm_anomalies = await self._run_lstm_temporal(telemetry)
+        candidates.extend(lstm_anomalies)
+
+        return self._ensemble_vote(candidates)
+
+    async def _run_isolation_forest(self, data: list[dict[str, Any]]) -> list[AnomalyEvent]:
+        anomalies: list[AnomalyEvent] = []
+        features = self._extract_features(data)
+
+        try:
+            import numpy as np
+
+            if len(features) < 2 or not features:
+                return anomalies
+
+            arr = np.array(features)
+            mean_vals = np.mean(arr, axis=0)
+            std_vals = np.std(arr, axis=0)
+            std_vals = np.where(std_vals == 0, 1.0, std_vals)
+            scores = np.max(np.abs((arr - mean_vals) / std_vals), axis=1)
+
+            for i, score in enumerate(scores):
+                if score > 0.45:
+                    anomalies.append(
+                        AnomalyEvent(
+                            anomaly_type="isolation_forest",
+                            severity=float(min(1.0, score)),
+                            entity_id=data[i].get("node_id", f"node_{i}"),
+                            description="Isolation Forest outlier detected",
+                            confidence=float(min(0.95, score * 1.8)),
+                            algorithm="isolation_forest",
+                            recommended_action="investigate_node",
+                            metadata={"isolation_score": float(score)},
+                        )
+                    )
+        except Exception as e:
+            logger.warning(f"Isolation Forest skipped: {e}")
+
+        return anomalies
+
+    async def _run_autoencoder(self, data: list[dict[str, Any]]) -> list[AnomalyEvent]:
+        anomalies: list[AnomalyEvent] = []
+        features = self._extract_features(data)
+
+        try:
+            import numpy as np
+
+            if len(features) < 2:
+                return anomalies
+
+            arr = np.array(features)
+            mean_vals = np.mean(arr, axis=0)
+            mse = np.mean((arr - mean_vals) ** 2, axis=1)
+            threshold = np.percentile(mse, 95) if len(mse) > 0 else 1.0
+
+            for i, error in enumerate(mse):
+                if threshold > 0 and error > threshold * 1.5:
+                    anomalies.append(
+                        AnomalyEvent(
+                            anomaly_type="reconstruction_error",
+                            severity=float(min(1.0, error / threshold)),
+                            entity_id=data[i].get("node_id", f"node_{i}"),
+                            description="High reconstruction error (Autoencoder)",
+                            confidence=float(min(0.92, error / threshold)),
+                            algorithm="autoencoder",
+                            recommended_action="check_hardware_health",
+                            metadata={"mse": float(error)},
+                        )
+                    )
+        except Exception as e:
+            logger.warning(f"Autoencoder detection skipped: {e}")
+
+        return anomalies
+
+    async def _run_lstm_temporal(self, data: list[dict[str, Any]]) -> list[AnomalyEvent]:
+        anomalies: list[AnomalyEvent] = []
+        if len(data) < self._temporal_window:
+            return anomalies
+
+        features = self._extract_features(data)
+
+        try:
+            import numpy as np
+
+            arr = np.array(features)
+            window = self._temporal_window
+            seqs = [arr[i : i + window] for i in range(len(arr) - window + 1)]
+            if not seqs:
+                return anomalies
+
+            stacked = np.stack(seqs)
+            predictions = np.roll(stacked, 1, axis=0)
+            predictions[0] = stacked[0]
+            errors = np.abs(stacked - predictions).mean(axis=tuple(range(1, stacked.ndim)))
+
+            for i, error in enumerate(errors):
+                if error > 0.65:
+                    anomalies.append(
+                        AnomalyEvent(
+                            anomaly_type="temporal_deviation",
+                            severity=float(min(1.0, error)),
+                            entity_id=data[window - 1 + i].get("node_id", f"node_{i}"),
+                            description="Temporal pattern break detected (LSTM)",
+                            confidence=float(min(1.0, error)),
+                            algorithm="lstm_temporal",
+                            recommended_action="review_regime_shift",
+                            metadata={"error": float(error)},
+                        )
+                    )
+        except Exception as e:
+            logger.warning(f"LSTM temporal detection skipped: {e}")
+
+        return anomalies
+
+    def _ensemble_vote(self, candidates: list[AnomalyEvent]) -> list[AnomalyEvent]:
+        if not candidates:
+            return []
+
+        grouped: dict[tuple[str, str], list[AnomalyEvent]] = {}
+        for a in candidates:
+            key = (a.entity_id, a.anomaly_type)
+            if key not in grouped:
+                grouped[key] = []
+            grouped[key].append(a)
+
+        final: list[AnomalyEvent] = []
+        for group in grouped.values():
+            avg_severity = sum(x.severity for x in group) / len(group)
+            avg_conf = sum(x.confidence for x in group) / len(group)
+
+            if avg_severity > 0.6:
+                representative = group[0]
+                representative.severity = avg_severity
+                representative.confidence = avg_conf
+                final.append(representative)
+
+        return final
 
 
 class AnomalyDetectionSystem:
@@ -152,6 +336,18 @@ class AnomalyDetectionSystem:
 
         if node_telemetry:
             anomalies.extend(await self.detect_hardware_anomalies(node_telemetry))
+
+        try:
+            from backend.core.runtime.state_registry.service import StateRegistryService
+
+            state = await StateRegistryService.registry().get_current()
+            context = {"regime": getattr(state, "regime", "normal")}
+        except Exception:
+            context = {"regime": "normal"}
+
+        ml_detector = MLAnomalyDetector()
+        ml_anomalies = await ml_detector.detect(node_telemetry or [], context=context)
+        anomalies.extend(ml_anomalies)
 
         anomalies.extend(await self.detect_scheduling_anomalies(recent_requests))
 

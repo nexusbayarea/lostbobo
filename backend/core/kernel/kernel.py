@@ -1,80 +1,80 @@
-"""SimHPC Kernel — Single Source of Truth."""
-
+# backend/core/kernel/kernel.py
 from __future__ import annotations
 
-import logging
+import uuid
+from datetime import datetime
 from typing import Any
 
-from backend.core.kernel.agents.planner import PlannerAgent
-from backend.core.kernel.auto_research.engine import AutoResearchEngine
 from backend.core.kernel.command_bus import CommandBus
-from backend.core.kernel.memory.depth import DepthAttentionRegistry
-from backend.core.kernel.memory.observational import Observer
-from backend.core.kernel.memory.reflector import Reflector
-from backend.core.kernel.plugins.loader import PluginLoader
-from backend.core.kernel.services.memory_service import KernelMemoryService
-from backend.core.kernel.services.reconciliation_service import ReconciliationService
-from backend.core.kernel.services.world_service import WorldService
-from backend.core.kernel.skills.registry import SkillRegistry
-from backend.core.kernel.state.memory_state import MemoryState
-from backend.core.kernel.state.world_state import WorldState
-from backend.core.kernel.world_brain import WorldBrain
-
-log = logging.getLogger(__name__)
+from backend.core.kernel.lineage.collector import LineageCollector
+from backend.core.services.observability_service import observability
+from backend.core.tracing import trace_context
 
 
-class Kernel:
-    """Central orchestrator. All commands must go through here."""
+class SimHPCKernel:
+    """Main SimHPC Kernel with unified lineage tracking."""
 
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
+            cls._instance.command_bus = CommandBus()
+            cls._instance.lineage = LineageCollector.collector()
         return cls._instance
 
-    def __init__(self):
-        if self._initialized:
-            return
-        self._initialized = True
+    @classmethod
+    def kernel(cls) -> SimHPCKernel:
+        return cls()
 
-        self.memory_state = MemoryState()
-        self.world_state = WorldState()
+    async def execute(self, command: dict[str, Any]) -> dict[str, Any]:
+        """Execute any command with full lineage tracking."""
+        execution_id = command.get("execution_id") or str(uuid.uuid4())
 
-        self.services = {
-            "memory": KernelMemoryService(self.memory_state),
-            "reconcile": ReconciliationService(self.memory_state),
-            "world": WorldService(self.world_state),
-        }
+        with trace_context("kernel.execute", {"execution_id": execution_id}) as span:
+            try:
+                # 1. Record execution start
+                await self.lineage.emit(
+                    execution_id=execution_id,
+                    event_type="execution_started",
+                    source_type="kernel",
+                    source_id="simhpc_kernel",
+                    payload={
+                        "command_type": command.get("type"),
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                )
 
-        self.skills = SkillRegistry()
-        self.agents = {
-            "planner": PlannerAgent(self),
-        }
-        self.auto_research = AutoResearchEngine(self)
-        self.observer = Observer(self)
-        self.reflector = Reflector(self)
-        self.depth_registry = DepthAttentionRegistry(self)
-        self.world_brain = WorldBrain(self)
-        self.plugin_loader = PluginLoader(self.world_brain)
-        self.plugin_loader.discover_and_register()
+                # 2. Execute command through bus
+                result = await self.command_bus.execute(command)
 
-        self.command_bus = CommandBus(self)
+                # 3. Record successful completion
+                await self.lineage.emit(
+                    execution_id=execution_id,
+                    event_type="execution_completed",
+                    source_type="kernel",
+                    source_id="simhpc_kernel",
+                    payload={
+                        "success": True,
+                        "duration_ms": span.get_duration_ms(),
+                        "result_summary": str(result)[:500],
+                    },
+                )
 
-        log.info("SimHPC Kernel initialized — Single Source of Truth active")
+                observability().increment("kernel_executions_success")
+                return {"execution_id": execution_id, "result": result}
 
-    async def execute(self, command: dict[str, Any]) -> Any:
-        """All execution paths go through here."""
-        if not isinstance(command, dict) or "type" not in command:
-            raise ValueError("Command must have 'type' field")
-
-        log.debug("Kernel.execute → %s", command["type"])
-
-        return await self.command_bus.route(command)
-
-    async def _ensure_workers(self):
-        """Background task to start Redis workers if not running."""
-        from backend.core.workers.consumer import BeamWorker
-
-        BeamWorker()
+            except Exception as e:
+                # 4. Record failure
+                await self.lineage.emit(
+                    execution_id=execution_id,
+                    event_type="execution_failed",
+                    source_type="kernel",
+                    source_id="simhpc_kernel",
+                    payload={
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
+                )
+                observability().increment("kernel_executions_failed")
+                raise

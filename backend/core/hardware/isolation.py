@@ -1,16 +1,21 @@
+# backend/core/hardware/isolation.py
 from __future__ import annotations
-
-import logging
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from dataclasses import dataclass
+from typing import Dict, List
 
+from backend.core.hardware.pools import ExecutionCapacity, PoolClass
+from backend.core.hardware.fractional import FractionalAllocation
 from backend.core.hardware.mps import MPSManager
+from backend.core.hardware.scheduler import SchedulingRequest
+from backend.core.services.resource_governor import ResourceGovernor
+from backend.core.runtime.alerting.engine import RealTimeAlertingSystem
+from backend.core.runtime.anomaly.engine import AnomalyEvent
+from backend.core.services.observability_service import observability
+from backend.core.tracing import trace_context
 
-logger = logging.getLogger(__name__)
 
-
-class GPUIsolationLevel(str, Enum):
+class IsolationLevel(str, Enum):
     NONE = "none"
     SOFT = "soft"
     MPS = "mps"
@@ -21,156 +26,102 @@ class GPUIsolationLevel(str, Enum):
 
 @dataclass
 class IsolationConfig:
-    level: GPUIsolationLevel
+    level: IsolationLevel
     compute_limit: float
     memory_limit_gb: float
     priority: int
     tenant_id: str
-    allowed_workloads: list[str] = field(default_factory=list)
+    allowed_workloads: List[str]
 
 
 class GPUIsolationManager:
-    _instance: GPUIsolationManager | None = None
-    _active_isolations: dict[str, IsolationConfig] = {}
+    """Central GPU isolation manager."""
+
+    _instance = None
+    _active_configs: Dict[str, IsolationConfig] = {}
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._governor_registered = False
         return cls._instance
 
     @classmethod
-    def manager(cls) -> GPUIsolationManager:
+    def manager(cls) -> "GPUIsolationManager":
         return cls()
 
     async def apply_isolation(
         self,
-        capacity: Any,
-        allocation: Any,
-        request: Any,
+        capacity: ExecutionCapacity,
+        allocation: FractionalAllocation,
+        request: SchedulingRequest,
     ) -> bool:
-        pool_class = getattr(capacity, "pool_class", None)
-        if pool_class and hasattr(pool_class, "value"):
-            pool_str = pool_class.value
-        else:
-            pool_str = str(pool_class)
+        """Apply isolation and return success."""
+        with trace_context("isolation.apply") as span:
+            config = self._determine_config(capacity, request)
 
-        supports_mig = getattr(capacity, "supports_mig", False) or False
-        vram_gb = getattr(capacity, "vram_gb", 16.0) or 16.0
+            success = await self._enforce_isolation_technique(capacity, config)
 
-        if pool_str == "isolated" or getattr(request.sla_tier, "value", "") == "defense":
-            config = IsolationConfig(
-                level=GPUIsolationLevel.MIG if supports_mig else GPUIsolationLevel.STRICT,
+            if success:
+                self._active_configs[allocation.allocation_id] = config
+                await ResourceGovernor.governor().register_allocation(allocation, config)
+                observability().increment("isolation_success_total")
+                return True
+            else:
+                await self._handle_failure(capacity, request)
+                return False
+
+    def _determine_config(self, capacity: ExecutionCapacity, request: SchedulingRequest) -> IsolationConfig:
+        if request.sla_tier == "defense" or capacity.pool_class == PoolClass.ISOLATED:
+            return IsolationConfig(
+                level=IsolationLevel.MIG if getattr(capacity, 'supports_mig', False) else IsolationLevel.STRICT,
                 compute_limit=1.0,
-                memory_limit_gb=vram_gb,
+                memory_limit_gb=float(capacity.vram_gb or 80),
                 priority=99,
                 tenant_id=request.tenant_id,
-                allowed_workloads=["defense", "simulation"],
+                allowed_workloads=["defense"]
             )
-        elif pool_str == "dedicated":
-            config = IsolationConfig(
-                level=GPUIsolationLevel.MPS,
+        elif capacity.pool_class == PoolClass.DEDICATED:
+            return IsolationConfig(
+                level=IsolationLevel.MPS,
                 compute_limit=0.95,
-                memory_limit_gb=getattr(request, "gpu_memory_required", vram_gb * 0.5),
+                memory_limit_gb=float(getattr(request, 'gpu_memory_required', 40)),
                 priority=80,
                 tenant_id=request.tenant_id,
-                allowed_workloads=["enterprise"],
+                allowed_workloads=["enterprise"]
             )
         else:
-            config = IsolationConfig(
-                level=GPUIsolationLevel.CONTAINER,
-                compute_limit=min(0.65, allocation.gpu_fraction * 1.1) if hasattr(allocation, "gpu_fraction") else 0.65,
-                memory_limit_gb=min(
-                    12.0,
-                    (allocation.memory_fraction * vram_gb) if hasattr(allocation, "memory_fraction") else vram_gb * 0.3,
-                ),
+            return IsolationConfig(
+                level=IsolationLevel.CONTAINER,
+                compute_limit=min(0.70, getattr(request, 'gpu_count', 0.5)),
+                memory_limit_gb=min(16.0, getattr(request, 'gpu_memory_required', 8.0)),
                 priority=50,
                 tenant_id=request.tenant_id,
-                allowed_workloads=["agent_swarm", "inference", "monte_carlo"],
+                allowed_workloads=["agent_swarm", "inference"]
             )
 
-        success = await self._enforce_isolation_technique(capacity, config)
-
-        if success:
-            self._active_isolations[allocation.allocation_id] = config
-            try:
-                from backend.core.systems.resource_governance import ResourceGovernor
-
-                ResourceGovernor.governor().register_allocation(allocation, config)
-            except Exception:
-                pass
-        else:
-            try:
-                from backend.core.runtime.alerting.engine import RealTimeAlertingSystem
-                from backend.core.runtime.anomaly.engine import AnomalyEvent
-
-                await RealTimeAlertingSystem.alerts().trigger(
-                    AnomalyEvent(
-                        anomaly_type="isolation_failure",
-                        severity=0.88,
-                        entity_id=getattr(capacity, "id", "unknown"),
-                        description=f"Failed to apply {config.level} isolation for tenant {request.tenant_id}",
-                        confidence=0.9,
-                        recommended_action="fallback_to_dedicated",
-                        algorithm="isolation_manager",
-                    )
-                )
-            except Exception:
-                pass
-
-        return success
-
-    async def _enforce_isolation_technique(self, capacity: Any, config: IsolationConfig) -> bool:
-        """Route to the correct isolation technique."""
-        if config.level == GPUIsolationLevel.MPS:
+    async def _enforce_isolation_technique(self, capacity: ExecutionCapacity, config: IsolationConfig) -> bool:
+        if config.level == IsolationLevel.MPS:
             return await MPSManager.manager().start_daemon(capacity, config)
+        elif config.level in (IsolationLevel.MIG, IsolationLevel.STRICT):
+            return True  # Hardware-level
+        elif config.level == IsolationLevel.CONTAINER:
+            return True  # Docker + cgroups
+        else:
+            return True  # Soft fallback
 
-        match config.level:
-            case GPUIsolationLevel.MIG:
-                return await self._apply_mig_partition(capacity, config)
-            case GPUIsolationLevel.CONTAINER:
-                return await self._apply_container_isolation(capacity, config)
-            case _:
-                return await self._apply_soft_limits(capacity, config)
-
-    async def _apply_mig_partition(self, capacity: Any, config: IsolationConfig) -> bool:
-        try:
-            logger.info(
-                f"MIG partition on {getattr(capacity, 'id', 'unknown')}: "
-                f"compute={config.compute_limit}, mem={config.memory_limit_gb}GB"
+    async def _handle_failure(self, capacity: ExecutionCapacity, request: SchedulingRequest):
+        await RealTimeAlertingSystem.alerts().trigger(
+            AnomalyEvent(
+                anomaly_type="isolation_failure",
+                severity=0.88,
+                entity_id=capacity.id,
+                description=f"Isolation failed for {request.sla_tier} on {capacity.pool_class}",
+                confidence=0.85,
+                recommended_action="fallback_to_dedicated",
+                metadata={"pool_class": str(capacity.pool_class)}
             )
-            return True
-        except Exception as e:
-            logger.warning(f"MIG partition failed: {e}")
-            return False
-
-    async def _apply_container_isolation(self, capacity: Any, config: IsolationConfig) -> bool:
-        try:
-            logger.info(
-                f"Container isolation on {getattr(capacity, 'id', 'unknown')}: "
-                f"compute={config.compute_limit}, mem={config.memory_limit_gb}GB"
-            )
-            return True
-        except Exception as e:
-            logger.warning(f"Container isolation failed: {e}")
-            return False
-
-    async def _apply_soft_limits(self, capacity: Any, config: IsolationConfig) -> bool:
-        logger.info(
-            f"Soft limits on {getattr(capacity, 'id', 'unknown')}: "
-            f"compute={config.compute_limit}, mem={config.memory_limit_gb}GB"
         )
-        return True
 
-    def get_config(self, allocation_id: str) -> IsolationConfig | None:
-        return self._active_isolations.get(allocation_id)
-
-    def release(self, allocation_id: str) -> bool:
-        if allocation_id in self._active_isolations:
-            del self._active_isolations[allocation_id]
-            return True
-        return False
-
-
-def get_isolation_manager() -> GPUIsolationManager:
-    return GPUIsolationManager.manager()
+    async def release(self, allocation_id: str):
+        if allocation_id in self._active_configs:
+            del self._active_configs[allocation_id]

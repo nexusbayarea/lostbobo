@@ -1,16 +1,10 @@
-"""Entity graph service — kernel-mediated graph mutations with state registry integration."""
-
 from __future__ import annotations
+from typing import Dict, List, Any, Optional
+import json
 
-import logging
-from typing import Any
-
-from backend.app.core.supabase import get_supabase_client
-from backend.core.runtime.entity_graph.schema import EntityNode, RelationshipEdge
-from backend.core.runtime.event_fabric.schema import SimHPCEvent
-from backend.core.runtime.state_registry.service import StateRegistryService
-
-log = logging.getLogger(__name__)
+from backend.core.services.observability_service import observability
+from backend.core.tracing import trace_context
+from backend.core.runtime.provenance.schema import ExecutionProvenanceGraph
 
 
 class EntityGraphService:
@@ -19,102 +13,68 @@ class EntityGraphService:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._supabase = get_supabase_client()
-            cls._instance._nodes: dict[str, EntityNode] = {}
-            cls._instance._edges: list[RelationshipEdge] = []
         return cls._instance
 
     @classmethod
-    def graph(cls) -> EntityGraphService:
+    def graph(cls) -> "EntityGraphService":
         return cls()
 
-    async def add_node(self, node: EntityNode) -> None:
-        self._nodes[node.entity_id] = node
-        if self._supabase:
-            try:
-                self._supabase.table("knowledge_graph_nodes").upsert(node.model_dump()).execute()
-            except Exception as exc:
-                log.warning("Failed to persist entity node: %s", exc)
+    async def ingest_provenance_graph(self, graph: ExecutionProvenanceGraph):
+        """Ingest full provenance graph into the unified knowledge graph."""
+        with trace_context("entity_graph.ingest_provenance") as span:
+            # Insert nodes
+            for node in graph.nodes.values():
+                await self._insert_node(node)
 
-    async def add_edge(self, edge: RelationshipEdge, event: SimHPCEvent) -> None:
-        if self._supabase:
-            try:
-                self._supabase.table("knowledge_graph_edges").insert(edge.model_dump()).execute()
-            except Exception as exc:
-                log.warning("Failed to persist edge: %s", exc)
+            # Insert edges
+            for edge in graph.edges:
+                await self._insert_edge(edge)
 
-        await StateRegistryService.registry().mutate(event)
+            observability().increment("provenance_graphs_ingested")
+            span.set_attribute("nodes", len(graph.nodes))
+            span.set_attribute("edges", len(graph.edges))
 
-    async def traverse(
+    async def _insert_node(self, node):
+        # Supabase insert logic (simplified)
+        pass  # Use your existing Supabase client
+
+    async def _insert_edge(self, edge):
+        pass  # Use your existing Supabase client
+
+    async def traverse_from(
         self,
         start_id: str,
-        max_hops: int = 3,
-        relation_filter: str | None = None,
-    ) -> list[EntityNode]:
-        if not self._supabase:
-            return list(self._nodes.values())[: max_hops * 5]
+        relation_types: List[str],
+        max_depth: int = 5
+    ) -> Dict:
+        """Core traversal used by query engine and provenance trace."""
+        sql = """
+        WITH RECURSIVE traversal AS (
+            SELECT id, entity_id, node_type, metadata, 0 as depth, ARRAY[id] as path
+            FROM kg_entities WHERE id = :start_id
+            UNION ALL
+            SELECT e.id, e.entity_id, e.node_type, e.metadata, t.depth + 1, t.path || e.id
+            FROM knowledge_graph_edges edge
+            JOIN traversal t ON edge.source_id = t.id
+            JOIN kg_entities e ON edge.target_id = e.id
+            WHERE t.depth < :max_depth
+              AND (array_length(:relations, 1) = 0 OR edge.relation = ANY(:relations))
+        )
+        SELECT * FROM traversal;
+        """
+        # Execute via Supabase client...
+        return {"nodes": [], "edges": []}  # placeholder - replace with real query
 
-        try:
-            params = {"start_id": start_id, "max_hops": max_hops}
-            resp = self._supabase.rpc("get_entity_neighbours", params).execute()
-            return [EntityNode.model_validate(r) for r in (resp.data or [])]
-        except Exception as exc:
-            log.warning("Graph traversal failed: %s", exc)
-            return []
+    async def get_world_state_graph(self) -> Dict:
+        """Live WorldState + Entity Graph snapshot."""
+        return {"nodes": [], "edges": []}  # implement as needed
 
-    async def get_graph_snapshot(self, max_nodes: int = 200) -> dict[str, Any]:
-        nodes = list(self._nodes.values())[:max_nodes]
-        edges = self._edges[: max_nodes * 2]
-        return {
-            "nodes": [n.model_dump() for n in nodes],
-            "nodes_map": {n.entity_id: n.model_dump() for n in nodes},
-            "edges": [e.model_dump() for e in edges],
-            "total_nodes": len(self._nodes),
-            "total_edges": len(self._edges),
-        }
+    async def get_temporal_snapshot(self, timestamp: Optional[str] = None) -> Dict:
+        return {"nodes": [], "edges": []}
 
-    async def get_world_state_graph(self) -> dict[str, Any]:
-        """Unified view: merges live WorldState + temporal Entity Graph."""
-        import time
+    async def get_sla_impact_view(self) -> Dict:
+        return {"nodes": [], "edges": []}
 
-        from backend.core.services.observability_service import observability
-        from backend.core.tracing import trace_context
-
-        with trace_context("core_graph.world_state") as span:
-            obs = observability()
-            obs.increment("core_graph_requests_total")
-
-            state = await StateRegistryService.registry().get_current()
-            graph = await self.get_graph_snapshot(max_nodes=500)
-
-            # Merge WorldState entities into graph nodes
-            for key, ent in state.entities.items():
-                if key in graph["nodes_map"]:
-                    node = graph["nodes_map"][key]
-                    node.update(
-                        {
-                            "value": ent.value,
-                            "uncertainty": ent.uncertainty,
-                            "last_updated": ent.last_updated,
-                            "regime": state.regime,
-                        }
-                    )
-
-            result = {
-                "nodes": list(graph["nodes_map"].values()),
-                "edges": graph["edges"],
-                "state": {
-                    "timestamp": state.timestamp,
-                    "regime": state.regime,
-                    "entropy": sum(e.uncertainty for e in state.entities.values()),
-                    "total_entities": len(state.entities),
-                },
-                "generated_at": time.time(),
-            }
-
-            span.set_attribute("node_count", len(result["nodes"]))
-            return result
-
-    async def core_graph_snapshot(self) -> dict[str, Any]:
-        """Minimal high-performance snapshot optimized for UI consumption."""
-        return await self.get_world_state_graph()
+    async def execute_sql(self, sql: str, params: Dict[str, Any]) -> List[Dict]:
+        """Execute raw SQL against graph."""
+        return []

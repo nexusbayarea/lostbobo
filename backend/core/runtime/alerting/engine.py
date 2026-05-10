@@ -28,8 +28,11 @@ class Alert:
     status: str = "ACTIVE"
     acknowledged_at: datetime | None = None
     acknowledged_by: str | None = None
+    created_at: datetime = field(default_factory=datetime.now)
     notes: str | None = None
     resolved_at: datetime | None = None
+    escalation_level: int = 0
+    last_escalated_at: datetime | None = None
     resolution_reason: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -114,6 +117,7 @@ class RealTimeAlertingSystem:
         self._alert_store[alert.id] = alert
 
     def _compute_dynamic_severity(self, anomaly: AnomalyEvent) -> str:
+        regime = "normal"
         try:
             from backend.core.runtime.state_registry.service import StateRegistryService
 
@@ -126,7 +130,6 @@ class RealTimeAlertingSystem:
             return "CRITICAL"
         if anomaly.severity > 0.6:
             return "WARNING"
-
         if regime == "normal" and anomaly.severity < 0.8:
             return "INFO"
         return "WARNING"
@@ -173,6 +176,7 @@ class RealTimeAlertingSystem:
             metadata=anomaly.metadata,
         )
 
+        alert.created_at = datetime.now(UTC)
         guard.record_alert(alert)
         self._store_alert(alert)
 

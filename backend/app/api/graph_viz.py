@@ -1,40 +1,29 @@
-import time
+from fastapi import APIRouter
+from typing import Optional
 
-from fastapi import APIRouter, Query
-
+from backend.core.runtime.provenance.service import ExecutionProvenanceService
 from backend.core.runtime.entity_graph.service import EntityGraphService
-from backend.core.runtime.state_registry.service import StateRegistryService
 
-router = APIRouter(prefix="/api/v1/graph", tags=["visualization"])
-
-
-@router.get("/entity-graph")
-async def get_entity_graph(
-    max_nodes: int = Query(300, le=1000), max_hops: int = Query(3, le=5), min_weight: float = Query(0.2, ge=0.0)
-):
-    """Live Entity Graph snapshot with temporal weights."""
-    graph_service = EntityGraphService.graph()
-    nodes = await graph_service.get_nodes_snapshot(max_nodes)
-    edges = await graph_service.get_edges_snapshot(min_weight=min_weight)
-    return {"nodes": nodes, "edges": edges, "timestamp": time.time()}
+router = APIRouter(prefix="/graph", tags=["Visualization"])
 
 
-@router.get("/world-state-graph")
+@router.get("/provenance/{run_id}")
+async def get_provenance_graph(run_id: str, depth: int = 4):
+    """Full provenance trace for a specific execution run."""
+    return await ExecutionProvenanceService.provenance().get_provenance_trace(run_id, depth)
+
+
+@router.get("/world-state")
 async def get_world_state_graph():
-    """Combined WorldState + Entity Graph view."""
-    state = await StateRegistryService.registry().get_current()
-    graph = await EntityGraphService.graph().get_graph_snapshot()
-    return {
-        "state": state.model_dump(),
-        "graph": graph,
-        "regime": state.regime,
-        "entropy": sum(e.uncertainty for e in state.entities.values()) if state.entities else 0,
-    }
+    """Current live WorldState + Entity Graph."""
+    return await EntityGraphService.graph().get_world_state_graph()
 
 
-@router.get("/graph/replay")
-async def replay_graph(at_timestamp: float):
-    """Deterministic historical graph reconstruction."""
-    state = await StateRegistryService.registry().reconstruct(at_timestamp)
-    # ... build graph at that point in time
-    return {"state": state, "graph": await EntityGraphService.graph().get_graph_snapshot()}
+@router.get("/temporal-snapshot")
+async def get_temporal_snapshot(timestamp: Optional[str] = None):
+    return await EntityGraphService.graph().get_temporal_snapshot(timestamp)
+
+
+@router.get("/sla-impact")
+async def get_sla_impact_graph():
+    return await EntityGraphService.graph().get_sla_impact_view()

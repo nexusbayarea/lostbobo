@@ -14,6 +14,7 @@ from backend.core.hardware.forecasting import (
     PredictiveCapacityForecaster,
     get_capacity_forecaster,
 )
+from backend.core.hardware.fractional import FractionalAllocation, FractionalGPUScheduler, get_fractional_scheduler
 from backend.core.hardware.placement import PlacementEngine, PlacementPolicy
 from backend.hardware.providers import (
     GPUNode,
@@ -41,6 +42,8 @@ __all__ = [
     "CostModel",
     "DemandForecaster",
     "EconomicScore",
+    "FractionalAllocation",
+    "FractionalGPUScheduler",
     "GPUType",
     "IsolationLevel",
     "NodeEconomics",
@@ -63,4 +66,5 @@ __all__ = [
     "ResourceEconomicsRuntime",
     "get_economics_engine",
     "get_capacity_forecaster",
+    "get_fractional_scheduler",
 ]

@@ -11,6 +11,7 @@ Routes every simulation job to the optimal GPU node based on:
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -26,6 +27,8 @@ from backend.hardware.providers import (
 )
 from backend.hardware.sla import SLATier, get_sla_engine
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class SchedulingRequest:
@@ -33,13 +36,17 @@ class SchedulingRequest:
     tenant_id: str
     sla_tier: SLATier
     gpu_type: GPUType = GPUType.A40
-    gpu_count: int = 1
+    gpu_count: float = 1.0
     estimated_duration_minutes: int = 30
+    gpu_memory_required: float = 0.0
+    priority: int = 50
+    workload_type: str = "default"
     domain: str = "structural"
     data_classification: str = "PUBLIC"
     region_preference: str = "us-east-1"
     max_cost_usd: float | None = None
     reservation_id: str | None = None
+    estimated_runtime_seconds: float = 1800.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -105,6 +112,11 @@ class HardwareAwareScheduler:
         self._queue: dict[str, list[SchedulingRequest]] = {}
 
     async def schedule(self, request: SchedulingRequest) -> SchedulingResult:
+        if request.gpu_count < 1.0 and request.sla_tier != SLATier.DEFENSE:
+            result = await self._schedule_fractional(request)
+            if result:
+                return result
+
         if request.sla_tier == SLATier.DEFENSE:
             return await self._schedule_defense(request)
         elif request.sla_tier == SLATier.ENTERPRISE:
@@ -180,6 +192,49 @@ class HardwareAwareScheduler:
 
         ranked = await self._arbitrage.rank_nodes_by_cost(nodes, prefer_spot=True)
         return await self._finalize_scheduling(request, ranked[0])
+
+    async def _schedule_fractional(self, request: SchedulingRequest) -> SchedulingResult | None:
+        try:
+            from backend.core.hardware.fractional import get_fractional_scheduler
+
+            nodes = await self._find_nodes_all_providers(request)
+            if not nodes:
+                return None
+
+            for node in await self._arbitrage.rank_nodes_by_cost(nodes, prefer_spot=True):
+
+                class CapWrapper:
+                    def __init__(self, n):
+                        self.id = n.node_id
+                        self.vram_gb = getattr(n, "vram_gb", 16.0) or 16.0
+                        self.gpu_count = n.gpu_count
+                        self.provider = n.provider
+                        self.hourly_cost_usd = n.hourly_cost_usd
+                        self.isolation_level = n.isolation_level
+
+                cap = CapWrapper(node)
+                frac = get_fractional_scheduler()
+                allocation = await frac.allocate(request, cap)
+                if allocation:
+                    frac.record_fractional_usage(allocation)
+                    return SchedulingResult(
+                        run_id=request.run_id,
+                        node=node,
+                        scheduled_at=datetime.now(UTC).isoformat(),
+                        queue_position=0,
+                        estimated_start_seconds=0.0,
+                        estimated_cost_usd=round(
+                            node.hourly_cost_usd * request.gpu_count * request.estimated_duration_minutes / 60, 4
+                        ),
+                        sla_tier=request.sla_tier,
+                        hardware_attestation_id=str(uuid.uuid4()),
+                        provider_chosen=node.provider,
+                        fallback_used=False,
+                        fallback_reason="",
+                    )
+        except Exception as e:
+            logger.warning(f"Fractional scheduling failed: {e}")
+        return None
 
     async def _schedule_free(self, request: SchedulingRequest) -> SchedulingResult:
         nodes = await self._find_nodes_all_providers(request)

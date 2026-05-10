@@ -690,3 +690,11 @@
 - **suggest_scheduling_action():** State-driven recommendations — PROVISION_ISOLATED, EXPAND_WARM_POOL, OPTIMIZE_PACKING, MAINTAIN.
 - **proactively_provision_isolated():** Defense-tier warm pool expansion on predicted demand.
 - **Git:** Committed and pushed to main.
+
+### Federated Learning Engine — Secure Multi-Party Learning Orchestration
+- **FederatedLearningEngine** (`backend/core/runtime/federated/engine.py`): Global + local `TemporalGNN` models per participant. `local_train()` trains on private subgraph only, returns delta with regime awareness. `aggregate()` weighted FedAvg with confidence + disruption downweighting.
+- **Versioned global model:** `ModelRegistry.register_version()` on every aggregation round.
+- **FederatedAlgorithms:** `fedavg`, `fedprox`, `scaffold`, `fednova`, `temporal_fedavg` (custom with regime weighting).
+- **Event publishing:** `federated.model_aggregated` event on every aggregation for audit trail.
+- **Metrics:** `federated_local_train_total`, `federated_aggregations_total`, `federated_rounds_total`.
+- **Git:** Committed and pushed to main.

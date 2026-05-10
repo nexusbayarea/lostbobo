@@ -1,23 +1,23 @@
 from __future__ import annotations
-from typing import Dict, List, Optional, Any
+
+from typing import Any
+
 from pydantic import BaseModel
-import json
 
 from backend.core.runtime.entity_graph.service import EntityGraphService
-from backend.core.runtime.temporal.engine import TemporalEngine
 from backend.core.services.observability_service import observability
 from backend.core.tracing import trace_context
 
 
 class GraphQuery(BaseModel):
-    start_entity_id: Optional[str] = None
-    relation_types: List[str] = []
+    start_entity_id: str | None = None
+    relation_types: list[str] = []
     max_depth: int = 6
     min_weight: float = 0.0
-    temporal_from: Optional[str] = None
-    temporal_to: Optional[str] = None
-    filter_node_types: List[str] = []
-    order_by: str = "influence"   # influence, recency, weight, depth
+    temporal_from: str | None = None
+    temporal_to: str | None = None
+    filter_node_types: list[str] = []
+    order_by: str = "influence"  # influence, recency, weight, depth
     limit: int = 100
 
 
@@ -25,10 +25,10 @@ class AdvancedGraphQueryEngine:
     """Powerful, production-grade graph querying engine."""
 
     @classmethod
-    def query(cls) -> "AdvancedGraphQueryEngine":
+    def query(cls) -> AdvancedGraphQueryEngine:
         return cls()
 
-    async def execute(self, q: GraphQuery) -> Dict[str, Any]:
+    async def execute(self, q: GraphQuery) -> dict[str, Any]:
         """Main entry point for all graph queries."""
         with trace_context("graph.query.execute") as span:
             observability().increment("graph_queries_total")
@@ -41,7 +41,7 @@ class AdvancedGraphQueryEngine:
             span.set_attribute("nodes_returned", len(result.get("nodes", [])))
             return result
 
-    async def _query_from_node(self, q: GraphQuery) -> Dict[str, Any]:
+    async def _query_from_node(self, q: GraphQuery) -> dict[str, Any]:
         """BFS-style traversal from a starting node with all filters."""
         sql = """
         WITH RECURSIVE graph_traversal AS (
@@ -90,19 +90,19 @@ class AdvancedGraphQueryEngine:
             "query_summary": {
                 "depth_reached": max((r.get("depth", 0) for r in rows), default=0),
                 "nodes_found": len(rows),
-                "start_entity": q.start_entity_id
-            }
+                "start_entity": q.start_entity_id,
+            },
         }
 
-    async def _global_pattern_query(self, q: GraphQuery) -> Dict:
+    async def _global_pattern_query(self, q: GraphQuery) -> dict:
         """Global pattern search (used when no start node is given)."""
         return {"nodes": [], "query_summary": {"message": "Global pattern queries not yet implemented"}}
 
     # Convenience methods
-    async def find_causal_paths(self, source_id: str, target_id: str, max_hops: int = 8) -> List[Dict]:
+    async def find_causal_paths(self, source_id: str, target_id: str, max_hops: int = 8) -> list[dict]:
         """Find all paths between two entities."""
         return []
 
-    async def rank_influence(self, entity_id: str, top_k: int = 20) -> List[Dict]:
+    async def rank_influence(self, entity_id: str, top_k: int = 20) -> list[dict]:
         """PageRank-style influence ranking."""
         return []

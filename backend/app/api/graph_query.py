@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from typing import Optional
 
 from backend.core.runtime.entity_graph.query import AdvancedGraphQueryEngine, GraphQuery
 
@@ -28,4 +27,5 @@ async def get_influence(entity_id: str, top_k: int = 20):
 async def get_provenance_trace(run_id: str, depth: int = 5):
     """Convenience endpoint for full execution provenance trace."""
     from backend.core.runtime.provenance.service import ExecutionProvenanceService
+
     return await ExecutionProvenanceService.provenance().get_provenance_trace(run_id, depth)

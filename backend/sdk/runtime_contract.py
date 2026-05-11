@@ -4,7 +4,10 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.sdk.world_service import WorldService
 
 log = logging.getLogger(__name__)
 

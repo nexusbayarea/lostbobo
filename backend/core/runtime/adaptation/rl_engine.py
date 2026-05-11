@@ -279,6 +279,16 @@ class RLAdaptationEngine:
             log.warning("Chaos injection failed: %s", e)
 
     @property
+    def policy(self) -> Any | None:
+        self._ensure_initialized()
+        return self._policy
+
+    @property
+    def epsilon(self) -> float:
+        self._ensure_initialized()
+        return self._epsilon
+
+    @property
     def rng(self) -> random.Random:
         if not hasattr(self, "_rng"):
             self._rng = random.Random(time.time())

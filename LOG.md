@@ -216,3 +216,83 @@
 - Prometheus federation exposes /federate endpoint for central Prometheus
 - Cortex and Thanos are both available (enable via values)
 - All pre-commit hooks pass (green)
+
+## 2026-05-10 21:49:27 PST
+
+### Actions Taken
+
+1. **Fixed Trailing Newline Issues in Kata Templates**
+   - Fixed simhpc-core/templates/runtimeclass-kata.yaml
+   - Fixed simhpc-core/templates/runtimeclass-kata-optimized.yaml
+   - Fixed simhpc-core/templates/karpenter-nodepool-kata.yaml
+
+2. **Created Kata Containers Values File**
+   - File: simhpc-core/values.kata.yaml
+   - Production-optimized settings for SimHPC plugins
+   - Includes kernel, QEMU, agent, sandbox, security configs
+
+3. **Created Isolation Router SDK**
+   - File: backend/sdk/isolation_router.py
+   - Automatic isolation tier selection (sandbox → WASM → Kata)
+   - choose_isolation_mode() based on security_tier in manifest
+   - get_runtime_class() mapping for Kata RuntimeClass
+
+4. **Created Runtime Security Dashboard**
+   - File: simhpc-core/docs/RUNTIME_SECURITY_DASHBOARD.json
+   - Includes Spectre mitigation status panels
+   - Branch misprediction rate, timing anomalies
+   - Side-channel mitigation effectiveness gauge
+   - Kata VM cold start latency tracking
+
+5. **Created Plugin Build Workflow**
+   - File: .github/workflows/plugin-build.yaml
+   - Builds Swivel-enhanced WASM with Spectre hardening
+   - Builds Kata container images with kata-optimized RuntimeClass
+   - Security scan step for plugin images
+
+### Notes
+
+- Pre-commit end-of-file-fixer required trailing newlines on YAML files
+- isolation_router.py integrates with manifest security_tier field
+- WASM runtime already has Swivel enabled in wasm_runtime.py
+- All pre-commit hooks pass (green)
+
+## 2026-05-11 00:08:59 PST
+
+### Actions Taken
+
+1. **Created WorldState Dashboard + Core Graph API**
+   - Created backend/app/api/core_graph.py with endpoints: /world-state-graph, /world-state/stream, /anomalies
+   - Created frontend/src/components/WorldStateDashboard.tsx with ReactFlow graph, regime/entropy display, event stream, anomaly panel
+
+2. **Created Causal Anomaly Detector**
+   - Created backend/core/runtime/anomaly/detector.py
+   - Singleton detector with 5 detection types: causal_break, regime_shift, uncertainty_spike, probability_mass_violation, temporal_monotonicity
+   - Runs detection pass every 5 seconds, emits runtime.anomaly.detected events
+
+3. **Created Database Migration for Causal Anomalies**
+   - Created deploy/supabase/migrations/20260510_causal_anomalies.sql
+   - Table runtime_causal_anomalies with indexes and RLS policies
+
+4. **Created ML Anomaly Prediction Layer**
+   - Created backend/core/runtime/anomaly/ml_predictor.py
+   - MLAnomalyPredictor singleton with LSTM + Isolation Forest ensemble
+   - 12-dimensional feature vector for temporal and feature-based predictions
+   - Predicts anomalies 5-60 minutes in advance with probability scores
+
+5. **Integrated ML Predictions into Detector**
+   - Updated detector.py with _run_ml_predictions() method
+   - ML predictions run alongside rule-based detection every cycle
+   - Predicted anomalies emitted with severity based on probability threshold
+
+6. **Fixed Ruff Linting Errors**
+   - Fixed N806: changed X to x and X_scaled to x_scaled for lowercase variable names
+   - All pre-commit hooks now pass (green)
+
+### Notes
+
+- WorldState Dashboard integrates with existing ReactFlow component
+- CausalAnomalyDetector extends existing AnomalyDetectionSystem with causal-specific logic
+- ML predictor uses rolling window of 300 feature vectors for temporal patterns
+- Ensemble probability combines LSTM temporal + Isolation Forest feature-based scores
+- All pre-commit hooks pass (green)

@@ -1,0 +1,52 @@
+{
+  "title": "SimHPC — RL Training & Policy Visualization",
+  "uid": "simhpc-rl-training-v2",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "title": "Reward Trajectory & Moving Average",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 10 },
+      "targets": [
+        { "expr": "rl_reward_history", "legendFormat": "Instant Reward" },
+        { "expr": "rl_reward_moving_avg", "legendFormat": "Moving Avg (10 steps)" }
+      ]
+    },
+    {
+      "title": "Current Policy Distribution",
+      "type": "barchart",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 10 },
+      "targets": [{ "expr": "rl_action_distribution" }]
+    },
+    {
+      "title": "Recent RL Decisions",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 10 },
+      "targets": [{ "expr": "rl_recent_decisions" }]
+    },
+    {
+      "title": "Policy Snapshots",
+      "type": "table",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 10 },
+      "targets": [{ "expr": "rl_snapshots_last_10" }]
+    },
+    {
+      "title": "Exploration Rate (Epsilon)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 8 },
+      "targets": [{ "expr": "rl_epsilon" }]
+    },
+    {
+      "title": "Quarantine Probability",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 8 },
+      "targets": [{ "expr": "rl_quarantine_prob" }]
+    },
+    {
+      "title": "Chaos Injection Status",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 8 },
+      "targets": [{ "expr": "rl_chaos_active" }]
+    }
+  ]
+}

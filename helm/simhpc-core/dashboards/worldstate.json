@@ -1,0 +1,57 @@
+{
+  "title": "SimHPC — WorldState Live + Entity Graph",
+  "uid": "simhpc-worldstate-v3",
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "WorldState Overview",
+      "type": "row",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+    },
+    {
+      "title": "Current Regime",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "targets": [{ "expr": "state_regime" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" } } }
+    },
+    {
+      "title": "Global Entropy",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "targets": [{ "expr": "state_entropy" }]
+    },
+    {
+      "title": "Active Entities",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "targets": [{ "expr": "count(state_entities)" }]
+    },
+    {
+      "title": "Causal Chain Length",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "targets": [{ "expr": "causal_chain_length" }]
+    },
+    {
+      "title": "Predicted Anomalies (5m)",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "targets": [{ "expr": "predicted_anomalies_5m" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" } } }
+    },
+    {
+      "title": "Live Entity Graph",
+      "type": "graph",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 14 },
+      "targets": [{ "expr": "entity_graph_nodes" }]
+    },
+    {
+      "title": "Causal Event Stream (Live)",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 19, "w": 24, "h": 9 },
+      "targets": [{ "expr": "causal_events_last_5m" }]
+    }
+  ]
+}

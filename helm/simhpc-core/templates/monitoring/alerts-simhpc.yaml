@@ -1,0 +1,78 @@
+groups:
+  - name: simhpc-worldstate
+    rules:
+      - alert: HighWorldStateEntropy
+        expr: state_entropy > 2.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WorldState Entropy"
+          description: "Global entropy is {{ $value | humanize }} — possible regime instability."
+
+      - alert: RegimeShiftDetected
+        expr: state_regime == "panic" or state_regime == "disruption"
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Regime Shift Detected"
+          description: "WorldState entered {{ $value }} regime."
+
+      - alert: CausalAnomalyHigh
+        expr: runtime_causal_anomalies_total{severity="critical"} > 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Multiple Critical Causal Anomalies"
+          description: "{{ $value }} critical anomalies in the last 5m."
+
+  - name: simhpc-rl-adaptation
+    rules:
+      - alert: RLLowReward
+        expr: rl_average_reward < 0.4
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RL Policy Reward Degraded"
+          description: "Average reward dropped to {{ $value | humanize }} — adaptation failing."
+
+      - alert: RLHighExploration
+        expr: rl_epsilon > 0.4
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "High RL Exploration Rate"
+          description: "Epsilon is {{ $value | humanize }} — policy is heavily exploring."
+
+      - alert: FrequentQuarantine
+        expr: rl_quarantine_events_total > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frequent RL-Initiated Quarantine"
+          description: "{{ $value }} plugins quarantined recently."
+
+  - name: simhpc-runtime
+    rules:
+      - alert: WASMExecutionTrap
+        expr: wasm_execution_traps_total > 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WASM Execution Trap Detected"
+          description: "Possible security violation in WASM plugin."
+
+      - alert: KataColdStartSlow
+        expr: kata_pod_start_duration_seconds{quantile="0.95"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kata Cold Start Latency High"
+          description: "95th percentile cold start is {{ $value }}s."

@@ -12,6 +12,7 @@ from backend.core.governance.health import validate_governance_secrets
 from backend.core.governance.metrics import metrics_app
 from backend.core.governance.simulation_worker import start_simulation_worker
 from backend.core.middleware.enforcement import register_middleware
+from backend.core.tenant_isolation.tenant_middleware import TenantMiddleware
 from backend.core.security.infisical import infisical_jit_inject
 
 log = logging.getLogger(__name__)

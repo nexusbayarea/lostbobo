@@ -110,5 +110,5 @@ async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 # Protected route example
 @router.get("/me")
-async def get_current_user_info(request: Depends = Depends(get_current_user)):
-    return {"user": request}
+async def get_current_user_info(user: dict = Depends(get_current_user)):
+    return {"user": user}

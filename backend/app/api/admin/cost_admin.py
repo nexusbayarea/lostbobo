@@ -13,5 +13,5 @@ async def get_spend(tenant_id: str):
 
 @router.get("/rate-limits/stats")
 async def rate_limit_stats():
-    limiter = get_rate_limiter()
+    get_rate_limiter()
     return {"total_hits": 0}

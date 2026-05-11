@@ -84,3 +84,35 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1000
   fsGroup: 1000
+
+# Karpenter Integration
+karpenter:
+  enabled: true
+  nodePools:
+    - name: gpu-general
+      instanceFamily: ["g4dn", "g5", "p3", "p4d", "p5", "g6"]
+      capacityType: ["spot", "on-demand"]
+      minSize: 3
+      maxSize: 40
+      spotPriority: true
+    - name: gpu-high-mem
+      instanceFamily: ["p4d", "p5"]
+      capacityType: ["on-demand"]
+      minSize: 1
+      maxSize: 12
+    - name: gpu-isolated
+      instanceFamily: ["p4d", "p5"]
+      capacityType: ["on-demand"]
+      minSize: 2
+      maxSize: 8
+
+# Monitoring
+monitoring:
+  gpu:
+    enabled: true
+
+# Cost Optimization
+costOptimization:
+  spotPriority: true
+  spotThreshold: 0.4
+  minSpotSavings: 0.6

@@ -112,3 +112,28 @@
 - HPA and VPA work together: HPA handles replica count, VPA handles resource requests
 - GPU resources (nvidia.com/gpu) are not managed by VPA
 - All pre-commit hooks pass (green)
+
+## 2026-05-10 20:35:18 PST
+
+### Actions Taken
+
+1. **Added Cluster Autoscaler and Karpenter Integration**
+   - Added clusterAutoscaler section to values.yaml
+   - Created templates/karpenter-nodeclass.yaml for EC2NodeClass
+   - Created templates/karpenter-nodepool.yaml for NodePool
+   - Updated .pre-commit-config.yaml to exclude helm templates from yaml check
+
+2. **Added GPU Monitoring and Cost Optimization**
+   - Added monitoring section to values.yaml (DCGM, Prometheus)
+   - Added Prometheus annotations to deployment.yaml
+   - Added costOptimization section to values.yaml
+   - Created simhpc-core/docs/ with setup guides:
+     - NVIDIA_DEVICE_PLUGIN.md
+     - GPU_MONITORING.md
+     - GPU_COST_OPTIMIZATION.md
+
+### Notes
+
+- Karpenter EC2NodeClass supports GPU instance families: g4dn, g5, p3, p4d, p5
+- Cost optimization includes spot-first scheduling (60-75% savings)
+- All pre-commit hooks pass (green)

@@ -15,7 +15,6 @@ from backend.core.sdk.plugin_loader import (
 
 class SimHPCKernel:
     def __init__(self) -> None:
-
         self.logger = logging.getLogger("simhpc.kernel")
 
         self.capabilities = CapabilityRegistry()
@@ -27,7 +26,6 @@ class SimHPCKernel:
         )
 
     async def boot(self) -> None:
-
         self.logger.info("Booting SimHPC Kernel...")
 
         await self.plugin_loader.load_plugins()

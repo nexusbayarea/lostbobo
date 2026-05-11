@@ -7,7 +7,6 @@ from backend.core.sdk.base_plugin import (
 
 class Plugin(BasePlugin):
     async def register(self, kernel) -> None:
-
         kernel.capabilities.register(
             "materials.predict",
             self.predict,
@@ -17,7 +16,6 @@ class Plugin(BasePlugin):
         self,
         payload: dict,
     ):
-
         return {
             "plugin": "materials",
             "payload": payload,

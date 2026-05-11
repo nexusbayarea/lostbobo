@@ -3,7 +3,6 @@ from __future__ import annotations
 from backend.core.sdk.base_plugin import (
     BasePlugin,
 )
-
 from backend.plugins.physics.dag_nodes.beam_solver import (
     solve_beam,
 )
@@ -16,7 +15,6 @@ class Plugin(BasePlugin):
     manifest = manifest
 
     async def register(self, kernel) -> None:
-
         kernel.capabilities.register(
             "physics.solve",
             self.solve,
@@ -31,7 +29,6 @@ class Plugin(BasePlugin):
         self,
         payload: dict,
     ):
-
         return {
             "plugin": "physics",
             "status": "executed",

@@ -1,10 +1,6 @@
 from backend.core.sdk.plugin_manifest import (
     IsolationTier,
-)
-from backend.core.sdk.plugin_manifest import (
     PluginManifest,
-)
-from backend.core.sdk.plugin_manifest import (
     PluginPermission,
 )
 

@@ -8,7 +8,6 @@ class ExecutionRuntime:
         capability: str,
         payload: dict,
     ):
-
         return await kernel.capabilities.invoke(
             capability,
             payload,
@@ -20,7 +19,6 @@ class ExecutionRuntime:
         node_type: str,
         payload: dict,
     ):
-
         return await kernel.dag.execute_node(
             node_type,
             payload,

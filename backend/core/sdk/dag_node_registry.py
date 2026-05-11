@@ -1,9 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any
-from typing import Awaitable
-from typing import Callable
-
 
 NodeExecutor = Callable[[dict], Awaitable[Any]]
 
@@ -17,7 +15,6 @@ class DAGNodeRegistry:
         node_type: str,
         executor: NodeExecutor,
     ) -> None:
-
         if node_type in self._nodes:
             raise ValueError(f"DAG node already registered: {node_type}")
 
@@ -28,7 +25,6 @@ class DAGNodeRegistry:
         node_type: str,
         payload: dict,
     ) -> Any:
-
         if node_type not in self._nodes:
             raise KeyError(f"Unknown DAG node: {node_type}")
 

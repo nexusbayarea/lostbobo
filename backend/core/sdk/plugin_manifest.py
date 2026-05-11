@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List
 
 from pydantic import BaseModel
 
@@ -24,10 +23,10 @@ class PluginManifest(BaseModel):
     name: str
     version: str
 
-    capabilities: List[str]
+    capabilities: list[str]
 
-    dag_nodes: List[str]
+    dag_nodes: list[str]
 
-    permissions: List[PluginPermission]
+    permissions: list[PluginPermission]
 
     isolation: IsolationTier = IsolationTier.PROCESS

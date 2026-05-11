@@ -1,9 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any
-from typing import Awaitable
-from typing import Callable
-
 
 CapabilityHandler = Callable[[dict], Awaitable[Any]]
 
@@ -17,7 +15,6 @@ class CapabilityRegistry:
         capability: str,
         handler: CapabilityHandler,
     ) -> None:
-
         if capability in self._handlers:
             raise ValueError(f"Capability already registered: {capability}")
 
@@ -28,7 +25,6 @@ class CapabilityRegistry:
         capability: str,
         payload: dict,
     ) -> Any:
-
         if capability not in self._handlers:
             raise KeyError(f"Unknown capability: {capability}")
 

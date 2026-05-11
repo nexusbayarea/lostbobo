@@ -268,3 +268,25 @@ pluginSecurity:
   tmpfs:
     enabled: true
     sizeLimit: "100Mi"
+
+# Kata Containers Configuration (Maximum Isolation)
+kata:
+  enabled: false
+  runtimeClass: "kata"
+  optimized:
+    enabled: false
+    runtimeClass: "kata-optimized"
+  virtiofs:
+    enabled: true
+  hugepages:
+    enabled: false
+    size: "2Mi"  # or "1Gi"
+  nodeSelector:
+    katacontainers.io/kata: "true"
+  resources:
+    requests:
+      cpu: "2"
+      memory: "1Gi"
+    limits:
+      cpu: "4"
+      memory: "2Gi"

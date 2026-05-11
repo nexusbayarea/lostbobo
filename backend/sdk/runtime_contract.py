@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -20,14 +20,14 @@ class PluginRuntimeContract(ABC):
     async def emit(
         self,
         event_type: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         confidence: float = 0.8,
-        entity_key: Optional[str] = None,
+        entity_key: str | None = None,
     ) -> str:
         """Emit event through Event Fabric -> mutates WorldState."""
 
     @abstractmethod
-    async def forecast(self, entity_key: str, horizon: datetime | None = None) -> Dict[str, Any]:
+    async def forecast(self, entity_key: str, horizon: datetime | None = None) -> dict[str, Any]:
         """Request a forecast from the temporal probabilistic engine."""
 
     @abstractmethod
@@ -65,9 +65,9 @@ class DefaultRuntimeContract(PluginRuntimeContract):
     async def emit(
         self,
         event_type: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         confidence: float = 0.8,
-        entity_key: Optional[str] = None,
+        entity_key: str | None = None,
     ) -> str:
         """Emit event -> Event Fabric -> WorldState mutation."""
         try:
@@ -85,7 +85,7 @@ class DefaultRuntimeContract(PluginRuntimeContract):
             log.error("Runtime contract emit failed: %s", e)
             return ""
 
-    async def forecast(self, entity_key: str, horizon: datetime | None = None) -> Dict[str, Any]:
+    async def forecast(self, entity_key: str, horizon: datetime | None = None) -> dict[str, Any]:
         """Request forecast from Temporal Engine."""
         try:
             from backend.core.runtime.temporal.engine import TemporalEngine

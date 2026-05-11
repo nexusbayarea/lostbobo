@@ -6,10 +6,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.api_router import api_router
+from backend.app.api.admin.cost_admin import router as cost_admin_router
 from backend.core.gateway.gateway import SecurityGatewayMiddleware
 from backend.core.governance.health import validate_governance_secrets
 from backend.core.governance.metrics import metrics_app
 from backend.core.governance.simulation_worker import start_simulation_worker
+from backend.core.middleware.enforcement import register_middleware
 from backend.core.security.infisical import infisical_jit_inject
 
 log = logging.getLogger(__name__)
@@ -59,6 +61,10 @@ app.add_middleware(SecurityGatewayMiddleware)
 
 # --- ROUTER INTEGRATION ---
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(cost_admin_router, prefix="/api/v1")
+
+# --- MIDDLEWARE INTEGRATION ---
+register_middleware(app)
 
 
 @app.get("/health")

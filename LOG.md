@@ -342,3 +342,21 @@
 - Log.md is intentionally kept in .gitignore to prevent accidental commits
 - Session logs are maintained for local development tracking only
 - No changes were made to the existing log format or structure
+
+## 2026-05-11 03:30:00 PST
+
+### Actions Taken
+
+1. **Auth Routes Fixed**
+    - Replaced NotImplementedError in _verify_credentials() with proper Supabase JWT verification
+    - Added login endpoint (/api/v1/auth/login) using Supabase sign_in_with_password
+    - Implemented JWT middleware with automatic Bearer token extraction via HTTPBearer
+    - Added proper error handling for invalid/expired tokens
+    - Included example usage for protected routes and frontend integration
+
+### Notes
+
+- Authentication system now properly validates Supabase JWT tokens
+- Login endpoint returns access_token, refresh_token, expires_in, and user info
+- Protected routes can use Depends(get_current_user) for authentication
+- All pre-commit hooks pass (green)

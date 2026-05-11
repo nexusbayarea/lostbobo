@@ -1,7 +1,7 @@
 -- deploy/supabase/migrations/20260510_provenance_storage.sql
 
 -- 1. Core Lineage Table (already exists, add missing columns safely)
-ALTER TABLE execution_lineage 
+ALTER TABLE execution_lineage
 ADD COLUMN IF NOT EXISTS trace_id TEXT,
 ADD COLUMN IF NOT EXISTS correlation_id TEXT,
 ADD COLUMN IF NOT EXISTS causation_id TEXT;
@@ -29,13 +29,13 @@ CREATE TABLE IF NOT EXISTS provenance_edges (
 );
 
 -- Indexes for fast queries and graph traversal
-CREATE INDEX IF NOT EXISTS idx_provenance_nodes_execution 
+CREATE INDEX IF NOT EXISTS idx_provenance_nodes_execution
     ON provenance_nodes(execution_id, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_provenance_edges_execution 
+CREATE INDEX IF NOT EXISTS idx_provenance_edges_execution
     ON provenance_edges(execution_id, source_id, target_id);
 
-CREATE INDEX IF NOT EXISTS idx_provenance_edges_relation 
+CREATE INDEX IF NOT EXISTS idx_provenance_edges_relation
     ON provenance_edges(relation);
 
 -- 3. Signed Snapshots (for audit & replay)
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS provenance_snapshots (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX IF NOT EXISTS idx_snapshots_execution 
+CREATE INDEX IF NOT EXISTS idx_snapshots_execution
     ON provenance_snapshots(execution_id, captured_at DESC);
 
 -- 4. RLS (service_role full access)

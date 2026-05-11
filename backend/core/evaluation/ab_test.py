@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/core/evaluation/ab_test.py
 ──────────────────────────────────
 Lightweight A/B testing harness for prompt variants on resolved questions.
@@ -9,13 +9,14 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 from uuid import uuid4
 
 from backend.core.runtime.event_fabric.log import EventLogService
 from backend.core.runtime.event_fabric.schema import SimHPCEvent
 
 log = logging.getLogger(__name__)
+
 
 @dataclass
 class ABTestResult:
@@ -25,10 +26,11 @@ class ABTestResult:
     resolved_outcome: int
     predicted_prob: float
     brier_score: float
-    evidence_ids: List[str]
+    evidence_ids: list[str]
     cited_evidence_count: int
     timestamp: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
+
 
 class ABTestHarness:
     _instance = None
@@ -69,7 +71,8 @@ class ABTestHarness:
         del self._active_tests[test_id]
         log.info("A/B test %s recorded for variant %s", test_id, variant)
 
-    async def get_test_stats(self, question_id: str | None = None) -> Dict[str, Any]:
+    async def get_test_stats(self, question_id: str | None = None) -> dict[str, Any]:
         return {}
+
 
 ab_test_harness = ABTestHarness()

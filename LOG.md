@@ -186,3 +186,33 @@
 - Profiles: all-1g.5gb (max isolation), all-2g.10gb (enterprise), all-3g.20gb (high-memory), mixed (general)
 - Defense tier uses Never consolidation policy for zero disruption
 - All pre-commit hooks pass (green)
+
+## 2026-05-10 21:23:35 PST
+
+### Actions Taken
+
+1. **Added Prometheus Recording Rules and Alert Rules**
+   - Created simhpc-core/prometheus/recording-rules.yaml with 5 groups: simhpc-gpu, simhpc-mig, simhpc-lineage, simhpc-sla, simhpc-core
+   - Created simhpc-core/prometheus/alert-rules.yaml with 4 groups: GPU alerts, Lineage alerts, SLA alerts, Core alerts
+
+2. **Added Prometheus Federation and Thanos Setup**
+   - Updated values.prod.yaml with prometheus.federation config
+   - Created prometheus/prometheus.yml with federation + scrape configs
+   - Added templates: thanos-sidecar.yaml, thanos-service.yaml, thanos-objstore-secret.yaml
+
+3. **Added Cortex Long-Term Storage**
+   - Updated values.prod.yaml with full Cortex config (distributor, ingester, store gateway, compactor, querier, query frontend)
+   - Added per-metric retention policies (45d for GPU/MIG, 60d for fractional/MPS, 365d for SLA)
+
+4. **Added Full Monitoring Dashboard**
+   - Created simhpc-core/docs/FULL_MONITORING_DASHBOARD.json (v4)
+   - Combined: GPU + MIG + Lineage + SLA monitoring
+   - Enhanced Thanos config in values.prod.yaml with retention: raw 90d, 5m 1y, 1h 2y
+
+### Notes
+
+- Recording rules pre-aggregate metrics for faster dashboard queries
+- Alert rules cover GPU utilization, MIG memory, lineage events, SLA compliance, kernel health
+- Prometheus federation exposes /federate endpoint for central Prometheus
+- Cortex and Thanos are both available (enable via values)
+- All pre-commit hooks pass (green)

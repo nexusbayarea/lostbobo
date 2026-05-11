@@ -136,15 +136,19 @@ prometheus:
       - '{job="nvidia-dcgm-exporter"}'
     central_prometheus_url: "https://central-prometheus.yourdomain.com"
 
-# Thanos Configuration
+# Thanos Configuration (Long-term metrics store)
 thanos:
   enabled: false
-  s3:
-    accessKey: ""
-    secretKey: ""
+  objstore:
+    type: s3
     bucket: "simhpc-thanos"
+    endpoint: "s3.us-east-1.amazonaws.com"
+    region: "us-east-1"
+    access_key: ""
+    secret_key: ""
   sidecar:
     enabled: false
+    prometheusUrl: "http://prometheus-operated.monitoring.svc.cluster.local:9090"
     resources:
       requests:
         cpu: "500m"
@@ -152,6 +156,32 @@ thanos:
       limits:
         cpu: "2"
         memory: "4Gi"
+  querier:
+    enabled: false
+    replicas: 3
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+  storeGateway:
+    enabled: false
+    replicas: 2
+  compactor:
+    enabled: false
+    replicas: 1
+    retention:
+      raw: 90d
+      5m: 1y
+      1h: 2y
+  ruler:
+    enabled: false
+    replicas: 2
+  queryFrontend:
+    enabled: false
+    replicas: 2
 
 # Cortex Long-Term Storage
 cortex:

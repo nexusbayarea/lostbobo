@@ -9,11 +9,9 @@ from backend.plugins.science.manifest import (
 
 
 class Plugin(BasePlugin):
-
     manifest = manifest
 
     async def register(self, kernel) -> None:
-
         kernel.capabilities.register(
             "science.reason",
             self.reason,
@@ -23,7 +21,6 @@ class Plugin(BasePlugin):
         self,
         payload: dict,
     ):
-
         return {
             "plugin": "science",
             "payload": payload,

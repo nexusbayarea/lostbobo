@@ -1,0 +1,116 @@
+groups:
+  - name: simhpc-gpu-alerts
+    rules:
+      - alert: GPUHighUtilization
+        expr: gpu:utilization:avg > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GPU Utilization"
+          description: "Average GPU utilization is {{ $value }}% for over 5 minutes."
+
+      - alert: GPUCriticalUtilization
+        expr: gpu:utilization:avg > 92
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical GPU Utilization"
+          description: "GPU cluster is heavily saturated at {{ $value }}%."
+
+      - alert: MIGHighUtilization
+        expr: mig:utilization:avg > 88
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High MIG Instance Utilization"
+          description: "MIG instances at {{ $value }}% utilization."
+
+      - alert: MIGMemoryPressure
+        expr: mig:memory:utilization:avg > 90
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MIG Memory Pressure"
+          description: "MIG memory usage critically high."
+
+  - name: simhpc-lineage-alerts
+    rules:
+      - alert: HighLineageEventRate
+        expr: lineage:events:rate5m > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Lineage Event Rate"
+          description: "{{ $value }} events per minute - possible storm."
+
+      - alert: LineageCollectionFailure
+        expr: increase(lineage_emit_failures_total[10m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Lineage Collection Failures"
+          description: "Multiple lineage events failed to persist."
+
+  - name: simhpc-sla-alerts
+    rules:
+      - alert: SLABreachRateHigh
+        expr: sla:breach:rate:1h > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High SLA Breach Rate"
+          description: "SLA breach rate is {{ $value | humanizePercentage }} in the last hour."
+
+      - alert: SLAComplianceLow
+        expr: sla:compliance:overall < 98
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SLA Compliance Below Target"
+          description: "Overall SLA compliance dropped to {{ $value | humanizePercentage }}%."
+
+      - alert: WarmPoolHitRateLow
+        expr: sla:warm_hit_rate:5m < 0.75
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low Warm Pool Hit Rate"
+          description: "Warm pool efficiency is only {{ $value | humanizePercentage }}%."
+
+  - name: simhpc-core-alerts
+    rules:
+      - alert: KernelHealthySubsystemsLow
+        expr: kernel:healthy_subsystems_ratio < 0.9
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kernel Subsystem Health Degraded"
+          description: "Only {{ $value | humanizePercentage }}% of subsystems are healthy."
+
+      - alert: HighAgentForecastError
+        expr: agent:forecast:mean_brier:1h > 0.25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Poor Agent Forecast Calibration"
+          description: "Mean Brier score is {{ $value }} (target < 0.20)."
+
+      - alert: HighMIGProfileSwitchRate
+        expr: increase(mig_profile_switches_total[1h]) > 8
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Frequent MIG Profile Switching"
+          description: "MIG profile changes may indicate unstable demand."

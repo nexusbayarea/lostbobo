@@ -1,0 +1,67 @@
+groups:
+  - name: simhpc-gpu
+    rules:
+      - record: gpu:utilization:avg
+        expr: avg(rate(DCGM_FI_DEV_GPU_UTIL[2m]))
+
+      - record: gpu:utilization:max
+        expr: max(DCGM_FI_DEV_GPU_UTIL)
+
+      - record: gpu:utilization:by_instance
+        expr: sum by (instance, gpu) (rate(DCGM_FI_DEV_GPU_UTIL[2m]))
+
+      - record: gpu:memory:utilization:avg
+        expr: avg(rate(DCGM_FI_DEV_MEM_COPY_UTIL[2m]))
+
+      - record: simhpc:fractional:gpu_utilization:avg
+        expr: avg(simhpc_fractional_gpu_utilization)
+
+      - record: mps:clients:active:avg
+        expr: avg(mps_active_clients)
+
+  - name: simhpc-mig
+    rules:
+      - record: mig:utilization:avg
+        expr: avg(rate(DCGM_FI_DEV_GPU_UTIL{instance=~".*mig.*"}[2m]))
+
+      - record: mig:memory:utilization:avg
+        expr: avg(rate(DCGM_FI_DEV_MEM_COPY_UTIL{instance=~".*mig.*"}[2m]))
+
+      - record: mig:instances:active:total
+        expr: count(DCGM_FI_DEV_MIG_PROFILE)
+
+      - record: mig:profile:distribution
+        expr: sum by (profile) (DCGM_FI_DEV_MIG_PROFILE)
+
+  - name: simhpc-lineage
+    rules:
+      - record: lineage:events:rate5m
+        expr: sum by (event_type) (rate(execution_lineage_events_total[5m]))
+
+      - record: lineage:events:total:1h
+        expr: sum(increase(execution_lineage_events_total[1h]))
+
+      - record: execution:count:1h
+        expr: sum by (execution_id) (changes(execution_lineage_events_total{event_type="execution_completed"}[1h]))
+
+  - name: simhpc-sla
+    rules:
+      - record: sla:compliance:overall
+        expr: (1 - sum(sla_breaches_total) / sum(sla_requests_total)) * 100
+
+      - record: sla:breach:rate:1h
+        expr: sum by (sla_tier) (rate(sla_breaches_total[1h]))
+
+      - record: sla:warm_hit_rate:5m
+        expr: sum(rate(warm_pool_hits_total[5m])) / sum(rate(warm_pool_requests_total[5m]))
+
+  - name: simhpc-core
+    rules:
+      - record: kernel:executions:success_rate:5m
+        expr: sum(rate(kernel_executions_success_total[5m])) / sum(rate(kernel_executions_total[5m]))
+
+      - record: agent:forecast:mean_brier:1h
+        expr: avg(calibration_records_brier_score[1h])
+
+      - record: hardware:utilization:avg
+        expr: avg(simhpc_gpu_utilization)

@@ -9,11 +9,10 @@ Snapshots are immutable and stored in Supabase for auditability.
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 from uuid import uuid4
 
 from backend.core.runtime.adaptation.rl_engine import rl_adaptation_engine
@@ -28,11 +27,11 @@ log = logging.getLogger(__name__)
 class RLPolicySnapshot:
     snapshot_id: str
     timestamp: float
-    policy_state_dict: Dict[str, Any]  # torch state_dict (serialized)
+    policy_state_dict: dict[str, Any]  # torch state_dict (serialized)
     epsilon: float
     reward_history: list[float]
     training_step: int
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class RLPolicySnapshotManager:

@@ -9,11 +9,6 @@ from backend.core.hardware.economics import (
     ResourceEconomicsRuntime,
     get_economics_engine,
 )
-from backend.core.hardware.forecasting import (
-    DemandForecaster,
-    PredictiveCapacityForecaster,
-    get_capacity_forecaster,
-)
 from backend.core.hardware.fractional import FractionalAllocation, FractionalGPUScheduler, get_fractional_scheduler
 from backend.core.hardware.isolation import (
     GPUIsolationConfig,
@@ -46,7 +41,6 @@ from backend.hardware.sla import SLATier
 
 __all__ = [
     "CostModel",
-    "DemandForecaster",
     "EconomicScore",
     "FractionalAllocation",
     "FractionalGPUScheduler",
@@ -59,7 +53,6 @@ __all__ = [
     "NodeStatus",
     "PlacementEngine",
     "PlacementPolicy",
-    "PredictiveCapacityForecaster",
     "ProviderHealth",
     "ProviderInterface",
     "GPUNode",
@@ -74,7 +67,6 @@ __all__ = [
     "SLATier",
     "ResourceEconomicsRuntime",
     "get_economics_engine",
-    "get_capacity_forecaster",
     "get_fractional_scheduler",
     "get_isolation_manager",
 ]

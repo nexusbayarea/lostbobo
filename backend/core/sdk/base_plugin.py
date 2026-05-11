@@ -2,15 +2,26 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from backend.core.sdk.plugin_manifest import PluginManifest
+from backend.core.sdk.abi.plugin_manifest import PluginManifest
+from backend.core.sdk.runtime.plugin_context import PluginContext
 
 
 class BasePlugin(ABC):
     manifest: PluginManifest
 
+    # Boot Lifecycle
     @abstractmethod
-    async def register(self, kernel) -> None:
-        """
-        Register capabilities + DAG nodes.
-        """
-        raise NotImplementedError
+    async def pre_boot(self, context: PluginContext) -> None:
+        pass
+
+    @abstractmethod
+    async def register(self, context: PluginContext) -> None:
+        """Register capabilities + DAG nodes."""
+
+    @abstractmethod
+    async def post_boot(self, context: PluginContext) -> None:
+        pass
+
+    @abstractmethod
+    async def shutdown(self, context: PluginContext) -> None:
+        pass

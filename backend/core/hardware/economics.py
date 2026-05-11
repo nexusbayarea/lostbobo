@@ -132,6 +132,7 @@ class EconomicsEngine:
         self,
         capacity: ExecutionCapacity,
         request: SchedulingRequest,
+        kernel: Any | None = None,
         predicted_demand: dict[str, float] | None = None,
     ) -> EconomicScore:
         base_cost = capacity.hourly_cost_usd * request.estimated_duration_minutes / 60
@@ -146,20 +147,20 @@ class EconomicsEngine:
         latency_requirement_ms = request.metadata.get("latency_requirement_ms", 800)
         latency_penalty = max(0.0, (latency_requirement_ms - 800) / 5000)
         demand_bonus = 0.0
-        try:
-            from backend.core.hardware.forecasting import DemandForecaster
-
-            predicted = await DemandForecaster.forecaster().predict_demand(
-                horizon_minutes=30,
-                pool_classes=None,
+        if kernel:
+            try:
+                predicted = await kernel.capabilities.invoke("forecast.generate", {"model": "demand", "payload": {}})
+                if predicted and capacity.pool_class.value in predicted:
+                    demand_bonus = predicted[capacity.pool_class.value] * 0.28
+            except Exception:
+                pass
+            total_score = (
+                margin * 0.45
+                + utilization_boost * 0.20
+                + sla_score * 0.25
+                + demand_bonus * 0.10
+                - latency_penalty * 0.05
             )
-            if predicted and capacity.pool_class.value in predicted:
-                demand_bonus = predicted[capacity.pool_class.value] * 0.28
-        except Exception:
-            pass
-        total_score = (
-            margin * 0.45 + utilization_boost * 0.20 + sla_score * 0.25 + demand_bonus * 0.10 - latency_penalty * 0.05
-        )
         if margin > 0.42 and sla_score > 0.7:
             action = "reserve"
         elif margin < 0.15:

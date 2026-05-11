@@ -55,14 +55,24 @@ class CapacityForecaster:
         if self._db is None:
             return self._mock_forecast(horizon)
 
-        result = self._db.table("simulation_runs").select("sla_tier, status").eq("status", "queued").execute()
+        result = (
+            self._db.table("simulation_runs")
+            .select("sla_tier, status")
+            .eq("status", "queued")
+            .execute()
+        )
 
         queued_by_tier: dict[str, int] = {}
         for row in result.data or []:
             tier = row.get("sla_tier", "free")
             queued_by_tier[tier] = queued_by_tier.get(tier, 0) + 1
 
-        active = self._db.table("simulation_runs").select("id").eq("status", "running").execute()
+        active = (
+            self._db.table("simulation_runs")
+            .select("id")
+            .eq("status", "running")
+            .execute()
+        )
         active_count = len(active.data or [])
 
         forecasts: list[dict[str, Any]] = []
@@ -163,7 +173,9 @@ class DemandForecaster:
 
             regime = "normal"
             try:
-                from backend.core.runtime.state_registry.service import StateRegistryService
+                from backend.core.runtime.state_registry.service import (
+                    StateRegistryService,
+                )
 
                 state = await StateRegistryService.registry().get_current()
                 regime = getattr(state, "regime", "normal")
@@ -181,7 +193,9 @@ class DemandForecaster:
 
             stats_forecast = await self._statistical_baseline()
 
-            regime_multiplier = {"normal": 1.0, "panic": 1.45, "disruption": 1.85}.get(regime, 1.3)
+            regime_multiplier = {"normal": 1.0, "panic": 1.45, "disruption": 1.85}.get(
+                regime, 1.3
+            )
 
             combined: dict[str, float] = {}
             targets = pool_classes or list(PoolClassType)
@@ -254,7 +268,9 @@ class PredictiveCapacityForecaster:
 
         trend = await self._compute_trend_forecast(horizon_minutes)
 
-        regime_weight = {"normal": 0.4, "panic": 0.7, "disruption": 0.85}.get(regime, 0.55)
+        regime_weight = {"normal": 0.4, "panic": 0.7, "disruption": 0.85}.get(
+            regime, 0.55
+        )
 
         forecast: dict[str, dict[str, Any]] = {}
         try:
@@ -271,7 +287,9 @@ class PredictiveCapacityForecaster:
                     "lower_bound": round(max(0.0, base_demand - uncertainty), 3),
                     "upper_bound": round(min(1.0, base_demand + uncertainty), 3),
                     "confidence": round(max(0.1, 1.0 - uncertainty * 0.8), 3),
-                    "recommended_warm_reserve": int(base_demand * 4) if base_demand > 0.6 else 1,
+                    "recommended_warm_reserve": int(base_demand * 4)
+                    if base_demand > 0.6
+                    else 1,
                 }
         except Exception:
             for key in trend:
@@ -283,7 +301,9 @@ class PredictiveCapacityForecaster:
                     "lower_bound": round(max(0.0, base_demand - uncertainty), 3),
                     "upper_bound": round(min(1.0, base_demand + uncertainty), 3),
                     "confidence": round(max(0.1, 1.0 - uncertainty * 0.8), 3),
-                    "recommended_warm_reserve": int(base_demand * 4) if base_demand > 0.6 else 1,
+                    "recommended_warm_reserve": int(base_demand * 4)
+                    if base_demand > 0.6
+                    else 1,
                 }
 
         scenarios_data: dict[str, Any] = {}
@@ -291,11 +311,21 @@ class PredictiveCapacityForecaster:
             scenarios_data = {
                 "normal": forecast,
                 "high_load": {
-                    k: {**v, "predicted_demand": round(min(1.0, v["predicted_demand"] * 1.45), 3)}
+                    k: {
+                        **v,
+                        "predicted_demand": round(
+                            min(1.0, v["predicted_demand"] * 1.45), 3
+                        ),
+                    }
                     for k, v in forecast.items()
                 },
                 "disruption": {
-                    k: {**v, "predicted_demand": round(min(1.0, v["predicted_demand"] * 1.9), 3)}
+                    k: {
+                        **v,
+                        "predicted_demand": round(
+                            min(1.0, v["predicted_demand"] * 1.9), 3
+                        ),
+                    }
                     for k, v in forecast.items()
                 },
             }
@@ -312,7 +342,10 @@ class PredictiveCapacityForecaster:
             from backend.core.services.observability_service import observability
 
             obs = observability()
-            obs.gauge("predicted_isolated_demand", forecast.get("isolated", {}).get("predicted_demand", 0))
+            obs.gauge(
+                "predicted_isolated_demand",
+                forecast.get("isolated", {}).get("predicted_demand", 0),
+            )
         except Exception:
             pass
 
@@ -328,7 +361,9 @@ class PredictiveCapacityForecaster:
             "high_memory": 0.55,
         }
 
-    async def _estimate_uncertainty(self, pool_class: str, horizon_minutes: int) -> float:
+    async def _estimate_uncertainty(
+        self, pool_class: str, horizon_minutes: int
+    ) -> float:
         base = 0.12
         horizon_factor = min(0.35, horizon_minutes / 240)
         return base + horizon_factor

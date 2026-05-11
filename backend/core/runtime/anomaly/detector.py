@@ -93,6 +93,8 @@ class CausalAnomalyDetector:
                 self._recent_anomalies.append(anomaly)
 
             self._recent_anomalies = self._recent_anomalies[-100:]
+
+            await self._run_ml_predictions()
         except Exception as e:
             log.error("Detection pass error: %s", e)
 
@@ -281,6 +283,29 @@ class CausalAnomalyDetector:
 
     async def get_recent_anomalies(self, limit: int = 50) -> list[dict[str, Any]]:
         return [a.__dict__ for a in self._recent_anomalies[-limit:]]
+
+    async def _run_ml_predictions(self):
+        """Run ML-based anomaly predictions."""
+        try:
+            from backend.core.runtime.anomaly.ml_predictor import ml_anomaly_predictor
+
+            predictions = await ml_anomaly_predictor.predict()
+            for pred in predictions:
+                anomaly = CausalAnomaly(
+                    anomaly_id=str(uuid4()),
+                    anomaly_type=f"predicted_{pred.anomaly_type}",
+                    severity=pred.severity,
+                    description=f"ML-predicted {pred.anomaly_type} in {pred.horizon_seconds}s",
+                    affected_entity_keys=pred.affected_entity_keys,
+                    confidence=pred.probability,
+                    causal_id="predicted",
+                    timestamp=time.time(),
+                    evidence={"ml_probability": pred.probability, **pred.features},
+                )
+                await self._emit_anomaly(anomaly)
+                self._recent_anomalies.append(anomaly)
+        except Exception as e:
+            log.warning("ML prediction failed: %s", e)
 
 
 anomaly_detector = CausalAnomalyDetector()

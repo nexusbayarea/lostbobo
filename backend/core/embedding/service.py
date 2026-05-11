@@ -77,5 +77,51 @@ class EmbeddingService:
         log.info("Embedding pipeline completed — %d chunks embedded", processed)
         return processed
 
+    async def reprocess_dead_letter(self, max_retries: int = 3) -> int:
+        """Reprocess failed chunks from dead-letter queue."""
+        sb = get_supabase_client()
+        if not sb:
+            return 0
+
+        # Get dead-letter entries with retry_count < max_retries
+        resp = (
+            sb.table("document_chunks_dead_letter")
+            .select("id, chunk_id, content, retry_count")
+            .lt("retry_count", max_retries)
+            .limit(200)
+            .execute()
+        )
+
+        entries = resp.data or []
+        if not entries:
+            log.info("Dead-letter queue is empty or all entries exhausted retries")
+            return 0
+
+        processed = 0
+        for entry in entries:
+            try:
+                # Re-embed single chunk
+                embeddings = await self.embed_batch([entry["content"]])
+                embedding = embeddings[0]
+
+                # Move back to main table
+                sb.table("document_chunks").update({"embedding": embedding}).eq("id", entry["chunk_id"]).execute()
+
+                # Remove from dead-letter
+                sb.table("document_chunks_dead_letter").delete().eq("id", entry["id"]).execute()
+
+                processed += 1
+                log.info("Successfully reprocessed dead-letter chunk %s", entry["chunk_id"])
+
+            except Exception as e:
+                # Increment retry count
+                sb.table("document_chunks_dead_letter").update(
+                    {"retry_count": entry["retry_count"] + 1, "last_attempt": "now()"}
+                ).eq("id", entry["id"]).execute()
+                log.warning("Reprocessing failed for chunk %s: %s", entry["chunk_id"], e)
+
+        log.info("Dead-letter reprocessing completed — %s chunks recovered", processed)
+        return processed
+
 
 embedding_service = EmbeddingService()

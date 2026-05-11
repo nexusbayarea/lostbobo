@@ -1,8 +1,9 @@
 """
 backend/core/middleware/rate_limiter.py
-Sliding Window + Token Bucket Rate Limiter (Supabase-backed)
+Sliding Window Rate Limiter (Supabase-backed)
 """
 
+import time
 from dataclasses import dataclass
 
 from backend.app.core.supabase import get_supabase_client
@@ -45,13 +46,29 @@ class RateLimiter:
     def check(self, tenant_id: str, endpoint: str, sla_tier: str = "free") -> RateLimitResult:
         cfg = ENDPOINT_OVERRIDES.get(endpoint) or TIER_LIMITS.get(sla_tier, TIER_LIMITS["free"])
 
-        # Simple implementation for now (can be expanded with sliding window later)
+        # Call Supabase RPC
+        now = time.time()
+        window_start = now - cfg.window_seconds
+
+        # RPC returns {"count": int, "allowed": bool}
+        response = self._db.rpc(
+            "rate_limit_sliding_window",
+            {
+                "p_tenant_id": tenant_id,
+                "p_endpoint": endpoint,
+                "p_window_start": window_start,
+                "p_bucket": int(now),
+                "p_limit": cfg.requests_per_minute,
+            },
+        ).execute()
+
+        result = response.data
         return RateLimitResult(
-            allowed=True,
+            allowed=result["allowed"],
             limit=cfg.requests_per_minute,
-            remaining=cfg.requests_per_minute - 1,
-            retry_after_seconds=0,
-            algorithm="tier_based",
+            remaining=max(0, cfg.requests_per_minute - result["count"]),
+            retry_after_seconds=0 if result["allowed"] else 1.0,
+            algorithm="sliding_window_sql",
         )
 
 

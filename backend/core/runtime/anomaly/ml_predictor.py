@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +49,6 @@ class MLAnomalyPredictor:
 
     def _build_lstm(self):
         try:
-            import torch
             import torch.nn as nn
 
             class LSTMAnomalyModel(nn.Module):
@@ -90,10 +88,10 @@ class MLAnomalyPredictor:
             import numpy as np
 
             feature_array = list(features.values())
-            if not all(isinstance(v, (int, float)) for v in feature_array):
+            if not all(isinstance(v, int | float) for v in feature_array):
                 return predictions
 
-            X = np.array([list(h.values()) for h in self._history[-lookback_window:]])
+            x = np.array([list(h.values()) for h in self._history[-lookback_window:]])
 
             ensemble_prob = 0.25
 
@@ -104,8 +102,8 @@ class MLAnomalyPredictor:
                 try:
                     import torch
 
-                    X_scaled = (X - X.mean(axis=0)) / (X.std(axis=0) + 1e-8)
-                    lstm_input = torch.tensor(X_scaled[-10:]).unsqueeze(0).float()
+                    x_scaled = (x - x.mean(axis=0)) / (x.std(axis=0) + 1e-8)
+                    lstm_input = torch.tensor(x_scaled[-10:]).unsqueeze(0).float()
                     with torch.no_grad():
                         lstm_out = self._lstm_model(lstm_input)
                         probs = torch.softmax(lstm_out, dim=1)[0]
@@ -115,7 +113,7 @@ class MLAnomalyPredictor:
 
             if self._isolation_forest is not None:
                 try:
-                    if_score = self._isolation_forest.fit_predict(X[-1].reshape(1, -1))[0]
+                    if_score = self._isolation_forest.fit_predict(x[-1].reshape(1, -1))[0]
                     if if_score == -1:
                         ensemble_prob = max(ensemble_prob, 0.45)
                 except Exception:

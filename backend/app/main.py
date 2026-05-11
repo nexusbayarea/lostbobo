@@ -58,6 +58,7 @@ app.add_middleware(
 )
 
 app.add_middleware(SecurityGatewayMiddleware)
+app.add_middleware(TenantMiddleware)
 
 # --- ROUTER INTEGRATION ---
 app.include_router(api_router, prefix="/api/v1")

@@ -57,7 +57,7 @@
 
 1. **Created Helm Chart for SimHPC Core**
    - Created `simhpc-core/` directory with Chart.yaml (v0.9.1)
-   - Created values.yaml with GPU configuration (fractional, MPS, nodeSelector, tolerations)        
+   - Created values.yaml with GPU configuration (fractional, MPS, nodeSelector, tolerations)
    - Created templates: deployment.yaml, service.yaml, configmap.yaml, secret.yaml, job-migration.yaml, ingress.yaml
    - Created .helmignore
 
@@ -202,7 +202,7 @@
 
 3. **Added Cortex Long-Term Storage**
    - Updated values.prod.yaml with full Cortex config (distributor, ingester, store gateway, compactor, querier, query frontend)
-   - Added per-metric retention policies (45d for GPU/MIG, 60d for fractional/MPS, 365d for SLA)    
+   - Added per-metric retention policies (45d for GPU/MIG, 60d for fractional/MPS, 365d for SLA)
 
 4. **Added Full Monitoring Dashboard**
    - Created simhpc-core/docs/FULL_MONITORING_DASHBOARD.json (v4)
@@ -212,7 +212,7 @@
 ### Notes
 
 - Recording rules pre-aggregate metrics for faster dashboard queries
-- Alert rules cover GPU utilization, MIG memory, lineage events, SLA compliance, kernel health      
+- Alert rules cover GPU utilization, MIG memory, lineage events, SLA compliance, kernel health
 - Prometheus federation exposes /federate endpoint for central Prometheus
 - Cortex and Thanos are both available (enable via values)
 - All pre-commit hooks pass (green)
@@ -233,7 +233,7 @@
 
 3. **Created Isolation Router SDK**
    - File: backend/sdk/isolation_router.py
-   - Automatic isolation tier selection (sandbox â†’ WASM â†’ Kata)
+   - Automatic isolation tier selection (sandbox -> WASM -> Kata)
    - choose_isolation_mode() based on security_tier in manifest
    - get_runtime_class() mapping for Kata RuntimeClass
 
@@ -304,7 +304,7 @@
 1. **Implemented VirtioFS Optimizations for SimHPC Plugins**
     - Updated simhpc-core/values.kata.yaml with requested VirtioFS settings: cache=always, writeback=true, queue_size=1024, multi_queue=true
     - Added noatime and nodiratime mount options for VirtioFS volumes
-    - Created simhpc-core/templates/plugin-deployment.yaml for VirtioFS-based plugin deployments    
+    - Created simhpc-core/templates/plugin-deployment.yaml for VirtioFS-based plugin deployments
     - Updated simhpc-core/values.yaml with plugin configuration section
     - Modified simhpc-core/templates/deployment.yaml to use kata-optimized runtime when Kata is enabled
     - Added VirtioFS cache hit rate monitoring panel to Grafana dashboard
@@ -348,7 +348,7 @@
 ### Actions Taken
 
 1. **Auth Routes Fixed**
-    - Replaced NotImplementedError in _verify_credentials() with proper Supabase JWT verification   
+    - Replaced NotImplementedError in _verify_credentials() with proper Supabase JWT verification
     - Added login endpoint (/api/v1/auth/login) using Supabase sign_in_with_password
     - Implemented JWT middleware with automatic Bearer token extraction via HTTPBearer
     - Added proper error handling for invalid/expired tokens

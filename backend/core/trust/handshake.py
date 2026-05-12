@@ -7,6 +7,7 @@ from typing import Any
 from backend.core.protocol.bus.protocol_envelope import ProtocolEnvelope
 from backend.core.protocol.bus.protocol_response import ProtocolResponse
 from backend.core.protocol.contracts.base_protocol import BaseProtocol
+from backend.core.trust.behavioral_engine import BehavioralTrustEvaluator
 from backend.core.trust.identity import TrustVerifier
 
 
@@ -18,11 +19,15 @@ class Session:
         target_plugin: str,
         capabilities: list[str],
         ttl_seconds: int = 300,
+        trust_score: float = 1.0,
+        action: str = "allow",
     ):
         self.session_id = session_id
         self.source_plugin = source_plugin
         self.target_plugin = target_plugin
         self.capabilities = capabilities
+        self.trust_score = trust_score
+        self.action = action
         self.created_at = time.time()
         self.expires_at = time.time() + ttl_seconds
 
@@ -35,6 +40,8 @@ class Session:
             "source_plugin": self.source_plugin,
             "target_plugin": self.target_plugin,
             "capabilities": self.capabilities,
+            "trust_score": self.trust_score,
+            "action": self.action,
             "created_at": self.created_at,
             "expires_at": self.expires_at,
         }
@@ -50,9 +57,11 @@ class SessionManager:
         target: str,
         capabilities: list[str],
         ttl_seconds: int = 300,
+        trust_score: float = 1.0,
+        action: str = "allow",
     ) -> str:
         session_id = secrets.token_hex(16)
-        session = Session(session_id, source, target, capabilities, ttl_seconds)
+        session = Session(session_id, source, target, capabilities, ttl_seconds, trust_score, action)
         self._sessions[session_id] = session
         return session_id
 
@@ -130,17 +139,21 @@ class HandshakeProtocol(BaseProtocol):
             await self.telemetry.report("handshake.failed", target_id or "unknown", {"reason": "target not found"})
             return ProtocolResponse(success=False, error="Target plugin not found")
 
-        if not self.verifier.verify_request(payload, source.public_key):
+        identity_ok = bool(self.verifier.verify_request(payload, source.public_key))
+        if not identity_ok:
             await self.telemetry.report("handshake.invalid_signature", source_id, {"target": target_id})
             return ProtocolResponse(success=False, error="Invalid request signature")
 
+        capabilities_ok = True
         for cap in requested:
             if cap not in source.permissions:
+                capabilities_ok = False
                 await self.telemetry.report("handshake.unauthorized_capability", source_id, {"requested": cap})
                 return ProtocolResponse(success=False, error=f"Capability {cap} not allowed for source")
 
         for cap in requested:
             if cap not in target.permissions:
+                capabilities_ok = False
                 await self.telemetry.report("handshake.unauthorized_capability", target_id, {"requested": cap})
                 return ProtocolResponse(success=False, error=f"Capability {cap} not available on target")
 
@@ -153,17 +166,54 @@ class HandshakeProtocol(BaseProtocol):
             except Exception:
                 return ProtocolResponse(success=False, error="Plugin challenge timeout")
 
-        session_id = self.kernel.session_manager.create_session(source_id, target_id, requested)
+        trust_eval: BehavioralTrustEvaluator = self.kernel.trust_evaluator
+        eval_result = await trust_eval.evaluate(
+            source_id=source_id,
+            target_id=target_id,
+            identity_ok=identity_ok,
+            capabilities_ok=capabilities_ok,
+        )
+
+        if eval_result.action == "reject":
+            return ProtocolResponse(
+                success=False,
+                error=f"Plugin trust score too low ({eval_result.trust_score})",
+            )
+
+        effective_caps = list(requested)
+        if eval_result.action == "sandbox":
+            effective_caps = [
+                c for c in effective_caps if not c.startswith("memory.write") and not c.startswith("lineage.write")
+            ]
+
+        session_id = self.kernel.session_manager.create_session(
+            source_id,
+            target_id,
+            effective_caps,
+            trust_score=eval_result.trust_score,
+            action=eval_result.action,
+        )
         session = self.kernel.session_manager.validate_session(session_id)
 
-        await self.telemetry.report("handshake.completed", source_id, {"target": target_id, "session_id": session_id})
+        await self.telemetry.report(
+            "handshake.completed",
+            source_id,
+            {
+                "target": target_id,
+                "session_id": session_id,
+                "trust_score": eval_result.trust_score,
+                "action": eval_result.action,
+            },
+        )
 
         return ProtocolResponse(
             success=True,
             payload={
                 "session_token": session_id,
                 "expires_at": session.expires_at if session else 0,
-                "granted_capabilities": requested,
+                "granted_capabilities": effective_caps,
+                "trust_score": eval_result.trust_score,
+                "action": eval_result.action,
             },
         )
 

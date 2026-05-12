@@ -11,9 +11,11 @@ from backend.core.health import HealthProbe
 from backend.core.protocol.bus.protocol_bus import KernelProtocolBus
 from backend.core.protocol.contracts.plugin_message_protocol import PluginMessageProtocol
 from backend.core.runtime_manifest import RuntimeManifest
+from backend.core.trust.behavioral_engine import BehavioralTrustEvaluator
 from backend.core.trust.handshake import HandshakeProtocol, SessionManager
 from backend.core.trust.identity import IdentityVerifier, TrustStore
 from backend.core.trust.telemetry_hook import TrustTelemetry
+from backend.core.trust.trust_graph import TrustGraphAnalyzer
 from backend.core.workers.registration import WorkerCapabilities, register_worker
 
 log = logging.getLogger("simhpc.kernel_boot")
@@ -47,8 +49,10 @@ async def boot(kernel) -> None:
     kernel.identity_verifier = IdentityVerifier()
     kernel.session_manager = SessionManager()
     kernel.trust_telemetry = TrustTelemetry()
+    kernel.trust_evaluator = BehavioralTrustEvaluator()
+    kernel.trust_graph = TrustGraphAnalyzer()
 
-    log.info("Trust subsystem initialized")
+    log.info("Trust subsystem initialized (behavioral engine + trust graph)")
 
     kernel.handshake_protocol = HandshakeProtocol(kernel)
     kernel.plugin_message_protocol = PluginMessageProtocol(kernel)

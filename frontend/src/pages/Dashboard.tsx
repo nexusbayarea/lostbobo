@@ -22,26 +22,22 @@ import { RunControlPanel } from '@/sections/dashboard/RunControlPanel';
 import { ResultsPanel } from '@/sections/dashboard/ResultsPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
 const sidebarItems = [
   { id: 'simulations', label: 'Simulations', icon: Play },
   { id: 'robustness', label: 'Robustness', icon: BarChart3 },
   { id: 'reports', label: 'Reports', icon: FileText },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
-
 const internalLinks = [
   { id: 'alpha', label: 'Alpha Control', icon: Cpu, path: '/dashboard/alpha' },
   { id: 'observatory', label: 'Kernel Observatory', icon: Activity, path: '/observability' },
 ];
-
 const DEFAULT_PARAMETERS: Parameter[] = [
   { name: 'boundary_flux', baseValue: 1000, unit: 'W/m²', perturbable: true, min: 500, max: 1500 },
   { name: 'thermal_conductivity', baseValue: 1.0, unit: 'W/(m·K)', perturbable: true, min: 0.5, max: 2.0 },
   { name: 'ambient_temp', baseValue: 300, unit: 'K', perturbable: true, min: 250, max: 350 },
   { name: 'mesh_refinement', baseValue: 2.0, unit: 'level', perturbable: false },
 ];
-
 export function Dashboard() {
   const { getToken, user } = useAuth();
   const [activeTab, setActiveTab] = useState('robustness');
@@ -52,7 +48,6 @@ export function Dashboard() {
   const [currentStatus, setCurrentStatus] = useState<'pending' | 'running' | 'completed' | 'failed' | 'queued' | 'processing'>('queued');
   const [progress, setProgress] = useState(0);
   const [usage, setUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-
   useEffect(() => {
     const fetchUsage = async () => {
       try {
@@ -64,7 +59,6 @@ export function Dashboard() {
     };
     if (user) fetchUsage();
   }, [user]);
-
   // Robustness Config State
   const [robustnessEnabled, setRobustnessEnabled] = useState(true);
   const [numRuns, setNumRuns] = useState(15);
@@ -72,7 +66,6 @@ export function Dashboard() {
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [timeout, setTimeoutVal] = useState(300);
   const [seed, setSeed] = useState<number | undefined>(undefined);
-
   // Invoke a kernel capability via the generic edge adapter
   const invokeCapability = async (capability: string, payload: any) => {
     const token = getToken();
@@ -90,7 +83,6 @@ export function Dashboard() {
     }
     return res.json();
   };
-
   const startPolling = async (batchId: string) => {
     try {
       const poll = async () => {
@@ -99,7 +91,6 @@ export function Dashboard() {
         });
         setProgress(result.completed / result.total * 100);
         setCurrentStatus(result.status === 'completed' ? 'completed' : 'processing');
-
         if (result.status === 'completed') {
           setIsRunning(false);
           setCurrentRun({
@@ -118,7 +109,6 @@ export function Dashboard() {
       toast.error(`Polling failed: ${error.message}`);
     }
   };
-
   const handleStartRun = async (overrides?: { method: string; numRuns: number }) => {
     try {
       setIsRunning(true);
@@ -126,10 +116,8 @@ export function Dashboard() {
       setCurrentRunId(null);
       setProgress(0);
       setCurrentStatus('queued');
-
       const activeMethod = overrides?.method || samplingMethod;
       const activeNumRuns = overrides?.numRuns || numRuns;
-
       const config = {
         tenant_id: user?.id,
         parameters: parameters.map((p) => ({
@@ -145,7 +133,6 @@ export function Dashboard() {
         solver_type: 'mfem',
         report_title: 'Robustness Analysis',
       };
-
       const response = await invokeCapability('engineering.robustness.run', config);
       setCurrentRunId(response.batch_id);
       startPolling(response.batch_id);
@@ -155,7 +142,6 @@ export function Dashboard() {
       console.error(error);
     }
   };
-
   const handleCancelRun = async () => {
     if (!currentRunId) return;
     try {
@@ -167,13 +153,11 @@ export function Dashboard() {
       console.error(error);
     }
   };
-
   const handleSignOut = async () => {
     const { supabase } = await import('@/lib/supabase');
     await supabase.auth.signOut();
     window.location.href = '/';
   };
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       {/* Sidebar */}
@@ -215,7 +199,6 @@ export function Dashboard() {
             </AnimatePresence>
           </Link>
         </div>
-
         {/* Navigation */}
         <nav className="p-4 space-y-2">
           {sidebarItems.map((item) => (
@@ -245,7 +228,6 @@ export function Dashboard() {
               </AnimatePresence>
             </button>
           ))}
-
           {/* Internal Links */}
           {internalLinks.map((link) => (
             <button
@@ -280,12 +262,10 @@ export function Dashboard() {
               </AnimatePresence>
             </button>
           ))}
-
           <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
             <NotebookNavButton isSidebarOpen={isSidebarOpen} />
           </div>
         </nav>
-
         {/* Bottom Actions */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700">
           <button
@@ -332,7 +312,6 @@ export function Dashboard() {
           </button>
         </div>
       </motion.aside>
-
       {/* Main Content */}
       <main
         className={cn(
@@ -365,7 +344,6 @@ export function Dashboard() {
             </div>
           </div>
         </header>
-
         {/* Content */}
         <div className="p-8">
           {activeTab === 'robustness' && (
@@ -385,7 +363,6 @@ export function Dashboard() {
                     <p className="text-sm text-slate-500 dark:text-slate-400">Select geometry and mesh parameters</p>
                   </div>
                 </div>
-
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Target Geometry</label>
@@ -416,7 +393,6 @@ export function Dashboard() {
                   </div>
                 </div>
               </motion.div>
-
               <ConfigurationPanel
                 enabled={robustnessEnabled}
                 onEnabledChange={(val) => setRobustnessEnabled(val)}
@@ -440,7 +416,6 @@ export function Dashboard() {
                 activeParams={parameters.filter(p => p.perturbable).length}
                 remainingRuns={usage?.remaining ?? 0}
               />
-
               {isRunning && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -458,11 +433,9 @@ export function Dashboard() {
                   </p>
                 </motion.div>
               )}
-
               {currentRun && <ResultsPanel run={currentRun} />}
             </div>
           )}
-
           {activeTab === 'simulations' && (
             <div className="text-center py-16">
               <Cpu className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
@@ -474,7 +447,6 @@ export function Dashboard() {
               </p>
             </div>
           )}
-
           {activeTab === 'reports' && (
             <div className="text-center py-16">
               <FileText className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
@@ -486,7 +458,6 @@ export function Dashboard() {
               </p>
             </div>
           )}
-
           {activeTab === 'settings' && (
             <div className="max-w-2xl">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">
@@ -535,5 +506,4 @@ export function Dashboard() {
     </div>
   );
 }
-e x p o r t   d e f a u l t   D a s h b o a r d ;  
- 
+export default Dashboard;

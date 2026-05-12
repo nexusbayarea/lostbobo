@@ -1,9 +1,11 @@
-import asyncio
-from typing import Any
-from uuid import uuid4
+from __future__ import annotations
 
-from backend.core.dag.lineage.lineage import DAGLineage
-from backend.core.dag.models import DAGGraph
+import asyncio
+import uuid
+from typing import Any
+
+from backend.core.dag.ir.dag_ir import DAGIR
+from backend.core.dag.lineage.dag_lineage import DAGLineage
 from backend.core.dag.replay.replay import DAGReplayer, DAGReplayRecorder
 from backend.core.dag.runtime.execution_planner import ExecutionPlanner
 from backend.core.scheduler.kernel_scheduler import KernelScheduler
@@ -16,72 +18,64 @@ class DAGRuntime:
         self.planner = ExecutionPlanner()
         self.scheduler: KernelScheduler = kernel.scheduler
         self.dag_registry = kernel.dag_registry
-        self.lineage = DAGLineage(kernel.lineage_syscalls)  # Assume kernel exposes lineage syscalls
+        self.lineage = DAGLineage(kernel.lineage_syscalls)
         self.replay_recorder = DAGReplayRecorder()
         self.replayer = DAGReplayer(self.replay_recorder, self.dag_registry)
 
-    async def execute(self, dag: DAGGraph, tenant_id: str, global_inputs: dict[str, Any]) -> dict[str, Any]:
-        run_id = str(uuid4())
-        await self.lineage.record_graph_start(dag.id, run_id)
+    async def execute(self, dag: DAGIR, global_inputs: dict[str, Any] = {}) -> dict[str, Any]:
+        run_id = str(uuid.uuid4())
+        await self.lineage.record_graph_start(dag.dag_id, run_id)
 
-        # Build levels
+        if dag.replay and dag.replay.replay_hash:
+            try:
+                return await self.replayer.replay(dag, run_id)
+            except KeyError:
+                pass
+
         levels = self.planner.execution_plan(dag)
-
-        # Execution state tracking
-        node_states: dict[str, str] = {n.id: "PENDING" for n in dag.nodes}
         outputs: dict[str, Any] = {}
-        global_outputs: dict[str, Any] = {}
 
         for node_ids in levels:
-            tasks = []
-            for nid in node_ids:
-                node = next(n for n in dag.nodes if n.id == nid)
-                node_states[nid] = "READY"
-                tasks.append(self._execute_node(dag, node, node_states, outputs, run_id, tenant_id, global_inputs))
+            tasks = [self._execute_node(dag, node_id, outputs, run_id, global_inputs) for node_id in node_ids]
             await asyncio.gather(*tasks)
 
-        if dag.nodes:
-            final_node = dag.nodes[-1]
-            if final_node.id in outputs:
-                global_outputs = outputs[final_node.id]
-
-        await self.lineage.record_graph_end(dag.id, run_id, global_outputs)
+        global_outputs = outputs.get(dag.nodes[-1].node_id, {}) if dag.nodes else {}
+        await self.lineage.record_graph_end(dag.dag_id, run_id, global_outputs)
         return global_outputs
 
-    async def _execute_node(self, dag, node, states, outputs, run_id, tenant_id, global_inputs):
-        await self.lineage.record_node_start(dag.id, run_id, node.id)
+    async def _execute_node(self, dag: DAGIR, node_id: str, outputs: dict, run_id: str, global_inputs: dict):
+        node = next(n for n in dag.nodes if n.node_id == node_id)
+        await self.lineage.record_node_start(dag.dag_id, run_id, node.node_id)
 
-        # Prepare inputs (simple mapping from previous outputs)
         inputs = global_inputs.copy()
         for edge in dag.edges:
-            if edge.target_node == node.id:
-                inputs[edge.target_port] = outputs.get(edge.source_node, {}).get(edge.source_port)
+            if edge.target == node.node_id:
+                inputs.update(outputs.get(edge.source, {}))
 
         workload = Workload(
-            tenant_id=tenant_id,
-            plugin_name="unknown",  # Simplified
+            tenant_id=dag.tenant_id,
+            plugin_name=node.plugin_name,
             workload_type=WorkloadType.DAG,
             priority=WorkloadPriority.NORMAL,
             resources=ResourceRequest(
-                cpu_cores=node.resources.get("cpu_cores", 1.0) if node.resources else 1.0,
-                memory_mb=node.resources.get("memory_mb", 1024) if node.resources else 1024,
+                cpu_cores=node.resources.cpu_cores,
+                memory_mb=node.resources.memory_mb,
+                gpu_fraction=node.resources.gpu_fraction,
+                gpu_type=node.resources.gpu_type,
             ),
-            dag_id=dag.id,
-            dag_node_id=node.id,
+            dag_id=dag.dag_id,
+            dag_node_id=node.node_id,
         )
 
         sched_result = await self.scheduler.schedule(workload)
         if sched_result["status"] != "accepted":
-            states[node.id] = "FAILED"
-            raise RuntimeError(f"Node {node.id} rejected by scheduler")
+            raise RuntimeError(f"Node {node.node_id} rejected")
 
-        states[node.id] = "RUNNING"
         try:
             executor = self.dag_registry.get_executor(node.node_type)
             output = await executor(inputs)
-            outputs[node.id] = output
-            self.replay_recorder.record(node.id, inputs, output)
-            states[node.id] = "COMPLETED"
-            await self.lineage.record_node_end(dag.id, run_id, node.id, output, 0.0)
+            outputs[node.node_id] = output
+            self.replay_recorder.record(node.node_id, inputs, output)
+            await self.lineage.record_node_end(dag.dag_id, run_id, node.node_id, output, 0.0)
         finally:
             await self.scheduler.release_resources(workload)

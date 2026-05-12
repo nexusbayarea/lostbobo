@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -26,6 +28,11 @@ class MemoryImportance(str, Enum):
     CRITICAL = "critical"
 
 
+class MemoryQuota(BaseModel):
+    max_records: int = 100_000
+    max_bytes: int = 100 * 1024 * 1024
+
+
 class BaseMemoryRecord(BaseModel):
     memory_id: str = Field(default_factory=lambda: uuid4().hex)
     tenant_id: str
@@ -39,8 +46,3 @@ class BaseMemoryRecord(BaseModel):
     lineage_id: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     idempotency_key: str | None = None
-
-
-class MemoryQuota(BaseModel):
-    max_records: int = 100000
-    max_bytes: int = 1024 * 1024 * 100

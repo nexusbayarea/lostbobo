@@ -11,6 +11,7 @@ import {
   X,
   Cpu,
   Loader2,
+  Activity,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { JobProgress } from '@/components/JobProgress';
@@ -19,7 +20,6 @@ import { cn } from '@/lib/utils';
 import { ConfigurationPanel, type Parameter } from '@/sections/dashboard/ConfigurationPanel';
 import { RunControlPanel } from '@/sections/dashboard/RunControlPanel';
 import { ResultsPanel } from '@/sections/dashboard/ResultsPanel';
-import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -30,9 +30,9 @@ const sidebarItems = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-// Internal links that use React Router
 const internalLinks = [
   { id: 'alpha', label: 'Alpha Control', icon: Cpu, path: '/dashboard/alpha' },
+  { id: 'observatory', label: 'Kernel Observatory', icon: Activity, path: '/observability' },
 ];
 
 const DEFAULT_PARAMETERS: Parameter[] = [
@@ -56,8 +56,6 @@ export function Dashboard() {
   useEffect(() => {
     const fetchUsage = async () => {
       try {
-        const token = getToken();
-        // const stats = await api.getUsage(token);
         const stats = { used: 0, limit: 100, remaining: 100 };
         setUsage(stats);
       } catch (error) {
@@ -75,29 +73,46 @@ export function Dashboard() {
   const [timeout, setTimeoutVal] = useState(300);
   const [seed, setSeed] = useState<number | undefined>(undefined);
 
-  const startPolling = async (runId: string) => {
+  // Invoke a kernel capability via the generic edge adapter
+  const invokeCapability = async (capability: string, payload: any) => {
+    const token = getToken();
+    const res = await fetch('/api/v1/capability/invoke', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ capability, payload }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'Capability invocation failed');
+    }
+    return res.json();
+  };
+
+  const startPolling = async (batchId: string) => {
     try {
-      const token = getToken();
-      const finalStatus = await api.pollStatus(runId, token, (p) => {
-        setProgress(p);
-        setCurrentStatus('processing');
-      });
-
-      setIsRunning(false);
-      setCurrentStatus(finalStatus.status as any);
-
-      if (finalStatus.status === 'completed') {
-        setCurrentRun({
-          run_id: finalStatus.run_id,
-          results: finalStatus.results,
-          ai_report: finalStatus.ai_report,
-          config_summary: finalStatus.config_summary,
-          progress: finalStatus.progress
+      const poll = async () => {
+        const result = await invokeCapability('engineering.robustness.status', {
+          batch_id: batchId,
         });
-        toast.success('Simulation analysis completed!');
-      } else {
-        toast.error(`Simulation analysis failed: ${finalStatus.error || 'Unknown error'}`);
-      }
+        setProgress(result.completed / result.total * 100);
+        setCurrentStatus(result.status === 'completed' ? 'completed' : 'processing');
+
+        if (result.status === 'completed') {
+          setIsRunning(false);
+          setCurrentRun({
+            run_id: batchId,
+            results: result,
+            config_summary: { method: samplingMethod, total: result.total },
+          });
+          toast.success('Simulation analysis completed!');
+        } else {
+          setTimeout(poll, 3000);
+        }
+      };
+      poll();
     } catch (error: any) {
       setIsRunning(false);
       toast.error(`Polling failed: ${error.message}`);
@@ -116,17 +131,24 @@ export function Dashboard() {
       const activeNumRuns = overrides?.numRuns || numRuns;
 
       const config = {
-        numRuns: activeNumRuns,
-        samplingMethod: activeMethod,
-        parameters,
-        timeout,
-        seed
+        tenant_id: user?.id,
+        parameters: parameters.map((p) => ({
+          name: p.name,
+          base: p.baseValue,
+          unit: p.unit,
+          perturbable: p.perturbable,
+          min: p.min,
+          max: p.max,
+        })),
+        sampling_method: activeMethod,
+        num_runs: activeNumRuns,
+        solver_type: 'mfem',
+        report_title: 'Robustness Analysis',
       };
 
-      const token = getToken();
-      const response = await api.startRobustnessRun(config, token);
-      setCurrentRunId(response.run_id);
-      startPolling(response.run_id);
+      const response = await invokeCapability('engineering.robustness.run', config);
+      setCurrentRunId(response.batch_id);
+      startPolling(response.batch_id);
     } catch (error: any) {
       setIsRunning(false);
       toast.error(error.message || 'Failed to start simulation.');
@@ -137,11 +159,9 @@ export function Dashboard() {
   const handleCancelRun = async () => {
     if (!currentRunId) return;
     try {
-      const token = getToken();
-      await api.cancelRobustnessRun(currentRunId, token);
       setIsRunning(false);
       setCurrentRunId(null);
-      toast.success('Simulation cancelled. Credits refunded.');
+      toast.success('Simulation cancelled.');
     } catch (error) {
       toast.error('Failed to cancel simulation.');
       console.error(error);
@@ -230,10 +250,18 @@ export function Dashboard() {
           {internalLinks.map((link) => (
             <button
               key={link.id}
-              onClick={() => window.open(link.path, "_blank")}
+              onClick={() => {
+                if (link.id === 'observatory') {
+                  window.open('/observability', '_blank');
+                } else {
+                  window.open(link.path, '_blank');
+                }
+              }}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all',
-                'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10',
+                link.id === 'observatory'
+                  ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+                  : 'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10',
                 !isSidebarOpen && 'justify-center px-2'
               )}
             >

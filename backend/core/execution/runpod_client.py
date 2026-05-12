@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional
 
 import httpx
 
 
 class RunPodClient:
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key or os.getenv("RUNPOD_API_KEY")
         self.base_url = "https://api.runpod.ai/v2"
         self.headers = {"Authorization": f"Bearer {self.api_key}"}

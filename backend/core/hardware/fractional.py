@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from backend.core.hardware.pools import ExecutionCapacity
 
 if TYPE_CHECKING:
-    from backend.core.hardware.isolation import GPUIsolationManager
-from backend.hardware.scheduler import SchedulingRequest
+    pass
 from backend.core.services.observability_service import observability
+from backend.hardware.scheduler import SchedulingRequest
 
 
 @dataclass

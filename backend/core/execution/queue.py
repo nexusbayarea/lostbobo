@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Dict, Optional
 
-from backend.core.execution.models import ExecutionPriority, ExecutionRequest, ExecutionStatus
+from backend.core.execution.models import ExecutionPriority, ExecutionRequest
 
 
 class LeaseTracker:
     def __init__(self):
-        self._leases: Dict[str, float] = {}
+        self._leases: dict[str, float] = {}
 
     def acquire(self, execution_id: str, lease_seconds: int = 30) -> bool:
         now = time.time()
@@ -47,9 +46,9 @@ class KernelExecutionQueue:
     ]
 
     def __init__(self):
-        self._queues: Dict[str, asyncio.PriorityQueue] = {p.value: asyncio.PriorityQueue() for p in ExecutionPriority}
+        self._queues: dict[str, asyncio.PriorityQueue] = {p.value: asyncio.PriorityQueue() for p in ExecutionPriority}
         self.leases = LeaseTracker()
-        self._retry_counts: Dict[str, int] = {}
+        self._retry_counts: dict[str, int] = {}
         self._max_retries = 3
 
     async def enqueue(self, request: ExecutionRequest):
@@ -57,7 +56,7 @@ class KernelExecutionQueue:
         queue = self._queues[request.priority.value]
         await queue.put((prio, request))
 
-    async def dequeue(self) -> Optional[ExecutionRequest]:
+    async def dequeue(self) -> ExecutionRequest | None:
         for priority in self._DECREASING_PRIORITY:
             queue = self._queues[priority.value]
             if not queue.empty():

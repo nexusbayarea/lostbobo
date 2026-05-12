@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -14,13 +14,13 @@ class SimulationEvent(BaseModel):
     execution_id: str
     event_type: str
     timestamp: float = Field(default_factory=time.time)
-    data: Dict[str, Any] = Field(default_factory=dict)
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class SimulationStreamManager:
-    def __init__(self, event_bus: Optional[EventLogService] = None):
+    def __init__(self, event_bus: EventLogService | None = None):
         self.event_bus = event_bus or EventLogService.event_log()
-        self._active_streams: Dict[str, asyncio.Queue] = {}
+        self._active_streams: dict[str, asyncio.Queue] = {}
 
     async def start_stream(self, execution_id: str):
         if execution_id not in self._active_streams:
@@ -38,7 +38,7 @@ class SimulationStreamManager:
         )
         await self.event_bus.publish(simhpc_event)
 
-    async def get_stream(self, execution_id: str) -> Optional[asyncio.Queue]:
+    async def get_stream(self, execution_id: str) -> asyncio.Queue | None:
         return self._active_streams.get(execution_id)
 
     async def stop_stream(self, execution_id: str):

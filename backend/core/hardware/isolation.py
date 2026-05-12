@@ -10,12 +10,12 @@ from backend.core.hardware.mps import MPSManager
 if TYPE_CHECKING:
     from backend.core.hardware.fractional import FractionalAllocation
 from backend.core.hardware.pools import ExecutionCapacity, PoolClass
-from backend.hardware.scheduler import SchedulingRequest
 from backend.core.runtime.alerting.engine import RealTimeAlertingSystem
 from backend.core.runtime.anomaly.engine import AnomalyEvent
 from backend.core.services.observability_service import observability
 from backend.core.services.resource_governor import ResourceGovernor
 from backend.core.tracing import trace_context
+from backend.hardware.scheduler import SchedulingRequest
 
 
 class IsolationLevel(str, Enum):

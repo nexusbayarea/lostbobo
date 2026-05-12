@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Dict, Optional
 
 from backend.core.execution.arbitration import ResourceArbiter
 from backend.core.execution.models import ExecutionFuture, ExecutionRequest, ExecutionStatus
@@ -23,7 +22,7 @@ class SimulationExecutor:
         self.arbiter = arbiter
         self.runpod = runpod
         self.stream_mgr = stream_mgr
-        self._active_jobs: Dict[str, asyncio.Task] = {}
+        self._active_jobs: dict[str, asyncio.Task] = {}
         self._cpu_endpoint_id = os.getenv("RUNPOD_CPU_ENDPOINT")
         self._gpu_endpoint_id = os.getenv("RUNPOD_A40_ENDPOINT")
 
@@ -48,7 +47,7 @@ class SimulationExecutor:
             return True
         return False
 
-    async def get_status(self, execution_id: str) -> Optional[ExecutionStatus]:
+    async def get_status(self, execution_id: str) -> ExecutionStatus | None:
         if execution_id in self._active_jobs:
             return ExecutionStatus.RUNNING
         if self.queue.leases.is_leased(execution_id):
@@ -69,9 +68,10 @@ class SimulationExecutor:
 
             await self.stream_mgr.start_stream(request.execution_id)
 
+            exec_id = request.execution_id
             task = asyncio.create_task(self._execute(request))
-            self._active_jobs[request.execution_id] = task
-            task.add_done_callback(lambda t: self._active_jobs.pop(request.execution_id, None))
+            self._active_jobs[exec_id] = task
+            task.add_done_callback(lambda t, eid=exec_id: self._active_jobs.pop(eid, None))
 
     async def _execute(self, request: ExecutionRequest):
         try:

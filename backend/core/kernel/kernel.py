@@ -12,9 +12,7 @@ from backend.core.sdk.dag_node_registry import DAGNodeRegistry
 from backend.core.sdk.plugin_loader import PluginLoader
 
 if TYPE_CHECKING:
-    from backend.core.execution.arbitration import ResourceArbiter
     from backend.core.execution.simulation_executor import SimulationExecutor
-    from backend.core.hardware.isolation import GPUIsolationManager
     from backend.core.scheduler.kernel_scheduler import KernelScheduler
 
 

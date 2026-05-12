@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.admin.cost_admin import router as cost_admin_router
 from backend.app.api.api_router import api_router
+from backend.app.api.worker_api import router as worker_router
 from backend.core.gateway.gateway import SecurityGatewayMiddleware
 from backend.core.governance.health import validate_governance_secrets
 from backend.core.governance.metrics import metrics_app
@@ -24,6 +25,14 @@ async def lifespan(app: FastAPI):
     log.info("Starting SimHPC with Security/Governance Gateway...")
     infisical_jit_inject()
     await validate_governance_secrets()
+
+    from backend.core.kernel.kernel import SimHPCKernel
+
+    kernel = SimHPCKernel()
+    await kernel.boot()
+    app.state.kernel = kernel
+    log.info("SimHPCKernel booted and registered on app.state")
+
     await start_simulation_worker()
 
     from backend.core.services.observability_service import observability
@@ -45,6 +54,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     log.info("Shutting down...")
+    await kernel.shutdown()
 
 
 app = FastAPI(title="SimHPC Core Orchestrator", version="3.5.0", lifespan=lifespan)
@@ -64,6 +74,7 @@ app.add_middleware(TenantMiddleware)
 # --- ROUTER INTEGRATION ---
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(cost_admin_router, prefix="/api/v1")
+app.include_router(worker_router)
 
 # --- MIDDLEWARE INTEGRATION ---
 register_middleware(app)

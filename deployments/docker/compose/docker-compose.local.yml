@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  kernel:
+    build:
+      context: ../../../
+      dockerfile: deployments/docker/images/kernel/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      SIMHPC_RUNTIME: kernel
+    depends_on:
+      - postgres
+    networks:
+      - simhpc-net
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: simhpc
+      POSTGRES_USER: simhpc
+      POSTGRES_PASSWORD: simhpc
+    ports:
+      - "5432:5432"
+    networks:
+      - simhpc-net
+
+networks:
+  simhpc-net:

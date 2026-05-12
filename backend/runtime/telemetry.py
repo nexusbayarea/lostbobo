@@ -68,3 +68,17 @@ class TelemetryManager:
             res = dict(stats)
             res["p95_wall_clock"] = p95
             return res
+
+
+async def main():
+    import asyncio
+
+    TelemetryManager()
+    while True:
+        await asyncio.sleep(60)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())

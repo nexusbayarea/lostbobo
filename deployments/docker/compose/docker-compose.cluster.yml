@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  kernel:
+    build:
+      context: ../../../
+      dockerfile: deployments/docker/images/kernel/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      SIMHPC_RUNTIME: kernel
+    healthcheck:
+      test: ["CMD", "python3", "deployments/runtime/health/health_probe.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - postgres
+    networks:
+      - simhpc-net
+
+  gpu-worker:
+    build:
+      context: ../../../
+      dockerfile: deployments/docker/images/gpu/Dockerfile
+    deploy:
+      replicas: 3
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      SIMHPC_RUNTIME: gpu-worker
+    depends_on:
+      - kernel
+    networks:
+      - simhpc-net
+
+  telemetry:
+    build:
+      context: ../../../
+      dockerfile: deployments/docker/images/telemetry/Dockerfile
+    deploy:
+      replicas: 2
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      SIMHPC_RUNTIME: telemetry
+    depends_on:
+      - kernel
+    networks:
+      - simhpc-net
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: simhpc
+      POSTGRES_USER: simhpc
+      POSTGRES_PASSWORD: simhpc
+    ports:
+      - "5432:5432"
+    networks:
+      - simhpc-net
+
+networks:
+  simhpc-net:

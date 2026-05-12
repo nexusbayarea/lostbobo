@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from backend.core.execution.queue import KernelExecutionQueue
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 class SimHPCKernel:
     def __init__(self) -> None:
         self.logger = logging.getLogger("simhpc.kernel")
+        self._boot_time: float | None = None
 
         self.capabilities = CapabilityRegistry()
         self.dag = DAGNodeRegistry()
@@ -30,8 +32,18 @@ class SimHPCKernel:
         self.stream_manager: SimulationStreamManager | None = None
         self._dispatcher_task: asyncio.Task | None = None
 
+    def uptime(self) -> float:
+        if self._boot_time is None:
+            return 0.0
+        return time.time() - self._boot_time
+
+    @property
+    def plugins(self) -> list:
+        return list(self.capabilities.list_capabilities())
+
     async def boot(self) -> None:
         self.logger.info("Booting SimHPC Kernel...")
+        self._boot_time = time.time()
 
         from backend.core.execution.arbitration import ResourceArbiter
         from backend.core.execution.simulation_executor import SimulationExecutor
@@ -57,6 +69,10 @@ class SimHPCKernel:
         self.logger.info("SimulationExecutor initialized")
 
         await self._register_capabilities()
+
+        from backend.runtime.kernel_boot import boot as boot_runtime
+
+        await boot_runtime(self)
 
         await self.plugin_loader.load_plugins()
 

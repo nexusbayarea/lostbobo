@@ -78,8 +78,8 @@ function ParticleBackground() {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            // Increased opacity from 0.10 to 0.20
-            ctx.strokeStyle = `rgba(34, 211, 238, ${0.20 * (1 - dist / 150)})`;
+            // Increased opacity from 0.20 to 0.30
+            ctx.strokeStyle = `rgba(34, 211, 238, ${0.30 * (1 - dist / 150)})`;
             ctx.stroke();
           }
         }

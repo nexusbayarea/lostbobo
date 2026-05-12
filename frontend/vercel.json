@@ -1,6 +1,15 @@
 {
   "headers": [
     {
+      "source": "/auth/callback",
+      "headers": [
+        {
+          "key": "X-Vercel-Deployment-Protection",
+          "value": "disabled"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {

@@ -3,7 +3,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Brain, DollarSign, Zap, AlertTriangle, FileText } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  DollarSign,
+  Zap,
+  AlertTriangle,
+  FileText,
+  ExternalLink,
+  RefreshCcw,
+} from 'lucide-react';
 import WorldStateDashboard from './WorldStateDashboard';
 import RLTrainingDashboard from './RLTrainingDashboard';
 import DAGExecutionViewer from './kernel-views/DAGExecutionViewer';
@@ -27,15 +36,26 @@ const ObservabilityHub: React.FC = () => {
   const [regime, setRegime] = useState('normal');
   const [anomalies, setAnomalies] = useState(2);
   const [llmSpend, setLlmSpend] = useState(12.4);
+  const [rateLimitHits, setRateLimitHits] = useState(47);
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
   const [logRate, setLogRate] = useState(8.4);
 
-  const { data: liveMetrics } = useSSE('/api/v1/observability/stream');
+  const {
+    data: liveMetrics,
+    error: sseError,
+    connected,
+    isReconnecting,
+    reconnect,
+  } = useSSE('/api/v1/observability/stream', {
+    onError: (err) => console.error('SSE error:', err),
+    onConnect: () => console.log('SSE connected'),
+  });
 
   useEffect(() => {
     const fetchRecentLogs = async () => {
       try {
         const res = await fetch('/api/v1/observability/recent-logs?limit=5');
+        if (!res.ok) return;
         const data = await res.json();
         setRecentLogs(data.logs || []);
       } catch (e) {}
@@ -49,9 +69,10 @@ const ObservabilityHub: React.FC = () => {
     if (liveMetrics) {
       setKernelHealth(liveMetrics.kernel || kernelHealth);
       setRegime(liveMetrics.regime || regime);
-      setAnomalies(liveMetrics.anomalies || anomalies);
-      setLlmSpend(liveMetrics.llm_spend_usd || llmSpend);
-      setLogRate(liveMetrics.log_rate || logRate);
+      setAnomalies(liveMetrics.anomalies ?? anomalies);
+      setLlmSpend(liveMetrics.llm_spend_usd ?? llmSpend);
+      setRateLimitHits(liveMetrics.rate_limit_hits ?? rateLimitHits);
+      setLogRate(liveMetrics.log_rate ?? logRate);
     }
   }, [liveMetrics]);
 
@@ -92,25 +113,62 @@ const ObservabilityHub: React.FC = () => {
         </Card>
 
         <nav className="flex flex-col gap-2">
-          <Button variant="ghost" className="justify-start" asChild><a href="#dag-execution">⚙️ DAG Execution</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#event-stream">📡 Event Stream</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#simulation">🌿 Simulation</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#scheduler">📊 Scheduler</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#replay">↩️ Replay Console</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#capabilities">🧩 Capability Graph</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#world-state">🌍 World State</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#rl-training">🧠 RL Training</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#hardware">🖥️ GPU/MIG</a></Button>
-          <Button variant="ghost" className="justify-start" asChild><a href="#otel">📈 OTel Metrics</a></Button>
           <Button variant="ghost" className="justify-start" asChild>
-            <a href="http://localhost:16686" target="_blank" rel="noopener noreferrer">🔍 Jaeger Tracing</a>
+            <a href="#dag-execution">⚙️ DAG Execution</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#event-stream">📡 Event Stream</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#simulation">🌿 Simulation</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#scheduler">📊 Scheduler</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#replay">↩️ Replay Console</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#capabilities">🧩 Capability Graph</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#world-state">🌍 World State</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#rl-training">🧠 RL Training</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#hardware">🖥️ GPU/MIG</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#otel">📈 OTel Metrics</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="#master-dashboard">📊 Master Dashboard</a>
+          </Button>
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="http://localhost:16686" target="_blank" rel="noopener noreferrer">
+              🔍 Jaeger Tracing
+            </a>
           </Button>
         </nav>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
+        {sseError && (
+          <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4 flex items-center gap-3">
+            <span>
+              {sseError} {!connected && '(offline)'}
+            </span>
+            <Button variant="outline" size="sm" onClick={reconnect} disabled={isReconnecting}>
+              <RefreshCcw className={`h-4 w-4 mr-1 ${isReconnecting ? 'animate-spin' : ''}`} />
+              {isReconnecting ? 'Reconnecting...' : 'Retry'}
+            </Button>
+          </div>
+        )}
+
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="dag">DAG</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
@@ -120,17 +178,26 @@ const ObservabilityHub: React.FC = () => {
             <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
             <TabsTrigger value="world-state">World State</TabsTrigger>
             <TabsTrigger value="rl">RL</TabsTrigger>
+            <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="grafana">Grafana</TabsTrigger>
-            <TabsTrigger value="otel">OTel</TabsTrigger>
+            <TabsTrigger value="master">Master</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="h-4 w-4" /> Kernel Health</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Kernel Health
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="flex justify-between items-end">
                   <div className="text-4xl font-bold text-green-500">Healthy</div>
-                  <Button variant="outline" size="sm" onClick={() => openCorrelatedLogs('{service_name="simhpc-core"} | trace_id%3D*')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openCorrelatedLogs('{service_name="simhpc-core"} | trace_id%3D*')}
+                  >
                     View Logs
                   </Button>
                 </CardContent>
@@ -141,14 +208,20 @@ const ObservabilityHub: React.FC = () => {
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Recent Logs
-                    <Badge variant="outline" className="ml-auto">{logRate.toFixed(1)} logs/sec</Badge>
+                    <Badge variant="outline" className="ml-auto">
+                      {logRate.toFixed(1)} logs/sec
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-h-64 overflow-auto text-sm">
                     {recentLogs.map((log, i) => (
                       <div key={i} className="flex items-start gap-3 border-l-4 border-l-blue-500 pl-3">
-                        <Badge variant={log.level === 'ERROR' ? 'destructive' : log.level === 'WARN' ? 'secondary' : 'default'}>
+                        <Badge
+                          variant={
+                            log.level === 'ERROR' ? 'destructive' : log.level === 'WARN' ? 'secondary' : 'default'
+                          }
+                        >
                           {log.level}
                         </Badge>
                         <div className="flex-1">
@@ -172,20 +245,38 @@ const ObservabilityHub: React.FC = () => {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Anomalies</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" /> Anomalies
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="text-4xl font-bold text-orange-500">{anomalies}</div>
-                  <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => openCorrelatedLogs('{level="ERROR"} | anomalies')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 w-full"
+                    onClick={() => openCorrelatedLogs('{level="ERROR"} | anomalies')}
+                  >
                     View Correlated Logs
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> LLM Spend (24h)</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" /> LLM Spend (24h)
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="text-4xl font-bold">${llmSpend}</div>
-                  <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => openCorrelatedLogs('{service_name="simhpc-core"} | llm')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 w-full"
+                    onClick={() => openCorrelatedLogs('{service_name="simhpc-core"} | llm')}
+                  >
                     LLM Logs
                   </Button>
                 </CardContent>
@@ -193,21 +284,51 @@ const ObservabilityHub: React.FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="dag"><DAGExecutionViewer /></TabsContent>
-          <TabsContent value="events"><EventStreamViewer /></TabsContent>
-          <TabsContent value="simulation"><SimulationViewer /></TabsContent>
-          <TabsContent value="scheduler"><SchedulerDashboard /></TabsContent>
-          <TabsContent value="replay"><ReplayConsole /></TabsContent>
-          <TabsContent value="capabilities"><CapabilityGraphExplorer /></TabsContent>
-          <TabsContent value="world-state"><WorldStateDashboard /></TabsContent>
-          <TabsContent value="rl"><RLTrainingDashboard /></TabsContent>
+          <TabsContent value="dag">
+            <DAGExecutionViewer />
+          </TabsContent>
+          <TabsContent value="events">
+            <EventStreamViewer />
+          </TabsContent>
+          <TabsContent value="simulation">
+            <SimulationViewer />
+          </TabsContent>
+          <TabsContent value="scheduler">
+            <SchedulerDashboard />
+          </TabsContent>
+          <TabsContent value="replay">
+            <ReplayConsole />
+          </TabsContent>
+          <TabsContent value="capabilities">
+            <CapabilityGraphExplorer />
+          </TabsContent>
+          <TabsContent value="world-state">
+            <WorldStateDashboard />
+          </TabsContent>
+          <TabsContent value="rl">
+            <RLTrainingDashboard />
+          </TabsContent>
 
           <TabsContent value="grafana">
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">Full Grafana + Thanos Instance</h2>
               <Button asChild size="lg">
-                <a href="/grafana" target="_blank" rel="noopener noreferrer">Open Grafana → All Dashboards</a>
+                <a href="/grafana" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Grafana → All Dashboards
+                </a>
               </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="master">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">Aggregated Observability Dashboard</h2>
+              <iframe
+                src="/grafana/d/simhpc-master-observability?orgId=1&refresh=10s"
+                className="w-full h-[800px] border rounded-xl"
+                title="Master Observability Dashboard"
+              />
             </div>
           </TabsContent>
 

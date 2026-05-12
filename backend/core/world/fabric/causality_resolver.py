@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 from backend.core.world.fabric.vector_clock import VectorClock
+
+if TYPE_CHECKING:
+    from backend.core.world.events.world_event import WorldEvent
 
 
 class CausalityResolver:
@@ -6,7 +11,7 @@ class CausalityResolver:
     def resolve(events: list["WorldEvent"]) -> list["WorldEvent"]:
         clocks = {e.event_id: VectorClock.from_dict(e.vector_clock) for e in events}
         # Rough order by timestamp first
-        sorted_events = sorted(events, key=lambda e: e.timestamp)
+        sorted(events, key=lambda e: e.timestamp)
 
         result = []
         remaining = {e.event_id for e in events}

@@ -1,16 +1,22 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any
 
 
 class QueueManager:
     def __init__(self):
-        self.queue = asyncio.Queue()
+        self.critical = asyncio.PriorityQueue()
+        self.high = asyncio.PriorityQueue()
+        self.normal = asyncio.PriorityQueue()
+        self.low = asyncio.PriorityQueue()
 
-    async def enqueue(self, priority: str, workload: Any):
-        # Simplistic priority handling
-        await self.queue.put((priority, workload))
+    async def enqueue(self, priority: str, workload):
+        queue = getattr(self, priority)
+        await queue.put(workload)
 
-    async def dequeue(self) -> Any | None:
-        if self.queue.empty():
-            return None
-        return await self.queue.get()
+    async def dequeue(self):
+        for queue_name in ["critical", "high", "normal", "low"]:
+            queue = getattr(self, queue_name)
+            if not queue.empty():
+                return await queue.get()
+        return None

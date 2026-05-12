@@ -42,10 +42,10 @@ class ResourceRequest(BaseModel):
 
 
 class Workload(BaseModel):
-    workload_id: str = Field(default_factory=lambda: str(uuid4()))
+    workload_id: str = Field(default_factory=lambda: uuid4().hex)
     tenant_id: str
     plugin_name: str
-    workload_type: WorkloadType
+    workload_type: WorkloadType = WorkloadType.DAG
     priority: WorkloadPriority = WorkloadPriority.NORMAL
     sla_class: SLAClass = SLAClass.BATCH
     resources: ResourceRequest

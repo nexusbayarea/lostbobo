@@ -2,12 +2,14 @@ import hashlib
 import json
 import time
 
+from backend.core.scheduler.scheduler_models import Workload
+
 
 class ReplayScheduler:
     def __init__(self):
-        self.placements = []  # list of dicts: {workload_id, node_id, gpu_fraction, timestamp}
+        self.placements = []  # list of dicts
 
-    def compute_hash(self, workload) -> str:
+    def compute_hash(self, workload: Workload) -> str:
         payload = json.dumps(workload.model_dump(exclude={"workload_id"}), sort_keys=True)
         return hashlib.sha256(payload.encode()).hexdigest()
 

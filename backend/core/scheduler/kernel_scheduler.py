@@ -95,6 +95,6 @@ class KernelScheduler:
             next_wl = await self.queues.dequeue()
             if next_wl is None:
                 break
-            result = await self.schedule(next_wl)
+            result = await self.schedule(next_wl[1])
             if result["status"] != SchedulingDecision.ACCEPTED:
-                await self.queues.enqueue(next_wl[0].priority.value, next_wl[1])
+                await self.queues.enqueue(next_wl[0], next_wl[1])

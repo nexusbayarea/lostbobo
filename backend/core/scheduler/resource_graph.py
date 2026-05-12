@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from backend.core.scheduler.scheduler_models import ResourceRequest
+from backend.core.scheduler.scheduler_models import ResourceRequest
 
 
 class ResourceNode:

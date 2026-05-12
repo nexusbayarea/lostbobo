@@ -7,15 +7,25 @@ from typing import Any
 from backend.core.determinism.seeds.deterministic_seed_manager import DeterministicSeedManager
 from backend.core.hardware.isolation import GPUIsolationManager
 from backend.runtime.gpu_worker.telemetry import TelemetryAgent
+from backend.runtime.scientific.simulation_executor import ScientificSimulationExecutor
 
 gpu_manager = GPUIsolationManager()
 seed_manager = DeterministicSeedManager()
+sci_executor = ScientificSimulationExecutor()
+
+SIMULATION_CAPABILITIES = frozenset(
+    {
+        "physics.solve",
+        "simulation.run",
+        "fem.thermal",
+        "ode.solve",
+    }
+)
 
 
 async def execute_job(job: dict[str, Any], agent: TelemetryAgent) -> dict[str, Any]:
     execution_id = job["execution_id"]
     capability = job["capability"]
-    job.get("inputs", {})
 
     seed = seed_manager.derive_seed(execution_id)
     seed_manager.apply_seed(seed)
@@ -24,8 +34,12 @@ async def execute_job(job: dict[str, Any], agent: TelemetryAgent) -> dict[str, A
 
     start = time.time()
     try:
-        await asyncio.sleep(2)
+        if capability in SIMULATION_CAPABILITIES:
+            result = await sci_executor.execute(job)
+            await agent.emit(execution_id, "job.completed", {"solver": job.get("solver_type")})
+            return result
 
+        await asyncio.sleep(2)
         result = {
             "output": f"simulated {capability}",
             "execution_id": execution_id,

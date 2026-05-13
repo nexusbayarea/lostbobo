@@ -6,6 +6,7 @@ import { Hero } from '@/sections/Hero';
 import { Stack } from '@/sections/Stack';
 import { ValueDifferentiator } from '@/sections/ValueDifferentiator';
 import { WhoItsFor } from '@/sections/WhoItsFor';
+import { AuthCallback } from '@/pages/AuthCallback';
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const DAGDashboard = lazy(() => import('@/pages/DAGDashboard'));
@@ -50,6 +51,7 @@ function App() {
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/terms" element={<Terms />} />

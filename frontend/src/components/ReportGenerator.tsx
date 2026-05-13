@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,13 +18,11 @@ export default function ReportGenerator() {
     }
     setIsGenerating(true);
     try {
-      const res = await fetch('/api/v1/reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ simulation_id: simulationId, report_type: reportType, dag_trigger: true })
+      const data = await api.post<any>('/reports/generate', {
+        simulation_id: simulationId,
+        report_type: reportType,
+        dag_trigger: true
       });
-
-      const data = await res.json();
       toast.success(`Report queued! Job ID: ${data.job_id}`);
     } catch (e) {
       toast.error("Failed to queue report");

@@ -2,6 +2,7 @@ import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 export default function WorldStateGraph() {
   const [nodes, setNodes] = useState([]);
@@ -9,7 +10,7 @@ export default function WorldStateGraph() {
 
   const { data } = useQuery({
     queryKey: ['entity-graph'],
-    queryFn: () => fetch('/api/v1/graph/entity-graph').then(r => r.json()),
+    queryFn: () => api.get<any>('/graph/entity-graph', false),
     refetchInterval: 8000, // live updates
   });
 

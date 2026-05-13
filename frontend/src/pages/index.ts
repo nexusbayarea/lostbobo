@@ -1,5 +1,5 @@
 export * from './Benchmarks';
-export * from '@/pages/Dashboard';
+export * from './Dashboard';
 export * from './Pricing';
 export * from './Privacy';
 export * from './SignIn';
@@ -11,3 +11,8 @@ export * from './CCPA';
 export * from './DPA';
 export * from './CookiePolicy';
 export * from './Contact';
+export * from './ApiReference';
+export * from './HomePage';
+export * from './ObservabilityPage';
+export * from './AlphaControlRoom';
+export * from './ExperimentNotebook';

@@ -1,52 +1,13 @@
-import path from "path";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
+// https://vite.dev/config/
 export default defineConfig({
-  base: "/",
   plugins: [react()],
-
   resolve: {
     alias: {
-      ...(process.env.VERCEL ? {
-        "@/pages/Dashboard": path.resolve(__dirname, "./src/pages/DashboardStub.tsx")
-      } : {}),
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
-  build: {
-    // Reasonable limit — 1000kB is acceptable for most apps
-    chunkSizeWarningLimit: 1000,
-
-    rollupOptions: {
-      output: {
-        manualChunks: (id: string) => {
-          // 1. Supabase (separate as it's heavily used and relatively independent)
-          if (id.includes("@supabase")) {
-            return "vendor-supabase";
-          }
-
-          // 2. State management libraries (can be separate)
-          if (
-            id.includes("zustand") ||
-            id.includes("jotai") ||
-            id.includes("recoil") ||
-            id.includes("redux")
-          ) {
-            return "vendor-state";
-          }
-
-          // 3. Everything else from node_modules goes into a single vendor chunk
-          // This avoids circular dependencies between React and UI libraries
-          if (id.includes("node_modules")) {
-            return "vendor";
-          }
-        },
-      },
-    },
-  },
-
-  // Optional: Better sourcemaps for debugging production issues
-  sourcemap: process.env.NODE_ENV === "development",
-});
+})

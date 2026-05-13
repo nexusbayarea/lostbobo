@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { api } from '@/lib/api';
 
 interface Experiment {
   id: string;
@@ -29,28 +30,15 @@ export function useExperiments(token?: string): UseExperimentsResult {
   useEffect(() => {
     const fetchExperiments = async () => {
       try {
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const res = await fetch('/api/v1/capability/invoke', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            capability: 'memory.recall',
-            payload: {
-              tenant_id: 'default',
-              memory_type: 'execution',
-              limit: 100,
-              filters: { plugin_name: 'robustness' },
-            },
-          }),
-        });
-
-        const json = await res.json();
+        const json = await api.post<any>('/capability/invoke', {
+          capability: 'memory.recall',
+          payload: {
+            tenant_id: 'default',
+            memory_type: 'execution',
+            limit: 100,
+            filters: { plugin_name: 'robustness' },
+          },
+        }, false);
         const records = (json.data?.records || json.records || []).map((rec: any) => {
           const state = rec.execution_state || {};
           const exp = state.experiment || {};

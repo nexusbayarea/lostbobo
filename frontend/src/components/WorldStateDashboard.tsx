@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import ReactFlow, {
   Controls,
   MiniMap,
@@ -71,7 +72,7 @@ const WorldStateDashboard: React.FC = () => {
 
   // Existing SSE for WorldState
   useEffect(() => {
-    const eventSource = new EventSource('/api/v1/core/world-state/stream');
+    const eventSource = new EventSource(api.getUrl('/core/world-state/stream'));
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setWorldState((prev) => ({ ...prev, ...data }));
@@ -94,8 +95,7 @@ const WorldStateDashboard: React.FC = () => {
   useEffect(() => {
     const fetchRLPolicy = async () => {
       try {
-        const res = await fetch('/api/v1/core/rl-policy-inspection');
-        const data = await res.json();
+        const data = await api.get<any>('/core/rl-policy-inspection', false);
         setRlPolicy(data);
       } catch (err) {
         console.error('Failed to fetch RL policy:', err);

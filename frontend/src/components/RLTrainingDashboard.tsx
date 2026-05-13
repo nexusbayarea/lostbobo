@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import { Card, Metric, Text, Table, Button, LineChart, BarChart } from '@tremor/react';
 import 'reactflow/dist/style.css';
 
@@ -9,18 +10,21 @@ const RLTrainingDashboard: React.FC = () => {
   // Poll RL training metrics
   useEffect(() => {
     const interval = setInterval(async () => {
-      const res = await fetch('/api/v1/core/rl-training-stats');
-      const data = await res.json();
-      setTrainingData(data);
+      try {
+        const data = await api.get<any>('/core/rl-training-stats', false);
+        setTrainingData(data);
+      } catch (err) {
+        console.error('Failed to fetch training stats:', err);
+      }
     }, 2000);
     return () => clearInterval(interval);
   }, []);
 
   // Load snapshots
   useEffect(() => {
-    fetch('/api/v1/core/rl/snapshots?limit=10')
-      .then(r => r.json())
-      .then(setSnapshots);
+    api.get<any[]>('/core/rl/snapshots?limit=10', false)
+      .then(setSnapshots)
+      .catch(err => console.error('Failed to fetch snapshots:', err));
   }, []);
 
   return (
@@ -92,7 +96,7 @@ const RLTrainingDashboard: React.FC = () => {
                     variant="secondary"
                     onClick={async () => {
                       if (window.confirm(`Restore policy from snapshot ${id}?`)) {
-                        await fetch(`/api/v1/core/rl/snapshot/${id}/restore`, { method: 'POST' });
+                        await api.post(`/core/rl/snapshot/${id}/restore`, {});
                         alert('Policy restored successfully!');
                       }
                     }}

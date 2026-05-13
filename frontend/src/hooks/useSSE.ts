@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { api } from '@/lib/api';
 
 interface UseSSEOptions<T = any> {
   onMessage?: (data: T) => void;
@@ -15,7 +16,8 @@ export function useSSE<T = any>(url: string, options: UseSSEOptions<T> = {}) {
 
   const connect = useCallback(() => {
     if (eventSourceRef.current) eventSourceRef.current.close();
-    const es = new EventSource(url);
+    const fullUrl = url.startsWith('/') && !url.startsWith('//') ? api.getUrl(url) : url;
+    const es = new EventSource(fullUrl);
     eventSourceRef.current = es;
     es.onopen = () => {
       setConnected(true);

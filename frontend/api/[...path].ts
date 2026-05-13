@@ -120,7 +120,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const url = `${baseUrl}/${path}`;
+    const url = `${baseUrl}/api/${path}`;
 
     const response = await fetchWithRetry(url, {
       method: req.method,

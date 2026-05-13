@@ -21,6 +21,7 @@ import { ConfigurationPanel, type Parameter } from '@/sections/dashboard/Configu
 import { RunControlPanel } from '@/sections/dashboard/RunControlPanel';
 import { ResultsPanel } from '@/sections/dashboard/ResultsPanel';
 import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 const sidebarItems = [
   { id: 'simulations', label: 'Simulations', icon: Play },
@@ -69,20 +70,15 @@ export function Dashboard() {
   const [seed, setSeed] = useState<number | undefined>(undefined);
   // Invoke a kernel capability via the generic edge adapter
   const invokeCapability = async (capability: string, payload: any) => {
-    const token = getToken();
-    const res = await fetch('/api/v1/capability/invoke', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ capability, payload }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || err.message || 'Capability invocation failed');
+    try {
+      const data = await api.post<any>('/capability/invoke', {
+        capability,
+        payload
+      }, true);
+      return data;
+    } catch (err: any) {
+      throw new Error(err.message || 'Capability invocation failed');
     }
-    return res.json();
   };
   const startPolling = async (batchId: string) => {
     try {

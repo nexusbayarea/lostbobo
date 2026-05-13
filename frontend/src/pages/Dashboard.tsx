@@ -41,7 +41,7 @@ const DEFAULT_PARAMETERS: Parameter[] = [
   { name: 'mesh_refinement', baseValue: 2.0, unit: 'level', perturbable: false },
 ];
 export function Dashboard() {
-  const { getToken, user } = useAuth();
+  const { getToken, user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('robustness');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentRun, setCurrentRun] = useState<any>(null);
@@ -50,6 +50,14 @@ export function Dashboard() {
   const [currentStatus, setCurrentStatus] = useState<'pending' | 'running' | 'completed' | 'failed' | 'queued' | 'processing'>('queued');
   const [progress, setProgress] = useState(0);
   const [usage, setUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
   useEffect(() => {
     const fetchUsage = async () => {
       try {

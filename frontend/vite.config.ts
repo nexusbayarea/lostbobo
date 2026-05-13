@@ -9,6 +9,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      ...(process.env.VERCEL ? {
+        "@/pages/Dashboard": path.resolve(__dirname, "./src/pages/DashboardStub.tsx")
+      } : {}),
     },
   },
 

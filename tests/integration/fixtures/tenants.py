@@ -1,0 +1,6 @@
+LAB_A = "test-lab-1"
+LAB_B = "test-lab-2"
+EVIL = "evil-tenant"
+RESTRICTED = "restricted-tenant"
+BROKE = "broke-tenant"
+TINY = "tiny-tenant"

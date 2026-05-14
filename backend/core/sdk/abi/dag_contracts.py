@@ -45,3 +45,17 @@ class DAGExecutionPlan(BaseModel):
     edges: list[DAGEdge] = Field(default_factory=list)
     max_concurrency: int = 1
     timeout_seconds: int = 3600
+
+
+class DAGNode(BaseModel):
+    node_id: str
+    node_type: str
+    inputs: dict[str, Any] = Field(default_factory=dict)
+    depends_on: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DAGGraph(BaseModel):
+    dag_id: str
+    nodes: list[DAGNode] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)

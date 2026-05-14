@@ -182,13 +182,18 @@ class CapabilityRegistry:
                 if entry.output_schema:
                     self._validate_payload(result, entry.output_schema, is_output=True)
 
+                outputs_hash = self._hash_payload(result)
                 self._finalize_invocation_record(
                     inv_record,
                     status="success",
-                    outputs_hash=self._hash_payload(result),
+                    outputs_hash=outputs_hash,
                 )
                 entry.invocation_count += 1
                 entry.last_invoked = datetime.now(UTC)
+
+                if entry.deterministic:
+                    self._emit_certificate(capability, entry, inputs_hash, outputs_hash, inv_record)
+
                 return result
 
             except TimeoutError:
@@ -288,6 +293,26 @@ class CapabilityRegistry:
                     invocation_id=r.invocation_id,
                 )
                 return
+
+    def _emit_certificate(
+        self,
+        capability: str,
+        entry: CapabilityEntry,
+        inputs_hash: str,
+        outputs_hash: str,
+        inv_record: InvocationRecord,
+    ) -> None:
+        from backend.core.sdk.abi.certificates import ReproducibilityCertificate
+
+        cert = ReproducibilityCertificate(
+            capability=capability,
+            plugin_name=entry.plugin_name,
+            plugin_version=entry.version,
+            inputs_hash=inputs_hash,
+            outputs_hash=outputs_hash,
+            seed=inv_record.seed,
+        )
+        _ = cert.compute_fingerprint()
 
     # ----------------------------------------------------------
     # Query

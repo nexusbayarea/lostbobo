@@ -3,6 +3,11 @@ from __future__ import annotations
 from backend.core.memory.fabric.memory_types import BaseMemoryRecord
 from backend.core.memory.stores.graph_store import GraphStore
 from backend.core.memory.stores.vector_store import VectorStore
+from backend.core.sdk.abi.plugin_manifest import MemoryAccessContract
+
+
+class MemoryAccessDeniedError(Exception):
+    pass
 
 
 class MemoryFabric:
@@ -10,6 +15,28 @@ class MemoryFabric:
         self.vector_store = VectorStore()
         self.graph_store = GraphStore()
         self.records: dict[str, BaseMemoryRecord] = {}
+        self._contracts: dict[str, MemoryAccessContract] = {}
+
+    def register_contract(self, plugin_name: str, contract: MemoryAccessContract) -> None:
+        self._contracts[plugin_name] = contract
+
+    def check_access(self, record: BaseMemoryRecord, plugin_name: str, write: bool = False) -> None:
+        contract = self._contracts.get(plugin_name)
+        if contract is None:
+            return
+        if record.memory_type.value not in contract.tiers:
+            raise MemoryAccessDeniedError(
+                f"Plugin '{plugin_name}' cannot write to tier '{record.memory_type.value}'. "
+                f"Allowed tiers: {contract.tiers}"
+            )
+        allowed_namespace = any(record.memory_id.startswith(ns.replace("*", "")) for ns in contract.namespaces)
+        if contract.namespaces and not allowed_namespace:
+            raise MemoryAccessDeniedError(
+                f"Plugin '{plugin_name}' cannot write to namespace '{record.memory_id}'. "
+                f"Allowed namespaces: {contract.namespaces}"
+            )
+        if contract.read_only and write:
+            raise MemoryAccessDeniedError(f"Plugin '{plugin_name}' has read-only access")
 
     async def insert(self, record: BaseMemoryRecord):
         self.records[record.memory_id] = record

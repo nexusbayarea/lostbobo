@@ -57,6 +57,11 @@ class PluginBootstrapper:
 
         ctx.lifecycle.transition(PluginState.INITIALIZING, reason="Boot started")
 
+        from backend.core.sdk.abi.sandbox_adapter import get_sandbox_adapter
+
+        adapter = get_sandbox_adapter(manifest)
+        ctx.sandbox_handle = await adapter.launch(manifest, ctx)
+
         plugin_module = importlib.import_module(f"backend.plugins.{manifest.name}.plugin")
         plugin_instance = plugin_module.plugin
         ctx.plugin_instance = plugin_instance

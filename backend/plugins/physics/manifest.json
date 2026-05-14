@@ -1,0 +1,114 @@
+{
+  "name": "physics",
+  "version": "1.0.0",
+  "description": "Physics simulation plugin for SimHPC — quantum chemistry and molecular science.",
+  "author": "SimHPC Core Team",
+  "author_email": "physics@simhpc.dev",
+  "sdk_version_min": "1.0.0",
+  "sdk_version_max": "2.0.0",
+  "capabilities": [
+    "physics.solve",
+    "physics.simulate",
+    "physics.backend.status"
+  ],
+  "dag_nodes": [
+    {
+      "node_type": "beam.solve",
+      "version": "1.0.0",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "molecule": {"type": "object"},
+          "backend": {"type": "string", "default": "pyscf"}
+        },
+        "required": ["molecule"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "energy": {"type": "number"},
+          "convergence": {"type": "boolean"}
+        }
+      },
+      "deterministic": true,
+      "idempotent": true,
+      "max_retries": 0,
+      "timeout_seconds": 3600
+    },
+    {
+      "node_type": "schrodinger.solve",
+      "version": "1.0.0",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "molecule": {"type": "object"},
+          "backend": {"type": "string"}
+        },
+        "required": ["molecule"]
+      },
+      "output_schema": {
+        "type": "object"
+      },
+      "deterministic": true,
+      "idempotent": true,
+      "max_retries": 1,
+      "timeout_seconds": 7200
+    }
+  ],
+  "isolation_tier": "kata",
+  "resource_quota": {
+    "cpu_cores": 16.0,
+    "memory_mb": 32768,
+    "gpu_profile": "dedicated-single",
+    "gpu_memory_mb": 4096,
+    "storage_mb": 10240,
+    "max_concurrent_executions": 4,
+    "execution_timeout_seconds": 7200
+  },
+  "permissions": {
+    "syscalls": [
+      {"name": "memory.read"},
+      {"name": "memory.write"},
+      {"name": "lineage.record"},
+      {"name": "state.read"},
+      {"name": "state.write"}
+    ],
+    "network_egress": [],
+    "secrets": [
+      {"secret_path": "/plugins/physics/orca-license-key", "readonly": true}
+    ],
+    "capabilities_delegate": []
+  },
+  "subscribes_to": [],
+  "emits": [
+    {
+      "event_type": "physics.calculation.completed",
+      "schema_version": "1.0.0",
+      "payload_schema": {
+        "type": "object",
+        "properties": {
+          "molecule_formula": {"type": "string"},
+          "energy": {"type": "number"},
+          "backend": {"type": "string"}
+        }
+      }
+    }
+  ],
+  "memory_contract": {
+    "tiers": ["episodic", "execution"],
+    "namespaces": ["physics.*"],
+    "read_only": false,
+    "ttl_seconds": 604800
+  },
+  "lineage_contract": {
+    "record_inputs": true,
+    "record_outputs": true,
+    "attestation_required": true,
+    "replay_supported": true
+  },
+  "auto_start": false,
+  "restart_policy": "on-failure",
+  "health_check_endpoint": "physics.backend.status",
+  "depends_on_plugins": [],
+  "depends_on_capabilities": []
+}

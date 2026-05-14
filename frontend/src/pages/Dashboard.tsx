@@ -51,6 +51,12 @@ export function Dashboard() {
   const [progress, setProgress] = useState(0);
   const [usage, setUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
   const [backendOnline, setBackendOnline] = useState(true);
+  const [robustnessEnabled, setRobustnessEnabled] = useState(true);
+  const [numRuns, setNumRuns] = useState(50);
+  const [samplingMethod, setSamplingMethod] = useState('monte_carlo');
+  const [parameters, setParameters] = useState<Parameter[]>(DEFAULT_PARAMETERS);
+  const [timeout, setTimeoutVal] = useState(300);
+  const [seed, setSeed] = useState(42);
 
   if (loading) {
     return (

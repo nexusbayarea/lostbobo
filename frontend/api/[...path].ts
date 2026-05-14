@@ -1,3 +1,5 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 let cachedUrl: string | null = null;
 let lastFetch = 0;
 
@@ -8,7 +10,7 @@ async function sleep(ms: number) {
   return new Promise(res => setTimeout(res, ms));
 }
 
-async function getRunpodUrl() {
+async function getRunpodUrl(): Promise<string> {
   // cache to avoid hitting RunPod API every request
   if (cachedUrl && Date.now() - lastFetch < CACHE_TTL) {
     return cachedUrl;
@@ -40,8 +42,7 @@ async function getRunpodUrl() {
     }),
   });
 
-  const json = await res.json();
-
+  const json = (await res.json()) as { data?: { myself?: { pods?: any[] } } };
   const pods = json?.data?.myself?.pods || [];
 
   if (!pods.length) {
@@ -93,9 +94,13 @@ async function fetchWithRetry(url: string, options: any) {
   throw new Error("MAX_RETRIES_EXCEEDED");
 }
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
   try {
-    const path = req.query.path?.join("/") || "";
+    const pathParams = req.query.path as string[] | undefined;
+    const path = pathParams?.join("/") || "";
     let baseUrl;
 
     // Resolve pod with retry for cold starts

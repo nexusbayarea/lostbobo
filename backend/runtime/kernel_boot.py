@@ -107,6 +107,50 @@ async def boot(kernel) -> None:
     await register_rag_capabilities(kernel)
     log.info("RAG capabilities registered (retrieve, rerank, compress, graphrag, streaming_rag)")
 
+    # Core RAG Service client (production: connects to RunPod CPU node via gRPC)
+    import os
+
+    from backend.core.services.rag_client import CoreRAGClient
+
+    kernel.rag_client = CoreRAGClient(
+        host=os.getenv("RAG_SERVICE_HOST", "rag-service"),
+        port=int(os.getenv("RAG_SERVICE_PORT", "50051")),
+    )
+    kernel.capability_registry.register(
+        "rag.retrieve",
+        kernel.rag_client.retrieve,
+        plugin_name="__core__",
+        deterministic=False,
+        timeout_seconds=30,
+    )
+    kernel.capability_registry.register(
+        "rag.reason",
+        kernel.rag_client.reason,
+        plugin_name="__core__",
+        deterministic=False,
+        timeout_seconds=120,
+    )
+    kernel.capability_registry.register(
+        "rag.index",
+        kernel.rag_client.index,
+        plugin_name="__core__",
+        deterministic=False,
+        timeout_seconds=60,
+    )
+    log.info("Core RAG client registered (rag.retrieve, rag.reason, rag.index)")
+
+    from backend.core.memory.stores.graph_store import GraphStore
+
+    kernel.graph_store = GraphStore()
+    kernel.capability_registry.register(
+        "rag.graph_query",
+        kernel.graph_store.handle_query,
+        plugin_name="__core__",
+        deterministic=True,
+        timeout_seconds=30,
+    )
+    log.info("GraphStore capability registered (rag.graph_query)")
+
     from backend.core.document.capabilities import register_document_capabilities
 
     await register_document_capabilities(kernel)

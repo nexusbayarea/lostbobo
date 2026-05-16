@@ -5,8 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-COPY ../plugins /app/plugins
+COPY services/module-runtime/ ./
+COPY plugins ./plugins/
 
 EXPOSE 50052
 

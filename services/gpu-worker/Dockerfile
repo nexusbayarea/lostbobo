@@ -23,9 +23,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-COPY ../backend /app/backend
-COPY ../deployment/config /app/deployment/config
+COPY services/gpu-worker/ ./
+COPY backend ./backend/
+COPY deployment/config ./deployment/config
 
 RUN useradd --create-home --shell /bin/bash simhpc && \
     chown -R simhpc:simhpc /app

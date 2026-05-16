@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   gateway:
-    build: ../services/gateway
+    build:
+      context: ..
+      dockerfile: services/gateway/Dockerfile
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-gateway:latest
     container_name: simhpc-gateway
     restart: unless-stopped
@@ -37,7 +39,9 @@ services:
       - simhpc-internal
 
   rag-service:
-    build: ../services/rag-service
+    build:
+      context: ..
+      dockerfile: services/rag-service/Dockerfile
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-rag-service:latest
     container_name: simhpc-rag
     restart: unless-stopped
@@ -58,7 +62,9 @@ services:
       - simhpc-internal
 
   module-runtime:
-    build: ../services/module-runtime
+    build:
+      context: ..
+      dockerfile: services/module-runtime/Dockerfile
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-module-runtime:latest
     container_name: simhpc-modules
     restart: unless-stopped
@@ -81,7 +87,9 @@ services:
       - simhpc-internal
 
   worker:
-    build: ../services/worker
+    build:
+      context: ..
+      dockerfile: services/worker/Dockerfile
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-worker:latest
     container_name: simhpc-worker
     restart: unless-stopped

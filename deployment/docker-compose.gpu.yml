@@ -3,8 +3,8 @@ version: "3.9"
 services:
   gpu-worker:
     build:
-      context: ../services/gpu-worker
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: services/gpu-worker/Dockerfile
     image: simhpc/gpu-worker:${RUNTIME_VERSION:-latest}
     container_name: simhpc-gpu-worker
     restart: unless-stopped

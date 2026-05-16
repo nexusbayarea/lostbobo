@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-COPY ../backend /app/backend
+COPY services/gateway-service/ ./
+COPY backend ./backend/
 
 EXPOSE 8080
 EXPOSE 50054

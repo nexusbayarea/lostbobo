@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-COPY ../backend /app/backend
+COPY services/worker-service/ ./
+COPY backend ./backend/
 
 CMD ["python", "-u", "worker.py"]

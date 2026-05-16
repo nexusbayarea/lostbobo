@@ -1,0 +1,8 @@
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+redis>=5.0.0
+supabase>=2.0.0
+httpx>=0.26.0
+tenacity>=8.2.0
+structlog>=24.0.0
+pydantic>=2.5.0

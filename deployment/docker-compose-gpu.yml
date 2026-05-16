@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  simulation-runtime:
+    build:
+      context: ../services/simulation-runtime
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-simulation:latest
+    container_name: simhpc-simulation
+    restart: unless-stopped
+    ports:
+      - "50053:50053"
+    environment:
+      - REDIS_URL=redis://${CPU_NODE_IP}:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - GATEWAY_HOST=${CPU_NODE_IP}
+      - GATEWAY_PORT=50054
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - simulation_data:/data
+      - /opt/sundials:/opt/sundials:ro
+      - /opt/mfem:/opt/mfem:ro
+
+volumes:
+  simulation_data:
+
+networks:
+  default:
+    name: simhpc-net
+    external: true

@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  gateway:
+    build: ../services/gateway
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-gateway:latest
+    container_name: simhpc-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - RAG_SERVICE_HOST=rag-service
+      - RAG_SERVICE_PORT=50051
+      - MODULE_RUNTIME_HOST=module-runtime
+      - MODULE_RUNTIME_PORT=50052
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      # Infisical bootstrap (secrets injected at runtime)
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_ENV=${INFISICAL_ENV:-production}
+      # Fallback env vars (used when Infisical is not configured)
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - rag-service
+      - module-runtime
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - simhpc-internal
+
+  rag-service:
+    build: ../services/rag-service
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-rag-service:latest
+    container_name: simhpc-rag
+    restart: unless-stopped
+    ports:
+      - "50051:50051"
+    environment:
+      - VECTOR_DIM=768
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import grpc; ch = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(ch).result(timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - simhpc-internal
+
+  module-runtime:
+    build: ../services/module-runtime
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-module-runtime:latest
+    container_name: simhpc-modules
+    restart: unless-stopped
+    ports:
+      - "50052:50052"
+    environment:
+      - KERNEL_HOST=gateway
+      - KERNEL_PORT=50054
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    depends_on:
+      - gateway
+    healthcheck:
+      test: ["CMD", "python", "-c", "import grpc; ch = grpc.insecure_channel('localhost:50052'); grpc.channel_ready_future(ch).result(timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - simhpc-internal
+
+  worker:
+    build: ../services/worker
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/simhpc-worker:latest
+    container_name: simhpc-worker
+    restart: unless-stopped
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - POLL_INTERVAL=5
+    networks:
+      - simhpc-internal
+
+networks:
+  simhpc-internal:
+    driver: bridge

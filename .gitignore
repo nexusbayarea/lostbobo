@@ -115,3 +115,11 @@ coverage.xml
 # Local progress logs (DO NOT PUSH)
 README/
 Completed.md
+
+# SSH keys (NEVER COMMIT)
+*.pem
+*.key
+id_*
+simhpc*
+known_hosts
+authorized_keys

@@ -1,0 +1,26 @@
+rag_service:
+  host: "0.0.0.0"
+  port: 50051
+  log_level: "INFO"
+
+ollama:
+  host: "http://ollama:11434"
+  embedding_model: "nomic-embed-text:v2-moe"
+  generation_model: "gemma:2b"
+  timeout_seconds: 60
+
+vector_store:
+  provider: "supabase"
+  table: "rag_documents"
+  dimensions: 768
+  match_function: "match_documents"
+
+graph_rag:
+  enabled: true
+  max_depth: 3
+  cache_ttl_seconds: 300
+
+agentic_rag:
+  enabled: true
+  max_steps: 3
+  reflection_model: "gemma:2b"

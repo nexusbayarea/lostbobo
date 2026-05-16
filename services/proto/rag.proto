@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package simhpc.rag;
+
+service RAGService {
+  rpc Retrieve (RetrieveRequest) returns (RetrieveResponse);
+  rpc StreamRetrieve (StreamRetrieveRequest) returns (stream StreamChunk);
+  rpc Reason (ReasonRequest) returns (ReasonResponse);
+  rpc Index (IndexRequest) returns (IndexResponse);
+  rpc GraphQuery (GraphQueryRequest) returns (GraphQueryResponse);
+  rpc AgentLoop (AgentLoopRequest) returns (AgentLoopResponse);
+}
+
+message RetrieveRequest {
+  string query = 1;
+  int32 top_k = 2;
+  string tenant_id = 3;
+}
+
+message RetrieveResponse {
+  repeated Document documents = 1;
+}
+
+message StreamRetrieveRequest {
+  string query = 1;
+  string tenant_id = 2;
+}
+
+message StreamChunk {
+  repeated Document documents = 1;
+}
+
+message Document {
+  string text = 1;
+  float score = 2;
+  map<string, string> metadata = 3;
+}
+
+message ReasonRequest {
+  repeated Document context = 1;
+  string prompt_template = 2;
+  string model = 3;
+}
+
+message ReasonResponse {
+  string answer = 1;
+}
+
+message IndexRequest {
+  string text = 1;
+  map<string, string> metadata = 2;
+  string tenant_id = 3;
+}
+
+message IndexResponse {
+  bool success = 1;
+}
+
+message GraphQueryRequest {
+  string query_type = 1;
+  string start_node = 2;
+  int32 max_depth = 3;
+  string tenant_id = 4;
+}
+
+message GraphPath {
+  repeated string nodes = 1;
+  string relationship = 2;
+  int32 depth = 3;
+}
+
+message GraphQueryResponse {
+  repeated GraphPath paths = 1;
+}
+
+message AgentLoopRequest {
+  string query = 1;
+  int32 max_steps = 2;
+  string tenant_id = 3;
+}
+
+message AgentStep {
+  int32 step = 1;
+  string answer = 2;
+}
+
+message AgentLoopResponse {
+  string final_answer = 1;
+  repeated AgentStep steps = 2;
+}

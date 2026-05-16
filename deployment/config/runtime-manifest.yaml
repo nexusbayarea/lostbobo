@@ -1,0 +1,72 @@
+manifest_version: "1.0"
+runtime_version: "0.1.0-gamma"
+build_date: "${BUILD_DATE}"
+git_commit: "${GIT_COMMIT}"
+
+components:
+  control_plane:
+    - name: kernel
+      version: "${RUNTIME_VERSION}"
+      ports: [8080, 50054]
+      health_check: "/health"
+    - name: module-runtime
+      version: "${RUNTIME_VERSION}"
+      ports: [50052]
+    - name: worker
+      version: "${RUNTIME_VERSION}"
+
+  reasoning_plane:
+    - name: rag-service
+      version: "${RUNTIME_VERSION}"
+      ports: [50051]
+      models:
+        embeddings: "nomic-embed-text:v2-moe"
+        ingestion: "numarkdown:8b-thinking"
+        routing: "gemma:2b"
+        fallback: "qwen2.5:3b-instruct"
+    - name: ollama
+      version: "latest"
+      ports: [11434]
+
+  simulation_plane:
+    - name: gpu-worker
+      version: "${RUNTIME_VERSION}"
+      ports: [50053]
+      libraries:
+        sundials: "7.0.0"
+        mfem: "4.6"
+        glvis: "4.2"
+      gpu_required: true
+      gpu_min_memory_mb: 40960
+
+  data_plane:
+    - name: redis
+      version: "7-alpine"
+      ports: [6379]
+    - name: supabase
+      external: true
+
+  telemetry_plane:
+    - name: telemetry
+      version: "${RUNTIME_VERSION}"
+      ports: [9090, 3000, 4317, 4318]
+
+network_policies:
+  simhpc-control:
+    internal: false
+    description: "Control plane communication"
+  simhpc-reasoning:
+    internal: true
+    description: "Reasoning plane isolated"
+  simhpc-simulation:
+    internal: true
+    description: "Simulation plane isolated"
+
+guild_rails_compliance:
+  kernel_centered_execution: true
+  supabase_orchestration_truth: true
+  no_internal_api_py: true
+  infisical_secrets: true
+  deterministic_replay: true
+  plugin_first: true
+  domain_agnostic_core: true

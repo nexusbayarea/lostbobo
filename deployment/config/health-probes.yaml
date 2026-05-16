@@ -1,0 +1,65 @@
+probes:
+  kernel:
+    liveness:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 30
+    readiness:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
+
+  rag-service:
+    liveness:
+      exec:
+        command:
+          - python
+          - -c
+          - "import grpc; ch = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(ch).result(timeout=5)"
+      initialDelaySeconds: 60
+      periodSeconds: 30
+    readiness:
+      exec:
+        command:
+          - python
+          - -c
+          - "import grpc; ch = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(ch).result(timeout=2)"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+
+  gpu-worker:
+    liveness:
+      exec:
+        command:
+          - python
+          - -c
+          - "import grpc; ch = grpc.insecure_channel('localhost:50053'); grpc.channel_ready_future(ch).result(timeout=5)"
+      initialDelaySeconds: 60
+      periodSeconds: 30
+    readiness:
+      exec:
+        command:
+          - python
+          - -c
+          - "import grpc; ch = grpc.insecure_channel('localhost:50053'); grpc.channel_ready_future(ch).result(timeout=2)"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+
+  redis:
+    liveness:
+      tcpSocket:
+        port: 6379
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+  ollama:
+    liveness:
+      httpGet:
+        path: /api/tags
+        port: 11434
+      initialDelaySeconds: 120
+      periodSeconds: 30

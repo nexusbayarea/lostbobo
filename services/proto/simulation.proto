@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package simhpc.simulation;
+
+service SimulationService {
+  rpc RunSimulation (SimulationRequest) returns (SimulationResponse);
+  rpc GetStatus (StatusRequest) returns (StatusResponse);
+  rpc StreamResults (StreamRequest) returns (stream SimulationResult);
+}
+
+message SimulationRequest {
+  string job_id = 1;
+  string capability = 2;
+  bytes payload = 3;
+  string tenant_id = 4;
+}
+
+message SimulationResponse {
+  string job_id = 1;
+  string status = 2;
+  string message = 3;
+}
+
+message StatusRequest {
+  string job_id = 1;
+}
+
+message StatusResponse {
+  string job_id = 1;
+  string status = 2;
+  float progress = 3;
+  string error = 4;
+}
+
+message StreamRequest {
+  string job_id = 1;
+}
+
+message SimulationResult {
+  string job_id = 1;
+  int32 step = 2;
+  bytes data = 3;
+  map<string, string> metadata = 4;
+}

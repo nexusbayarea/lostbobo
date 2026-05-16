@@ -1,4 +1,4 @@
-name: Deploy SimHPC Gamma
+name: Build and Deploy
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  RUNTIME_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
 
 jobs:
   build:
@@ -17,12 +16,10 @@ jobs:
     strategy:
       matrix:
         service:
-          - kernel
+          - gateway
           - rag-service
           - module-runtime
-          - worker-service
-          - gpu-worker
-          - telemetry
+          - worker
 
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +40,8 @@ jobs:
           context: ./services/${{ matrix.service }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/simhpc-${{ matrix.service }}:${{ env.RUNTIME_VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/simhpc-${{ matrix.service }}:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/simhpc-${{ matrix.service }}:latest
-          build-args: |
-            RUNTIME_VERSION=${{ env.RUNTIME_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -61,10 +56,10 @@ jobs:
       - name: Start services
         run: |
           docker compose -f deployment/docker-compose.yml up -d
-          sleep 30
-          bash deployment/scripts/health-check.sh || sleep 30
+          sleep 15
+          bash deployment/scripts/validate-cpu.sh || sleep 15
 
-      - name: Run tests
+      - name: Run integration tests
         run: |
           pip install pytest httpx grpcio
           pytest tests/integration/ -v
@@ -80,28 +75,19 @@ jobs:
     environment: production
 
     steps:
-      - name: Deploy CPU Node
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.RUNPOD_CPU_HOST }}
-          username: root
-          key: ${{ secrets.RUNPOD_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /root/simhpc-gamma
+            export INFISICAL_CLIENT_ID="${{ secrets.INFISICAL_CLIENT_ID }}"
+            export INFISICAL_CLIENT_SECRET="${{ secrets.INFISICAL_CLIENT_SECRET }}"
+            export INFISICAL_PROJECT_ID="${{ secrets.INFISICAL_PROJECT_ID }}"
+            export INFISICAL_ENV="production"
+            cd /mnt/simhpc_vps/simhpc-gamma
             git pull origin main
             docker compose -f deployment/docker-compose.yml pull
             docker compose -f deployment/docker-compose.yml up -d --remove-orphans
-            bash deployment/scripts/health-check.sh
-
-      - name: Deploy GPU Node
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.RUNPOD_GPU_HOST }}
-          username: root
-          key: ${{ secrets.RUNPOD_SSH_KEY }}
-          script: |
-            cd /root/simhpc-gamma
-            git pull origin main
-            docker compose -f deployment/docker-compose.gpu.yml pull
-            docker compose -f deployment/docker-compose.gpu.yml up -d --remove-orphans
-            bash deployment/scripts/health-check.sh
+            bash deployment/scripts/validate-cpu.sh

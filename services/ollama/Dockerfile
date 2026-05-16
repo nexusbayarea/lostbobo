@@ -1,6 +1,6 @@
 FROM ollama/ollama:latest
 
-COPY pull_models.sh /usr/local/bin/pull_models.sh
+COPY services/ollama/pull_models.sh /usr/local/bin/pull_models.sh
 RUN chmod +x /usr/local/bin/pull_models.sh
 
 ENTRYPOINT ["ollama", "serve"]

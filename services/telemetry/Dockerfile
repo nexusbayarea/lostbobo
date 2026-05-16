@@ -15,12 +15,12 @@ COPY --from=grafana /usr/sbin/grafana-cli /usr/sbin/grafana-cli
 
 COPY --from=otel /otelcol-contrib /usr/local/bin/otelcol-contrib
 
-COPY prometheus.yml /etc/prometheus/prometheus.yml
+COPY services/telemetry/prometheus.yml /etc/prometheus/prometheus.yml
 
 RUN mkdir -p /etc/otel && \
     echo 'receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nexporters:\n  prometheus:\n    endpoint: 0.0.0.0:8889\nservice:\n  pipelines:\n    metrics:\n      receivers: [otlp]\n      exporters: [prometheus]' > /etc/otel/config.yml
 
-COPY start-telemetry.sh /start-telemetry.sh
+COPY services/telemetry/start-telemetry.sh /start-telemetry.sh
 RUN chmod +x /start-telemetry.sh
 
 EXPOSE 9090 3000 4317 4318

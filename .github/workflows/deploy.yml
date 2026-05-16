@@ -1,15 +1,7 @@
-name: Deploy SimHPC Gamma
+name: Deploy SimHPC Gamma (Deprecated — use build.yml)
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-    branches: [main]
-
-env:
-  REGISTRY: ghcr.io
-  RUNTIME_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+  workflow_dispatch:
 
 jobs:
   build:
@@ -50,29 +42,6 @@ jobs:
             RUNTIME_VERSION=${{ env.RUNTIME_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Start services
-        run: |
-          docker compose -f deployment/docker-compose.yml up -d
-          sleep 30
-          bash deployment/scripts/health-check.sh || sleep 30
-
-      - name: Run tests
-        run: |
-          pip install pytest httpx grpcio
-          pytest tests/integration/ -v
-
-      - name: Cleanup
-        if: always()
-        run: docker compose -f deployment/docker-compose.yml down
 
   deploy:
     needs: build
